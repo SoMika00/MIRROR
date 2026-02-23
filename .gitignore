@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtualenv
+venv/
+.venv/
+
+# Env files
+.env
+.env.*
+
+# App runtime data
+uploads/
+models/*.gguf
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:2.8.4
+    container_name: mirror-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - mirror
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: mirror-qdrant
+    expose:
+      - "6333"
+      - "6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+
+  mirror:
+    build: .
+    container_name: mirror-app
+    expose:
+      - "5000"
+    volumes:
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+      - ./articles:/app/articles
+    environment:
+      - FLASK_DEBUG=0
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - MODEL_PATH=/app/models/phi-4-Q4_K_M.gguf
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  caddy_data:
+  caddy_config:

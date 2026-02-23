@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block title %}AI Chat{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    <!-- Sidebar -->
+    <aside class="chat-sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title" data-i18n="chat.upload_docs">Upload Documents</div>
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-icon">&#128196;</div>
+                <div class="drop-zone-text" data-i18n="chat.drop_here">Drop files here</div>
+                <div class="drop-zone-hint" data-i18n="chat.supported_files">PDF, DOCX, TXT, MD</div>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" multiple style="display:none">
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title" data-i18n="chat.web_scraper">Web Scraper</div>
+            <div class="scraper-input-group">
+                <input type="text" class="scraper-input" id="scraperUrl" placeholder="https://..." data-i18n-placeholder="chat.url_placeholder">
+                <button class="btn btn-ghost btn-sm" onclick="scrapeUrl()" id="scrapeBtn" data-i18n="chat.go">Go</button>
+            </div>
+            <div id="scraperStatus" class="mt-1 text-muted" style="font-size:0.8rem;"></div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title" data-i18n="chat.indexed_docs">Indexed Documents</div>
+            <div class="doc-list" id="docList">
+                <div class="text-muted" style="font-size:0.8rem;" data-i18n="chat.no_docs">No documents indexed</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title" data-i18n="chat.scraped_pages">Scraped Pages</div>
+            <div class="doc-list" id="scrapedList">
+                <div class="text-muted" style="font-size:0.8rem;" data-i18n="chat.no_pages">No pages scraped</div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title" data-i18n="chat.filter_source">Filter Source</div>
+            <select id="sourceFilter" class="scraper-input" style="width:100%;">
+                <option value="" data-i18n="chat.filter.all">All sources</option>
+                <option value="document" data-i18n="chat.filter.documents">Documents only</option>
+                <option value="web" data-i18n="chat.filter.web">Web pages only</option>
+            </select>
+        </div>
+    </aside>
+
+    <!-- Main Chat -->
+    <div class="chat-main">
+        <div class="chat-messages" id="chatMessages">
+            <div class="message message-assistant">
+                <div class="message-bubble">
+                    <span data-i18n-html="chat.welcome">Welcome! I'm <strong>MIRROR</strong>, Michail's AI assistant. Upload documents or scrape a URL, then ask me anything. I'll answer with source citations.</span><br><br>
+                    <span class="text-muted" style="font-size:0.85rem;">
+                        <span data-i18n="chat.tip">Tip: Load a model via the &#9881; button in the top-right corner to enable AI responses.</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="chatInput" placeholder="Ask a question..." data-i18n-placeholder="chat.ask_placeholder" rows="1"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
+                <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    loadDocumentList();
+    loadScrapedPages();
+    setupDropZone();
+});
+
+// --- Drop Zone ---
+function setupDropZone() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        for (const file of files) uploadFile(file);
+    });
+    fileInput.addEventListener('change', () => {
+        for (const file of fileInput.files) uploadFile(file);
+        fileInput.value = '';
+    });
+}
+
+// --- File Upload ---
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    showToast(`Uploading ${file.name}...`, 'info');
+
+    try {
+        const resp = await fetch('/api/documents/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.success) {
+            showToast(`${file.name}: ${data.chunks} chunks indexed in ${data.elapsed_seconds}s`, 'success');
+            loadDocumentList();
+        } else {
+            showToast(`Error: ${data.error}`, 'error');
+        }
+    } catch (e) {
+        showToast(`Upload failed: ${e.message}`, 'error');
+    }
+}
+
+// --- Document List ---
+async function loadDocumentList() {
+    try {
+        const resp = await fetch('/api/documents/list');
+        const data = await resp.json();
+        const list = document.getElementById('docList');
+        if (!data.sources || data.sources.length === 0) {
+            list.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">No documents indexed</div>';
+            return;
+        }
+        list.innerHTML = data.sources.map(s => `
+            <div class="doc-item">
+                <span class="doc-item-name" title="${s.source_name}">${s.source_name}</span>
+                <span class="doc-item-chunks">${s.chunks} chunks</span>
+                <button class="doc-item-delete" onclick="deleteDoc('${s.source_name}')" title="Delete">&times;</button>
+            </div>
+        `).join('');
+    } catch (e) {
+        // Qdrant not connected
+    }
+}
+
+async function deleteDoc(name) {
+    try {
+        await fetch(`/api/documents/delete/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        showToast(`Deleted: ${name}`, 'info');
+        loadDocumentList();
+    } catch (e) {
+        showToast('Delete failed', 'error');
+    }
+}
+
+// --- Scraper ---
+async function scrapeUrl() {
+    const urlInput = document.getElementById('scraperUrl');
+    const url = urlInput.value.trim();
+    if (!url) return;
+
+    const status = document.getElementById('scraperStatus');
+    status.textContent = 'Scraping...';
+    document.getElementById('scrapeBtn').disabled = true;
+
+    try {
+        const resp = await fetch('/api/scraper/scrape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, index: true })
+        });
+        const data = await resp.json();
+        if (data.error) {
+            status.textContent = `Error: ${data.error}`;
+        } else {
+            status.textContent = `${data.char_count} chars in ${data.elapsed_seconds}s`;
+            showToast(`Scraped: ${data.title || url}`, 'success');
+            loadScrapedPages();
+            loadDocumentList();
+        }
+    } catch (e) {
+        status.textContent = `Failed: ${e.message}`;
+    }
+    document.getElementById('scrapeBtn').disabled = false;
+}
+
+async function loadScrapedPages() {
+    try {
+        const resp = await fetch('/api/scraper/cached');
+        const data = await resp.json();
+        const list = document.getElementById('scrapedList');
+        if (!data.pages || data.pages.length === 0) {
+            list.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">No pages scraped</div>';
+            return;
+        }
+        list.innerHTML = data.pages.map(p => `
+            <div class="doc-item">
+                <span class="doc-item-name" title="${p.url}">${p.title || p.url}</span>
+                <span class="doc-item-chunks">${p.chars} ch</span>
+            </div>
+        `).join('');
+    } catch (e) {}
+}
+
+// --- Chat ---
+let isGenerating = false;
+
+async function sendMessage() {
+    if (isGenerating) return;
+    const input = document.getElementById('chatInput');
+    const question = input.value.trim();
+    if (!question) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    appendMessage('user', question);
+
+    const sourceFilter = document.getElementById('sourceFilter').value;
+    isGenerating = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    // Show typing indicator
+    const typingId = appendTyping();
+
+    try {
+        const resp = await fetch('/api/chat/query', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, source_type: sourceFilter || undefined })
+        });
+        const data = await resp.json();
+        removeTyping(typingId);
+
+        if (data.error) {
+            appendMessage('assistant', `Error: ${data.error}`);
+        } else {
+            appendMessage('assistant', data.answer, data.sources, data.timings);
+        }
+    } catch (e) {
+        removeTyping(typingId);
+        appendMessage('assistant', `Connection error: ${e.message}`);
+    }
+
+    isGenerating = false;
+    document.getElementById('sendBtn').disabled = false;
+}
+
+function appendMessage(role, text, sources, timings) {
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message message-${role}`;
+
+    let html = `<div class="message-bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
+
+    if (sources && sources.length > 0) {
+        html += `<div class="message-sources">
+            <div class="message-sources-title">Sources</div>
+            ${sources.map(s => `
+                <div class="source-item">
+                    <span>${escapeHtml(s.source)}${s.page ? `, p.${s.page}` : ''}</span>
+                    <span class="source-score">${s.score}</span>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    if (timings) {
+        html += `<div class="message-timings">
+            embed: ${timings.embedding_ms || '?'}ms · search: ${timings.search_ms || '?'}ms · rerank: ${timings.rerank_ms || '0'}ms · gen: ${timings.generation_ms || '?'}ms · total: ${timings.total_ms || '?'}ms
+        </div>`;
+    }
+
+    div.innerHTML = html;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+let typingCounter = 0;
+function appendTyping() {
+    const id = `typing-${++typingCounter}`;
+    const container = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'message message-assistant';
+    div.id = id;
+    div.innerHTML = `<div class="message-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return id;
+}
+
+function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Auto-resize textarea
+document.getElementById('chatInput').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+});
+</script>
+{% endblock %}

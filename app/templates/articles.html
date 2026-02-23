@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Articles{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="text-center mb-1" style="font-size:2rem;font-weight:800;" data-i18n="articles.title">Articles</h1>
+        <p class="text-center text-muted mb-3" data-i18n="articles.subtitle">Technical writing on AI, RAG, MLOps and production systems.</p>
+
+        <div class="articles-grid" id="articlesGrid">
+            <div class="text-center text-muted" style="grid-column:1/-1;" data-i18n="articles.loading">Loading articles...</div>
+        </div>
+
+        <!-- Article Detail View (hidden by default) -->
+        <div id="articleDetail" class="hidden">
+            <button class="btn btn-ghost btn-sm mb-2" onclick="showArticleList()" data-i18n="articles.back">&larr; Back to articles</button>
+            <div class="article-content" id="articleContent"></div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', loadArticles);
+
+function getCurrentLang() {
+    try {
+        return localStorage.getItem('mirror_lang') || '';
+    } catch (e) {
+        return '';
+    }
+}
+
+async function loadArticles() {
+    try {
+        const lang = encodeURIComponent(getCurrentLang());
+        const resp = await fetch(`/api/articles/list${lang ? `?lang=${lang}` : ''}`);
+        const data = await resp.json();
+        const grid = document.getElementById('articlesGrid');
+
+        if (!data.articles || data.articles.length === 0) {
+            grid.innerHTML = `
+                <div class="text-center text-muted" style="grid-column:1/-1;">
+                    <p style="font-size:1.2rem;margin-bottom:0.5rem;" data-i18n="articles.empty_title">No articles yet</p>
+                    <p style="font-size:0.85rem;" data-i18n="articles.empty_hint">Add markdown files to the <code>articles/</code> directory to get started.</p>
+                </div>`;
+            if (window.MIRROR_I18N?.applyTranslations) {
+                window.MIRROR_I18N.applyTranslations(window.MIRROR_I18N.getLang());
+            }
+            return;
+        }
+
+        grid.innerHTML = data.articles.map(a => `
+            <div class="card article-card" onclick="loadArticle('${a.slug}')">
+                <div class="card-header">
+                    <div class="card-title">${escapeHtml(a.title)}</div>
+                    <div class="card-date">${a.date || ''}</div>
+                </div>
+                <div class="card-body">${escapeHtml(a.summary || '')}</div>
+                ${a.tags && a.tags.length ? `
+                    <div class="article-tags">
+                        ${a.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+                    </div>` : ''}
+            </div>
+        `).join('');
+
+        if (window.MIRROR_I18N?.applyTranslations) {
+            window.MIRROR_I18N.applyTranslations(window.MIRROR_I18N.getLang());
+        }
+    } catch (e) {
+        document.getElementById('articlesGrid').innerHTML =
+            '<div class="text-center text-muted" style="grid-column:1/-1;">Failed to load articles</div>';
+    }
+}
+
+async function loadArticle(slug) {
+    try {
+        const lang = encodeURIComponent(getCurrentLang());
+        const resp = await fetch(`/api/articles/${slug}${lang ? `?lang=${lang}` : ''}`);
+        const data = await resp.json();
+
+        if (data.error) {
+            showToast(data.error, 'error');
+            return;
+        }
+
+        document.getElementById('articlesGrid').classList.add('hidden');
+        const detail = document.getElementById('articleDetail');
+        detail.classList.remove('hidden');
+
+        document.getElementById('articleContent').innerHTML = `
+            <h1 style="font-size:2rem;margin-bottom:0.25rem;">${escapeHtml(data.title)}</h1>
+            <div class="text-muted mb-3" style="font-size:0.85rem;">
+                ${data.date ? data.date + ' · ' : ''}
+                ${data.tags.length ? data.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join(' ') : ''}
+            </div>
+            <div>${data.html}</div>
+        `;
+    } catch (e) {
+        showToast('Failed to load article', 'error');
+    }
+}
+
+function showArticleList() {
+    document.getElementById('articlesGrid').classList.remove('hidden');
+    document.getElementById('articleDetail').classList.add('hidden');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

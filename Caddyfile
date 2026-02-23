@@ -1,0 +1,27 @@
+mymirror.fr {
+    encode gzip zstd
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
+    reverse_proxy mirror:5000
+}
+
+http://65.109.55.179 {
+    encode gzip zstd
+
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
+    reverse_proxy mirror:5000
+}
+
+www.mymirror.fr {
+    redir https://mymirror.fr{uri} permanent
+}

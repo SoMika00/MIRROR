@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Portfolio{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <h1 class="hero-title">Michail Berjaoui</h1>
+        <p class="hero-subtitle" data-i18n="home.subtitle">Lead AI Engineer | LLM & MLOps</p>
+        <p class="hero-summary" data-i18n="home.summary">
+            5 years deploying AI models to production at scale. Enterprise RAG specialist,
+            fine-tuning (LoRA/QLoRA), OCR/NER. Based in Tokyo, actively seeking
+            opportunities in Japan.
+        </p>
+        <div class="hero-tags">
+            <span class="tag">Enterprise RAG</span>
+            <span class="tag">Fine-tuning LoRA</span>
+            <span class="tag">vLLM / TensorRT</span>
+            <span class="tag">Qdrant</span>
+            <span class="tag">Kubernetes</span>
+            <span class="tag">FastAPI</span>
+            <span class="tag">GCP / AWS / Azure</span>
+            <span class="tag">OCR / NER</span>
+        </div>
+        <div class="hero-actions">
+            <a href="/chat" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span data-i18n="home.ask_ai">Ask the AI about me</span>
+            </a>
+            <a href="/tech" class="btn btn-secondary" data-i18n="home.tech_choices">Technical Choices</a>
+        </div>
+        <div class="contact-links mt-3">
+            <a class="contact-link" href="mailto:michail.berjaoui@gmail.com">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                michail.berjaoui@gmail.com
+            </a>
+            <a class="contact-link" href="https://www.linkedin.com/in/mickail-berjaoui-02776b193" target="_blank">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                LinkedIn
+            </a>
+            <span class="contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                07 83 00 00 84
+            </span>
+            <span class="contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                Tokyo, Japan
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- Skills -->
+<section class="section" id="skills">
+    <div class="container">
+        <h2 class="text-center mb-3" style="font-size:1.5rem;font-weight:700;" data-i18n="home.skills">Technical Skills</h2>
+        <div class="skills-grid">
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.genai">Generative AI</div>
+                <div class="skill-items">
+                    <span class="skill-item">Enterprise RAG</span>
+                    <span class="skill-item">LoRA / QLoRA</span>
+                    <span class="skill-item">ReAct Agents</span>
+                    <span class="skill-item">Text-to-SQL</span>
+                    <span class="skill-item">LlamaIndex</span>
+                    <span class="skill-item">LangChain</span>
+                </div>
+            </div>
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.inference">Inference & Scaling</div>
+                <div class="skill-items">
+                    <span class="skill-item">vLLM</span>
+                    <span class="skill-item">TGI</span>
+                    <span class="skill-item">Ollama</span>
+                    <span class="skill-item">TensorRT-LLM</span>
+                    <span class="skill-item">AWQ / GPTQ</span>
+                    <span class="skill-item">Continuous Batching</span>
+                    <span class="skill-item">Paged Attention</span>
+                </div>
+            </div>
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.vectorstores">Vector Stores</div>
+                <div class="skill-items">
+                    <span class="skill-item">Qdrant (self-hosted)</span>
+                    <span class="skill-item">PGVector</span>
+                    <span class="skill-item">Hybrid Search</span>
+                    <span class="skill-item">Reranking</span>
+                    <span class="skill-item">Metadata Filtering</span>
+                </div>
+            </div>
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.mlops">MLOps & GPU</div>
+                <div class="skill-items">
+                    <span class="skill-item">Kubernetes</span>
+                    <span class="skill-item">Docker</span>
+                    <span class="skill-item">Terraform</span>
+                    <span class="skill-item">Helm</span>
+                    <span class="skill-item">Prometheus</span>
+                    <span class="skill-item">Grafana</span>
+                    <span class="skill-item">Scaleway H100</span>
+                    <span class="skill-item">RunPod</span>
+                </div>
+            </div>
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.backend">Backend & Data</div>
+                <div class="skill-items">
+                    <span class="skill-item">FastAPI</span>
+                    <span class="skill-item">Python</span>
+                    <span class="skill-item">BigQuery</span>
+                    <span class="skill-item">Spark</span>
+                    <span class="skill-item">Airflow</span>
+                    <span class="skill-item">MinIO</span>
+                    <span class="skill-item">OCR / NER</span>
+                    <span class="skill-item">PDF Parsing</span>
+                </div>
+            </div>
+            <div class="skill-category">
+                <div class="skill-category-title" data-i18n="home.skill_cat.cloud">Cloud</div>
+                <div class="skill-items">
+                    <span class="skill-item">GCP (Vertex AI, GKE)</span>
+                    <span class="skill-item">AWS (Lambda)</span>
+                    <span class="skill-item">Azure</span>
+                    <span class="skill-item">OVH</span>
+                    <span class="skill-item">Scaleway</span>
+                    <span class="skill-item">Cloud Run</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Experience -->
+<section class="section" id="experience" style="background:var(--bg-secondary);">
+    <div class="container">
+        <h2 class="text-center mb-3" style="font-size:1.5rem;font-weight:700;" data-i18n="home.experience">Experience</h2>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Freelance — Lead LLM Engineer</div>
+                            <div class="card-location">Remote</div>
+                        </div>
+                        <div class="card-date">June 2025 — Present</div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="experience-bullets">
+                            <li>Fine-tuning 70B model + dynamic LoRA adapters — assistant with live personality switching in production on 2&times;H100 at Scaleway</li>
+                            <li>E-commerce semantic search engine — RAG auto-activated at 100+ products (FastAPI + Qdrant + vLLM + auto-scaling)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">SOMA — Lead Data Scientist & AI Architect</div>
+                            <div class="card-location">Paris / Remote &middot; Team Lead (4-8 people)</div>
+                        </div>
+                        <div class="card-date">Jul 2023 — June 2025</div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="experience-bullets">
+                            <li><strong>Rapid Visa</strong> — Automated identity document validation: OCR + NER + biometric matching + FastAPI + Kubernetes + MinIO</li>
+                            <li><strong>Jenius</strong> — Sovereign LLM (Scaleway) + multi-tenant enterprise RAG (Qdrant) + Text-to-SQL + K8s + load testing 100 concurrent users</li>
+                            <li><strong>StoneLake</strong> — Automated SCPI report parsing (PDF &rarr; financial ratios), strategic clustering &amp; recommendation</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Orange — Data/AI Division</div>
+                            <div class="card-location">France</div>
+                        </div>
+                        <div class="card-date">Jan 2022 — June 2023</div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="experience-bullets">
+                            <li>Industrialization of geospatial algorithms on Vertex AI — 40% reduction in uncertainty on the national fiber network</li>
+                            <li>BigQuery pipelines + Cloud Functions + Looker dashboards</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">Amadeus — Data Engineer</div>
+                            <div class="card-location">Nice / Sophia Antipolis</div>
+                        </div>
+                        <div class="card-date">Sept 2020 — Oct 2021</div>
+                    </div>
+                    <div class="card-body">
+                        <ul class="experience-bullets">
+                            <li>Central Spark/Hadoop data lake + strategic KPIs for cloud costs & tool availability</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Education & Languages -->
+<section class="section" id="education">
+    <div class="container">
+        <div class="skills-grid">
+            <div class="card">
+                <div class="card-title mb-1" data-i18n="home.education">Education</div>
+                <div class="card-body">
+                    <strong>Universit&eacute; Paul Val&eacute;ry — Montpellier</strong><br>
+                    Master MIASHS — Applied Mathematics &amp; Computer Science<br>
+                    <span class="text-muted">2019 — 2021</span><br><br>
+                    <strong>Universit&eacute; Nice Sophia Antipolis</strong><br>
+                    Licence Math&eacute;matiques Appliqu&eacute;es (avec mention)<br>
+                    <span class="text-muted">2015 — 2018</span>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title mb-1" data-i18n="home.languages">Languages</div>
+                <div class="card-body">
+                    <strong>French</strong> — Native<br>
+                    <strong>English</strong> — B2, full professional proficiency<br>
+                    <strong>Japanese</strong> — Learning
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title mb-1" data-i18n="home.certifications">Certifications</div>
+                <div class="card-body">
+                    <strong>How Google does Machine Learning</strong><br>
+                    <span class="text-muted">Coursera | Google — Jul 2022</span><br><br>
+                    <strong>Modernizing Data Lakes &amp; Data Warehouses with GCP</strong><br>
+                    <span class="text-muted">Coursera | Google — Jul 2022</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <p data-i18n="footer.tagline">MIRROR &mdash; AI-powered portfolio by Michail Berjaoui &middot; Built with Flask, Qdrant, BGE-M3 & Phi-4</p>
+</footer>
+{% endblock %}

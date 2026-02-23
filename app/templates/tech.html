@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Technical Choices{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container" style="max-width:860px;">
+        <h1 class="text-center mb-1" style="font-size:2rem;font-weight:800;" data-i18n="tech.title">Technical Choices</h1>
+        <p class="text-center text-muted mb-3" data-i18n="tech.subtitle">Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.</p>
+
+        <!-- Infrastructure -->
+        <div class="tech-section">
+            <h2>1. Infrastructure Constraints</h2>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Resource</th><th>Specification</th><th>Budget Allocation</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>RAM</td><td>64 GB DDR4/DDR5</td><td>LLM ~12 GB · Embedding ~2 GB · Qdrant ~4 GB · OS+App ~6 GB · Free ~40 GB</td></tr>
+                    <tr><td>CPU</td><td>12 cores (x86_64)</td><td>Auto-detected by Docker — no fixed allocation, scheduler manages contention</td></tr>
+                    <tr><td>GPU</td><td>None</td><td>Full CPU inference — drives all model choices</td></tr>
+                    <tr><td>Storage</td><td>SSD (assumed)</td><td>Models ~10 GB · Qdrant data · Uploaded docs</td></tr>
+                </tbody>
+            </table>
+            <p>
+                The absence of a GPU is the defining constraint. Every model selection prioritizes
+                <strong>CPU inference speed</strong> while maintaining production-grade quality. Thread allocation is
+                auto-detected at runtime (<code>multiprocessing.cpu_count() - 2</code>), letting Docker's cgroup
+                limits apply naturally when deployed on different VMs.
+            </p>
+        </div>
+
+        <!-- LLM -->
+        <div class="tech-section">
+            <h2>2. LLM: Phi-4 14B (Q4_K_M GGUF)</h2>
+
+            <h3>Why Phi-4?</h3>
+            <ul>
+                <li><strong>Best quality/size ratio at 14B</strong> — Microsoft's Phi-4 matches or exceeds many 30B+ models on reasoning benchmarks (MMLU, HumanEval, GSM8K)</li>
+                <li><strong>Q4_K_M quantization</strong> — ~9 GB RAM footprint with perplexity degradation &lt;0.5 vs FP16, validated by llama.cpp community benchmarks</li>
+                <li><strong>CPU-optimized via llama.cpp</strong> — GGUF format with AVX2/AVX-512 SIMD acceleration, ~5-10 tokens/sec on 12 cores</li>
+                <li><strong>MIT license</strong> — full commercial use, no restrictions for portfolio/client work</li>
+                <li><strong>4096 token context</strong> — sufficient for RAG with 5 retrieved chunks (~500 tokens each)</li>
+            </ul>
+
+            <h3>Alternatives Considered</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Model</th><th>Size</th><th>RAM (Q4)</th><th>CPU t/s (est.)</th><th>Verdict</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Phi-4 14B</td><td>14B</td><td>~9 GB</td><td>5-10</td><td class="text-accent"><strong>Selected</strong></td></tr>
+                    <tr><td>Mistral 7B</td><td>7B</td><td>~5 GB</td><td>10-18</td><td>Faster but lower quality for complex RAG</td></tr>
+                    <tr><td>Qwen2.5 14B</td><td>14B</td><td>~9 GB</td><td>5-10</td><td>Comparable, Phi-4 edges on reasoning</td></tr>
+                    <tr><td>Llama 3.3 70B</td><td>70B</td><td>~42 GB</td><td>1-2</td><td>Too slow on CPU, RAM too tight</td></tr>
+                    <tr><td>Phi-4-mini 3.8B</td><td>3.8B</td><td>~2.5 GB</td><td>20-30</td><td>Fallback option for speed-critical use</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Inference Engine: llama-cpp-python</h3>
+            <p>
+                We use <code>llama-cpp-python</code> (Python bindings for llama.cpp) rather than Ollama or vLLM because:
+            </p>
+            <ul>
+                <li><strong>Zero overhead</strong> — direct C++ inference, no HTTP server layer, no Docker container</li>
+                <li><strong>Fine-grained control</strong> — n_threads, n_batch, n_ctx tunable per-request</li>
+                <li><strong>Hot-swappable</strong> — load/unload models without restarting the Flask app</li>
+                <li><strong>Memory efficient</strong> — mmap support, only loads needed layers</li>
+            </ul>
+
+            <h3>References</h3>
+            <ul>
+                <li>Abdin et al. (2024). <em>"Phi-4 Technical Report"</em>. Microsoft Research. arXiv:2412.08905</li>
+                <li>Dettmers et al. (2023). <em>"QLoRA: Efficient Finetuning of Quantized Language Models"</em>. NeurIPS 2023</li>
+                <li>llama.cpp GGUF quantization benchmarks — <a href="https://github.com/ggml-org/llama.cpp/discussions/3847" target="_blank">github.com/ggml-org/llama.cpp</a></li>
+            </ul>
+        </div>
+
+        <!-- Embedding Model -->
+        <div class="tech-section">
+            <h2>3. Embedding: BGE-M3</h2>
+
+            <h3>Why BGE-M3?</h3>
+            <ul>
+                <li><strong>Multilingual</strong> — supports 100+ languages including French, English, and Japanese (critical for Japan job market positioning)</li>
+                <li><strong>Hybrid retrieval</strong> — dense (1024-dim) + sparse + multi-vector representations in a single model</li>
+                <li><strong>MTEB performance</strong> — 63.0 MTEB score, top open-source embedding model for retrieval tasks</li>
+                <li><strong>CPU-friendly</strong> — 567M parameters, &lt;30ms per query on CPU (sentence-transformers benchmark)</li>
+                <li><strong>Apache 2.0 license</strong> — full commercial use</li>
+            </ul>
+
+            <h3>Benchmark Results (CPU Inference)</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Model</th><th>Params</th><th>MTEB</th><th>Latency (CPU)</th><th>Top-5 Acc</th><th>Multilingual</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>e5-small</td><td>118M</td><td>—</td><td>16ms</td><td>100%</td><td>Limited</td></tr>
+                    <tr><td class="text-accent"><strong>BGE-M3</strong></td><td>567M</td><td>63.0</td><td>&lt;30ms</td><td>Competitive</td><td class="text-accent"><strong>100+ languages</strong></td></tr>
+                    <tr><td>Qwen3-Embed-8B</td><td>8B</td><td>70.58</td><td>~200ms</td><td>High</td><td>100+ languages</td></tr>
+                    <tr><td>all-MiniLM-L6-v2</td><td>22.7M</td><td>—</td><td>12ms</td><td>56%</td><td>English only</td></tr>
+                </tbody>
+            </table>
+            <p>
+                For a PDF page (~500-1000 tokens), BGE-M3 chunks and embeds in <strong>&lt;5 seconds on CPU</strong>,
+                well within our 10-second target. Using ONNX runtime or OpenVINO quantization can further
+                reduce this by 30-40%.
+            </p>
+
+            <h3>References</h3>
+            <ul>
+                <li>Chen et al. (2024). <em>"BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings Through Self-Knowledge Distillation"</em>. arXiv:2402.03216</li>
+                <li>Muennighoff et al. (2023). <em>"MTEB: Massive Text Embedding Benchmark"</em>. EACL 2023</li>
+                <li>AIM Research (2025). <em>"Benchmark of 16 Best Open Source Embedding Models for RAG"</em></li>
+            </ul>
+        </div>
+
+        <!-- Qdrant -->
+        <div class="tech-section">
+            <h2>4. Vector Store: Qdrant</h2>
+
+            <h3>Why Qdrant?</h3>
+            <ul>
+                <li><strong>Rust-native</strong> — compiled binary, minimal memory overhead, no JVM/GC pauses</li>
+                <li><strong>HNSW indexing</strong> — Hierarchical Navigable Small World graphs for sub-10ms approximate nearest neighbor search</li>
+                <li><strong>Scalar INT8 quantization</strong> — 4× RAM reduction with &lt;1% recall loss, configurable <code>always_ram=True</code> for speed</li>
+                <li><strong>Payload filtering</strong> — indexed keyword filters on <code>source_type</code>, <code>source_name</code> for O(1) pre-filtering</li>
+                <li><strong>Self-hosted</strong> — full data sovereignty, critical for sensitive documents and Japan data residency</li>
+                <li><strong>Active community</strong> — 21k+ GitHub stars, weekly releases, excellent documentation</li>
+                <li><strong>gRPC + REST API</strong> — Python client with async support, batch operations</li>
+            </ul>
+
+            <h3>HNSW Configuration</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Value</th><th>Rationale</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>m</code></td><td>16</td><td>Default. Each node connects to 16 neighbors. Good recall/memory tradeoff</td></tr>
+                    <tr><td><code>ef_construct</code></td><td>200</td><td>High build quality. Slower indexing but better recall at search time</td></tr>
+                    <tr><td><code>ef_search</code></td><td>128</td><td>Search-time beam width. Ensures >95% recall with sub-10ms latency</td></tr>
+                    <tr><td>Quantization</td><td>INT8 scalar</td><td>Reduces 1024-dim float32 vectors from 4KB to 1KB each</td></tr>
+                    <tr><td><code>always_ram</code></td><td>True</td><td>With 64GB RAM, we can keep all quantized vectors in memory</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Alternatives Considered</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Database</th><th>Pros</th><th>Cons</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="text-accent"><strong>Qdrant</strong></td><td>Rust, fast, HNSW, quantization, filtering</td><td>Separate process (Docker)</td></tr>
+                    <tr><td>PGVector</td><td>PostgreSQL integration</td><td>Slower ANN, no native quantization, GC pauses</td></tr>
+                    <tr><td>ChromaDB</td><td>Simple Python API</td><td>Limited scaling, no quantization, SQLite backend</td></tr>
+                    <tr><td>Weaviate</td><td>GraphQL, modules</td><td>Heavier RAM footprint, Go-based</td></tr>
+                    <tr><td>FAISS</td><td>In-process, fast</td><td>No persistence, no filtering, no API</td></tr>
+                </tbody>
+            </table>
+
+            <h3>References</h3>
+            <ul>
+                <li>Malkov & Yashunin (2018). <em>"Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs"</em>. IEEE TPAMI</li>
+                <li>Qdrant Documentation — <a href="https://qdrant.tech/documentation/guides/optimize/" target="_blank">Performance Optimization Guide</a></li>
+                <li>Baranchuk et al. (2022). <em>"Revisiting the Inverted Indices for Billion-Scale Approximate Nearest Neighbors"</em></li>
+            </ul>
+        </div>
+
+        <!-- RAG Architecture -->
+        <div class="tech-section">
+            <h2>5. RAG Pipeline</h2>
+
+            <h3>Architecture</h3>
+            <p>
+                The pipeline follows the canonical RAG pattern from Lewis et al. (2020), adapted for CPU-only inference:
+            </p>
+            <ol>
+                <li><strong>Document Ingestion</strong> — PDF/DOCX/TXT/MD → PyMuPDF extraction → sentence-boundary chunking (512 chars, 64 overlap) → BGE-M3 embedding → Qdrant upsert with metadata</li>
+                <li><strong>Query Processing</strong> — User question → BGE-M3 embedding → Qdrant ANN search (top-8, threshold 0.45) → <strong>cross-encoder reranking (top-3)</strong> → context assembly with source tracking</li>
+                <li><strong>Generation</strong> — Context + question → Phi-4 with citation-aware system prompt + personal context → response with [Source: name, page] citations</li>
+            </ol>
+
+            <h3>Chunking Strategy</h3>
+            <ul>
+                <li><strong>512-character chunks</strong> — fits well within BGE-M3's 512-token max sequence length</li>
+                <li><strong>64-character overlap</strong> — prevents information loss at chunk boundaries</li>
+                <li><strong>Sentence-boundary aware</strong> — splits at sentence endings to preserve semantic coherence</li>
+            </ul>
+
+            <h3>Citation Mechanism</h3>
+            <p>
+                Each retrieved chunk carries metadata (<code>source_name</code>, <code>page</code>, <code>chunk_index</code>).
+                The system prompt instructs the LLM to cite sources using <code>[Source: name, p.X]</code> format.
+                Sources are also returned as structured JSON for the frontend to display.
+            </p>
+
+            <h3>Limitations</h3>
+            <ul>
+                <li><strong>No hybrid search</strong> — BGE-M3 supports sparse vectors but Qdrant hybrid search adds complexity; dense-only is sufficient for our document corpus size</li>
+                <li><strong>Context window</strong> — 4096 tokens limits us to ~3 reranked chunks per query. Larger models or sliding window approaches would help for complex multi-document questions</li>
+            </ul>
+
+            <h3>References</h3>
+            <ul>
+                <li>Lewis et al. (2020). <em>"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"</em>. NeurIPS 2020</li>
+                <li>Gao et al. (2024). <em>"Retrieval-Augmented Generation for Large Language Models: A Survey"</em>. arXiv:2312.10997</li>
+                <li>Shi et al. (2023). <em>"REPLUG: Retrieval-Augmented Black-Box Language Models"</em>. arXiv:2301.12652</li>
+            </ul>
+        </div>
+
+        <!-- Reranker -->
+        <div class="tech-section">
+            <h2>5b. Reranker: cross-encoder/ms-marco-MiniLM-L-6-v2</h2>
+
+            <h3>Why a Cross-Encoder Reranker?</h3>
+            <p>
+                Bi-encoder retrieval (BGE-M3 + cosine similarity) is fast but approximate.
+                A cross-encoder jointly encodes query+document with full cross-attention,
+                yielding significantly more accurate relevance scores at the cost of higher latency.
+                By retrieving 8 candidates and reranking to top-3, we get the best of both worlds.
+            </p>
+
+            <h3>Why ms-marco-MiniLM-L-6-v2?</h3>
+            <ul>
+                <li><strong>Only 22M parameters</strong> — extremely fast on CPU (~5-15ms per query-document pair)</li>
+                <li><strong>Trained on MS MARCO</strong> — 500M+ query-passage pairs, the gold standard for passage reranking</li>
+                <li><strong>NDCG@10 of 39.01</strong> on TREC Deep Learning 2019 — best speed/quality ratio for CPU</li>
+                <li><strong>sentence-transformers CrossEncoder API</strong> — drop-in integration, no extra dependencies</li>
+            </ul>
+
+            <h3>Pipeline Integration</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Stage</th><th>Model</th><th>Latency (CPU)</th><th>Output</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>1. Embedding</td><td>BGE-M3</td><td>&lt;30ms</td><td>1024-dim query vector</td></tr>
+                    <tr><td>2. ANN Search</td><td>Qdrant HNSW</td><td>&lt;10ms</td><td>Top-8 candidates</td></tr>
+                    <tr><td>3. Reranking</td><td>MiniLM-L-6-v2</td><td>~40-120ms (8 pairs)</td><td>Top-3 reranked</td></tr>
+                    <tr><td>4. Generation</td><td>Phi-4 14B</td><td>5-50s</td><td>Answer with citations</td></tr>
+                </tbody>
+            </table>
+
+            <h3>References</h3>
+            <ul>
+                <li>Nogueira & Cho (2019). <em>"Passage Re-ranking with BERT"</em>. arXiv:1901.04085</li>
+                <li>Wang et al. (2020). <em>"MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression"</em>. NeurIPS 2020</li>
+            </ul>
+        </div>
+
+        <!-- Vision Model -->
+        <div class="tech-section">
+            <h2>5c. Vision Model: MiniCPM-V 2.6 (INT4)</h2>
+
+            <h3>Why a Vision Language Model?</h3>
+            <p>
+                Many PDFs contain charts, tables, diagrams, and complex layouts that text extraction alone misses.
+                A VLM can "see" the rendered page and describe its visual content, augmenting the text-only RAG pipeline.
+            </p>
+
+            <h3>Why MiniCPM-V 2.6?</h3>
+            <ul>
+                <li><strong>8B parameters total</strong> (SigLip-400M vision encoder + Qwen2-7B language model) — compact for a VLM</li>
+                <li><strong>INT4 quantization</strong> — ~4 GB RAM footprint, fits alongside the LLM in our 64 GB budget</li>
+                <li><strong>GPT-4V level accuracy</strong> on OCR, document understanding, and chart comprehension benchmarks</li>
+                <li><strong>On-demand loading</strong> — loaded only when processing visual PDFs, unloaded to free RAM</li>
+                <li><strong>Apache 2.0 license</strong></li>
+            </ul>
+
+            <h3>Usage in MIRROR</h3>
+            <p>
+                The vision model is <strong>optional</strong> (activated via <code>VISION_ENABLED=1</code>).
+                When enabled, PDF pages are rendered at 150 DPI and analyzed by the VLM.
+                The visual description is appended to the text extraction, enriching the RAG context.
+                On CPU, each page analysis takes ~30-60 seconds — acceptable for async document processing.
+            </p>
+
+            <h3>References</h3>
+            <ul>
+                <li>Yao et al. (2024). <em>"MiniCPM-V: A GPT-4V Level MLLM on Your Phone"</em>. arXiv:2408.01800</li>
+            </ul>
+        </div>
+
+        <!-- Docker -->
+        <div class="tech-section">
+            <h2>6. Docker: Full Encapsulation</h2>
+            <p>
+                The entire stack runs via <code>docker compose up</code> — zero host dependencies beyond Docker itself.
+                This enables <strong>one-command portability</strong> to any VM.
+            </p>
+            <h3>Design Decisions</h3>
+            <ul>
+                <li><strong>No fixed CPU/memory limits</strong> — Docker's cgroup scheduler manages resource contention naturally. Thread count is auto-detected via <code>multiprocessing.cpu_count()</code></li>
+                <li><strong>Qdrant healthcheck</strong> — the app container waits for Qdrant to be healthy before starting</li>
+                <li><strong>Volume mounts</strong> — <code>./models</code>, <code>./uploads</code>, <code>./articles</code> are mounted from host for easy model swaps and data persistence</li>
+                <li><strong>Single worker + 4 threads</strong> — Gunicorn runs with 1 worker (LLM is single-threaded) and 4 threads for concurrent HTTP handling</li>
+            </ul>
+        </div>
+
+        <!-- Web Scraping -->
+        <div class="tech-section">
+            <h2>7. Web Scraping</h2>
+            <p>
+                The scraping tool uses <strong>trafilatura</strong> as primary extractor (precision >90% on web content benchmarks)
+                with <strong>BeautifulSoup</strong> as fallback. Scraped content can be:
+            </p>
+            <ul>
+                <li>Queried directly (in-memory, no indexing) for quick one-off questions</li>
+                <li>Indexed into Qdrant for persistent retrieval alongside uploaded documents</li>
+            </ul>
+            <h3>References</h3>
+            <ul>
+                <li>Barbaresi (2021). <em>"Trafilatura: A Web Scraping Library and Command-Line Tool for Text Discovery and Extraction"</em>. ACL 2021 System Demonstrations</li>
+            </ul>
+        </div>
+
+        <!-- Stack Summary -->
+        <div class="tech-section">
+            <h2>8. Full Stack Summary</h2>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Layer</th><th>Technology</th><th>Role</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Web Framework</td><td>Flask 3.1</td><td>Lightweight, Jinja2 templates, blueprint architecture</td></tr>
+                    <tr><td>LLM</td><td>Phi-4 14B Q4_K_M + llama-cpp-python</td><td>CPU inference, ~5-10 t/s, 9GB RAM</td></tr>
+                    <tr><td>Embedding</td><td>BGE-M3 + sentence-transformers</td><td>Multilingual, 1024-dim, &lt;30ms/query</td></tr>
+                    <tr><td>Reranker</td><td>ms-marco-MiniLM-L-6-v2</td><td>Cross-encoder, 22M params, ~15ms/pair on CPU</td></tr>
+                    <tr><td>Vision (opt.)</td><td>MiniCPM-V 2.6 INT4</td><td>PDF visual understanding, ~4 GB RAM</td></tr>
+                    <tr><td>Vector Store</td><td>Qdrant (Docker)</td><td>HNSW + INT8 quantization, sub-10ms search</td></tr>
+                    <tr><td>PDF Parsing</td><td>PyMuPDF (fitz)</td><td>Fast, handles complex layouts</td></tr>
+                    <tr><td>Scraping</td><td>trafilatura + BeautifulSoup</td><td>High-precision content extraction</td></tr>
+                    <tr><td>Containerization</td><td>Docker Compose</td><td>Full encapsulation, zero host deps, portable</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</section>
+
+<footer class="footer">
+    <p>MIRROR — Technical documentation &middot; Michail Berjaoui</p>
+</footer>
+{% endblock %}

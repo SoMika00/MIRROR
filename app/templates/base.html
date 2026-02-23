@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MIRROR{% endblock %} — Michail Berjaoui</title>
+    <meta name="description" content="Michail Berjaoui — Lead AI Engineer | LLM & MLOps. Based in Tokyo, Japan. Portfolio & AI-powered knowledge base.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="nav">
+        <a href="/" class="nav-brand">
+            <div class="logo-icon">M</div>
+            <span>MIRROR</span>
+        </a>
+        <ul class="nav-links">
+            <a href="/" class="{% if request.path == '/' %}active{% endif %}" data-i18n="nav.portfolio">Portfolio</a>
+            <a href="/chat" class="{% if request.path == '/chat' %}active{% endif %}" data-i18n="nav.chat">AI Chat</a>
+            <a href="/articles" class="{% if request.path == '/articles' %}active{% endif %}" data-i18n="nav.articles">Articles</a>
+            <a href="/tech" class="{% if request.path == '/tech' %}active{% endif %}" data-i18n="nav.tech">Tech Choices</a>
+        </ul>
+        <div class="nav-status">
+            <div class="lang-switch" id="langSwitch">
+                <button class="lang-bubble" id="langBubble" type="button" aria-haspopup="true" aria-expanded="false">
+                    <span class="lang-bubble-label" id="langBubbleLabel">EN</span>
+                </button>
+                <div class="lang-menu" id="langMenu" role="menu" aria-label="Language">
+                    <button class="lang-menu-item" type="button" data-lang="fr" role="menuitem">FR</button>
+                    <button class="lang-menu-item" type="button" data-lang="en" role="menuitem">EN</button>
+                    <button class="lang-menu-item" type="button" data-lang="ja" role="menuitem">日本語</button>
+                </div>
+            </div>
+            <span class="status-dot offline" id="statusDot" title="Services status"></span>
+            <button class="btn btn-ghost btn-sm" id="modelManagerBtn" title="Model Manager">&#9881;</button>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Model Manager Modal -->
+    <div class="modal-overlay" id="modelModal">
+        <div class="modal">
+            <div class="modal-title">
+                <span>Model Manager</span>
+                <button class="modal-close" onclick="closeModelModal()">&times;</button>
+            </div>
+            <div id="modelModalContent">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">LLM Status</div>
+                    <div id="llmStatus">Checking...</div>
+                    <div class="mt-1">
+                        <div class="sidebar-title mt-2">Available Models</div>
+                        <div id="availableModels">Loading...</div>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-primary btn-sm" onclick="loadLLM()">Load Model</button>
+                        <button class="btn btn-ghost btn-sm" onclick="unloadLLM()">Unload</button>
+                        <button class="btn btn-ghost btn-sm" onclick="testLLM()">Test Speed</button>
+                    </div>
+                    <div id="testResult" class="mt-1 text-muted" style="font-size:0.8rem;"></div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Embedding Model</div>
+                    <div id="embeddingStatus">Checking...</div>
+                    <button class="btn btn-secondary btn-sm mt-1" onclick="loadEmbedding()">Load Embedding</button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Reranker</div>
+                    <div id="rerankerStatus">Checking...</div>
+                    <button class="btn btn-secondary btn-sm mt-1" onclick="loadReranker()">Load Reranker</button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Qdrant Vector Store</div>
+                    <div id="qdrantStatus">Checking...</div>
+                    <button class="btn btn-secondary btn-sm mt-1" onclick="connectQdrant()">Connect</button>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Vision Model (optional)</div>
+                    <div id="visionStatus">Checking...</div>
+                    <button class="btn btn-secondary btn-sm mt-1" onclick="loadVision()">Load Vision</button>
+                    <button class="btn btn-ghost btn-sm mt-1" onclick="unloadVision()">Unload</button>
+                </div>
+                <div class="sidebar-section" style="text-align:center;">
+                    <button class="btn btn-primary" onclick="loadAll()" style="width:100%;">Load All Services</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
