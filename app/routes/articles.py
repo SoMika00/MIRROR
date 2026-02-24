@@ -93,7 +93,7 @@ def list_articles():
     """List all available articles."""
     articles_dir = current_app.config["ARTICLES_FOLDER"]
     lang = _normalize_lang(request.args.get("lang"))
-    files = sorted(glob.glob(os.path.join(articles_dir, "*.md")), reverse=True)
+    files = sorted(glob.glob(os.path.join(articles_dir, "*.md")))
 
     grouped: dict[str, dict] = {}
     for f in files:
@@ -128,7 +128,8 @@ def list_articles():
         except Exception:
             continue
 
-    # preserve previous behavior: newest first
+    # sort by date ascending (oldest first)
+    articles.sort(key=lambda a: a.get("date", ""), reverse=False)
     return jsonify({"articles": articles})
 
 

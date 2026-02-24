@@ -12,6 +12,7 @@ const I18N_DICT = {
         'nav.portfolio': 'Portfolio',
         'nav.chat': 'AI Chat',
         'nav.articles': 'Articles',
+        'nav.courses': 'Courses',
         'nav.tech': 'Tech Choices',
         'home.subtitle': 'Lead AI Engineer | LLM & MLOps',
         'home.summary': '5 years deploying AI models to production at scale. Enterprise RAG specialist, fine-tuning (LoRA/QLoRA), OCR/NER. Based in Tokyo, actively seeking opportunities in Japan.',
@@ -53,6 +54,36 @@ const I18N_DICT = {
         'articles.back': '← Back to articles',
         'tech.title': 'Technical Choices',
         'tech.subtitle': 'Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.',
+        'courses.title': 'Courses',
+        'courses.subtitle': 'A clear, structured overview of core ML topics — explained with lists, examples, and practical intuition.',
+        'courses.ml.title': '1) Machine Learning (classic)',
+        'courses.ml.intro': 'Classical ML is often the fastest path to a strong production baseline: interpretable, cheap, and reliable when the data is right.',
+        'courses.ml.supervised': 'Supervised learning',
+        'courses.ml.unsupervised': 'Unsupervised & representation',
+        'courses.ml.stats': 'Stats essentials',
+        'courses.ml.production': 'Production mindset',
+        'courses.dl.title': '2) Deep Learning (neural networks)',
+        'courses.dl.intro': 'Deep learning is mostly about learning representations. I group networks by what structure they exploit: sequences, images, graphs, and multimodal signals.',
+        'courses.dl.foundations': 'Foundations',
+        'courses.dl.networks': 'Main network families',
+        'courses.dl.training': 'Training & scaling',
+        'courses.dl.failure': 'Typical failure modes',
+        'courses.cv.title': '3) Computer Vision (SOTA overview)',
+        'courses.cv.intro': 'Vision systems are about extracting structure from pixels. Modern SOTA is dominated by Transformers and strong pretraining.',
+        'courses.cv.tasks': 'Core tasks',
+        'courses.cv.models': 'Typical SOTA families',
+        'courses.cv.metrics': 'Metrics',
+        'courses.cv.production': 'Production notes',
+        'courses.nlp.title': '4) NLP & LLMs (SOTA overview)',
+        'courses.nlp.intro': 'Modern NLP is Transformer-based. The practical skill is not just training, but controlling behavior: prompting, retrieval, evaluation, safety.',
+        'courses.nlp.tasks': 'Core tasks',
+        'courses.nlp.components': 'Key components',
+        'courses.nlp.eval': 'Evaluation',
+        'courses.nlp.production': 'Production notes',
+        'courses.visual.bias_variance': 'Bias / Variance',
+        'courses.visual.transformer': 'Transformer (high level)',
+        'courses.visual.rag': 'RAG pipeline',
+        'courses.footer': 'MIRROR · Courses · Michail Berjaoui',
         'footer.tagline': 'MIRROR — AI-powered portfolio by Michail Berjaoui · Built with Flask, Qdrant, BGE-M3 & Phi-4',
         'common.integrality': 'The entirety',
     },
@@ -60,6 +91,7 @@ const I18N_DICT = {
         'nav.portfolio': 'Portfolio',
         'nav.chat': 'Chat IA',
         'nav.articles': 'Articles',
+        'nav.courses': 'Cours',
         'nav.tech': 'Choix techniques',
         'home.subtitle': 'Lead AI Engineer | LLM & MLOps',
         'home.summary': "5 ans à déployer des modèles d'IA en production à grande échelle. Spécialiste RAG entreprise, fine-tuning (LoRA/QLoRA), OCR/NER. Basé à Tokyo, en recherche active d'opportunités au Japon.",
@@ -101,6 +133,20 @@ const I18N_DICT = {
         'articles.back': '← Retour aux articles',
         'tech.title': 'Choix techniques',
         'tech.subtitle': 'Décisions d’architecture, benchmarks et optimisation infra pour MIRROR.',
+        'courses.title': 'Cours',
+        'courses.subtitle': 'Une vue structurée et claire des sujets clés ML — expliqués avec listes, exemples et intuition.',
+        'courses.ml.title': '1) Machine Learning (classique)',
+        'courses.ml.intro': 'Le ML classique est souvent la voie la plus rapide vers un baseline solide en production : interprétable, peu coûteux et fiable.',
+        'courses.dl.title': '2) Deep Learning (réseaux de neurones)',
+        'courses.dl.intro': 'Le deep learning sert surtout à apprendre des représentations. Je regroupe les réseaux par structure : séquences, images, graphes, multimodal.',
+        'courses.cv.title': '3) Computer Vision (aperçu SOTA)',
+        'courses.cv.intro': 'Les systèmes vision extraient de la structure depuis des pixels. Le SOTA moderne est dominé par les Transformers et le pré-entraînement.',
+        'courses.nlp.title': '4) NLP & LLM (aperçu SOTA)',
+        'courses.nlp.intro': 'Le NLP moderne est basé sur Transformers. La compétence pratique: contrôler le comportement (prompting, retrieval, évaluation, sécurité).',
+        'courses.visual.bias_variance': 'Biais / Variance',
+        'courses.visual.transformer': 'Transformer (niveau haut)',
+        'courses.visual.rag': 'Pipeline RAG',
+        'courses.footer': 'MIRROR · Cours · Michail Berjaoui',
         'footer.tagline': 'MIRROR — Portfolio boosté à l’IA par Michail Berjaoui · Construit avec Flask, Qdrant, BGE-M3 & Phi-4',
         'common.integrality': "L'intégralité",
     },
@@ -108,6 +154,7 @@ const I18N_DICT = {
         'nav.portfolio': 'ポートフォリオ',
         'nav.chat': 'AIチャット',
         'nav.articles': '記事',
+        'nav.courses': 'コース',
         'nav.tech': '技術選定',
         'home.subtitle': 'リードAIエンジニア | LLM & MLOps',
         'home.summary': '5年間、AIモデルを大規模に本番導入。エンタープライズRAG、微調整（LoRA/QLoRA）、OCR/NER。東京在住。日本での機会を積極的に探しています。',
@@ -149,6 +196,20 @@ const I18N_DICT = {
         'articles.back': '← 記事一覧へ戻る',
         'tech.title': '技術選定',
         'tech.subtitle': 'MIRRORのアーキテクチャ判断、ベンチマーク、インフラ最適化。',
+        'courses.title': 'コース',
+        'courses.subtitle': 'MLの重要トピックを、リストと例で分かりやすく体系化した概要。',
+        'courses.ml.title': '1) 機械学習（クラシック）',
+        'courses.ml.intro': '古典的MLは本番ベースラインに最適：解釈しやすく、安価で、データが揃えば強い。',
+        'courses.dl.title': '2) 深層学習（ニューラルネット）',
+        'courses.dl.intro': '深層学習は表現学習が本質。構造（系列/画像/グラフ/マルチモーダル）で整理します。',
+        'courses.cv.title': '3) Computer Vision（SOTA概要）',
+        'courses.cv.intro': 'Visionはピクセルから構造を抽出。SOTAはTransformerと強い事前学習が中心。',
+        'courses.nlp.title': '4) NLP & LLM（SOTA概要）',
+        'courses.nlp.intro': '現代NLPはTransformer。実務は挙動制御（プロンプト/RAG/評価/安全）。',
+        'courses.visual.bias_variance': 'バイアス/バリアンス',
+        'courses.visual.transformer': 'Transformer（概要）',
+        'courses.visual.rag': 'RAGパイプライン',
+        'courses.footer': 'MIRROR · コース · Michail Berjaoui',
         'footer.tagline': 'MIRROR — Michail Berjaoui のAI搭載ポートフォリオ · Flask / Qdrant / BGE-M3 / Phi-4',
         'common.integrality': '全体',
     }
@@ -310,39 +371,25 @@ async function refreshModelStatus() {
         const resp = await fetch('/api/models/status');
         const data = await resp.json();
 
-        // LLM Status
+        // LLM Status (compact header)
         const llmEl = document.getElementById('llmStatus');
         if (llmEl) {
             if (data.llm.loaded) {
-                const modelName = data.llm.model_path.split('/').pop();
-                llmEl.innerHTML = `<span style="color:var(--success);">● Loaded</span> <span class="text-muted" style="font-size:0.8rem;">${modelName}</span>`;
+                const name = data.llm.model_name || data.llm.model_path.split('/').pop();
+                llmEl.innerHTML = `<span style="color:var(--success);">●</span> ${name}`;
             } else {
-                llmEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
+                llmEl.innerHTML = '<span style="color:var(--text-muted);">○ None</span>';
             }
         }
 
-        // Available models
-        const modelsEl = document.getElementById('availableModels');
-        if (modelsEl) {
-            const modelsResp = await fetch('/api/models/llm/list');
-            const modelsData = await modelsResp.json();
-            if (modelsData.models && modelsData.models.length > 0) {
-                modelsEl.innerHTML = modelsData.models.map(m =>
-                    `<div class="doc-item" style="cursor:pointer;" onclick="loadLLMModel('${m}')">
-                        <span class="doc-item-name">${m}</span>
-                        <span class="text-muted" style="font-size:0.7rem;">click to load</span>
-                    </div>`
-                ).join('');
-            } else {
-                modelsEl.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">No .gguf files in ./models/</div>';
-            }
-        }
+        // Model Registry Cards
+        await refreshRegistryCards();
 
         // Embedding Status
         const embEl = document.getElementById('embeddingStatus');
         if (embEl) {
             if (data.embedding.loaded) {
-                embEl.innerHTML = `<span style="color:var(--success);">● Loaded</span> <span class="text-muted" style="font-size:0.8rem;">${data.embedding.model}</span>`;
+                embEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
             } else {
                 embEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
             }
@@ -352,7 +399,7 @@ async function refreshModelStatus() {
         const rrEl = document.getElementById('rerankerStatus');
         if (rrEl) {
             if (data.reranker?.loaded) {
-                rrEl.innerHTML = `<span style="color:var(--success);">● Loaded</span> <span class="text-muted" style="font-size:0.8rem;">${data.reranker.model}</span>`;
+                rrEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
             } else {
                 rrEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
             }
@@ -362,7 +409,7 @@ async function refreshModelStatus() {
         const qdEl = document.getElementById('qdrantStatus');
         if (qdEl) {
             if (data.qdrant.connected) {
-                qdEl.innerHTML = `<span style="color:var(--success);">● Connected</span> <span class="text-muted" style="font-size:0.8rem;">${data.qdrant.vectors_count || 0} vectors</span>`;
+                qdEl.innerHTML = `<span style="color:var(--success);">● ${data.qdrant.vectors_count || 0} vecs</span>`;
             } else {
                 qdEl.innerHTML = '<span style="color:var(--text-muted);">○ Disconnected</span>';
             }
@@ -372,11 +419,11 @@ async function refreshModelStatus() {
         const visEl = document.getElementById('visionStatus');
         if (visEl) {
             if (data.vision?.loaded) {
-                visEl.innerHTML = `<span style="color:var(--success);">● Loaded</span> <span class="text-muted" style="font-size:0.8rem;">${data.vision.model}</span>`;
+                visEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
             } else if (data.vision?.enabled) {
-                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Enabled, not loaded</span>';
+                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
             } else {
-                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Disabled (VISION_ENABLED=0)</span>';
+                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Disabled</span>';
             }
         }
 
@@ -385,6 +432,118 @@ async function refreshModelStatus() {
 
     } catch (e) {
         console.error('Status check failed:', e);
+    }
+}
+
+async function refreshRegistryCards() {
+    const container = document.getElementById('modelRegistry');
+    if (!container) return;
+    try {
+        const resp = await fetch('/api/models/llm/registry');
+        const data = await resp.json();
+        if (!data.models || data.models.length === 0) {
+            container.innerHTML = '<div class="text-muted">No models in registry</div>';
+            return;
+        }
+        // Group by family
+        const families = {};
+        data.models.forEach(m => {
+            if (!families[m.family]) families[m.family] = [];
+            families[m.family].push(m);
+        });
+        let html = '';
+        for (const [family, models] of Object.entries(families)) {
+            html += `<div style="margin-bottom:0.3rem;"><span style="font-size:0.75rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;">${family}</span></div>`;
+            models.forEach(m => {
+                const isActive = m.active;
+                const isDownloaded = m.downloaded;
+                const borderColor = isActive ? 'var(--success)' : isDownloaded ? 'var(--accent-dim, rgba(139,92,246,0.3))' : 'var(--border)';
+                const bgColor = isActive ? 'rgba(16,185,129,0.08)' : 'transparent';
+
+                let actionBtn = '';
+                if (isActive) {
+                    actionBtn = `<span style="color:var(--success);font-size:0.75rem;font-weight:600;">● Active</span>`;
+                } else if (isDownloaded) {
+                    actionBtn = `<button class="btn btn-primary btn-sm" onclick="loadModelById('${m.id}')" style="font-size:0.7rem;padding:0.2rem 0.6rem;">Load</button>`;
+                } else {
+                    actionBtn = `<button class="btn btn-secondary btn-sm" onclick="downloadModelById('${m.id}')" style="font-size:0.7rem;padding:0.2rem 0.6rem;">Download</button>`;
+                }
+
+                html += `<div class="model-card" style="border-color:${borderColor};background:${bgColor};" id="card-${m.id}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-weight:600;font-size:0.85rem;">${m.name}${m.default ? ' <span style="font-size:0.65rem;color:var(--accent);">(default)</span>' : ''}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.1rem;">${m.description}</div>
+                        </div>
+                        <div style="text-align:right;min-width:80px;">
+                            ${actionBtn}
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.8rem;margin-top:0.3rem;font-size:0.7rem;color:var(--text-muted);">
+                        <span>RAM: ~${m.ram_gb} GB</span>
+                        <span>Speed: ${m.speed_estimate}</span>
+                        <span>${m.quant}</span>
+                    </div>
+                </div>`;
+            });
+        }
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="text-muted">Failed to load registry</div>';
+    }
+}
+
+async function downloadModelById(modelId) {
+    showOpBar('Starting download from HuggingFace...', 'indeterminate');
+    const card = document.getElementById(`card-${modelId}`);
+    const btn = card?.querySelector('.btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Downloading...'; }
+    try {
+        const resp = await fetch('/api/models/llm/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model_id: modelId })
+        });
+        const data = await resp.json();
+        if (data.error) {
+            showOpBarError(`Download failed: ${data.error}`);
+            if (btn) { btn.disabled = false; btn.textContent = 'Download'; }
+            return;
+        }
+        if (data.message === 'Already downloaded') {
+            showOpBarDone('Model already downloaded');
+            refreshModelStatus();
+            return;
+        }
+
+        // Poll progress with bottom bar
+        let lastPct = -1;
+        for (let i = 0; i < 600; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+                const pr = await fetch(`/api/models/llm/download-progress/${modelId}`);
+                const p = await pr.json();
+                if (p.status === 'done') {
+                    showOpBarDone('Download complete');
+                    break;
+                }
+                if (p.status === 'error') {
+                    showOpBarError(`Download error: ${p.error}`);
+                    break;
+                }
+                const pct = Math.round((p.progress || 0) * 100);
+                if (pct !== lastPct) {
+                    lastPct = pct;
+                    updateOpBar(`Downloading model... ${pct}%`, pct);
+                    if (btn) btn.textContent = `${pct}%`;
+                }
+            } catch (e) { /* ignore poll errors */ }
+        }
+
+        refreshModelStatus();
+    } catch (e) {
+        showOpBarError(`Error: ${e.message}`);
+        refreshModelStatus();
     }
 }
 
@@ -408,9 +567,83 @@ function updateGlobalStatus(data) {
     }
 }
 
+// --- Bottom Operation Bar ---
+function showOpBar(text, mode = 'indeterminate') {
+    const bar = document.getElementById('modelOpBar');
+    const textEl = document.getElementById('modelOpText');
+    const fill = document.getElementById('modelOpFill');
+    if (!bar) return;
+    textEl.textContent = text;
+    bar.className = 'model-op-bar visible ' + mode;
+    if (mode === 'indeterminate') fill.style.width = '30%';
+    else fill.style.width = '0%';
+}
+
+function updateOpBar(text, pct) {
+    const textEl = document.getElementById('modelOpText');
+    const fill = document.getElementById('modelOpFill');
+    const bar = document.getElementById('modelOpBar');
+    if (textEl) textEl.textContent = text;
+    if (fill) fill.style.width = pct + '%';
+    if (bar) bar.className = 'model-op-bar visible';
+}
+
+function hideOpBar(delay = 2500) {
+    setTimeout(() => {
+        const bar = document.getElementById('modelOpBar');
+        if (bar) bar.className = 'model-op-bar';
+    }, delay);
+}
+
+function showOpBarDone(text) {
+    const bar = document.getElementById('modelOpBar');
+    const textEl = document.getElementById('modelOpText');
+    const fill = document.getElementById('modelOpFill');
+    if (textEl) textEl.textContent = text;
+    if (fill) fill.style.width = '100%';
+    if (bar) bar.className = 'model-op-bar visible done';
+    hideOpBar(3000);
+}
+
+function showOpBarError(text) {
+    const bar = document.getElementById('modelOpBar');
+    const textEl = document.getElementById('modelOpText');
+    if (textEl) textEl.textContent = text;
+    if (bar) bar.className = 'model-op-bar visible error';
+    hideOpBar(5000);
+}
+
+// --- Model Load Status Polling ---
+let _loadPollTimer = null;
+function startLoadPoll() {
+    stopLoadPoll();
+    _loadPollTimer = setInterval(async () => {
+        try {
+            const resp = await fetch('/api/models/llm/load-status');
+            const s = await resp.json();
+            if (s.status === 'loading') {
+                showOpBar(s.step || 'Loading model...', 'indeterminate');
+            } else if (s.status === 'done') {
+                showOpBarDone(`${s.model_name || 'Model'} loaded successfully`);
+                stopLoadPoll();
+                refreshModelStatus();
+            } else if (s.status === 'error') {
+                showOpBarError(`Load failed: ${s.error || 'Unknown error'}`);
+                stopLoadPoll();
+                refreshModelStatus();
+            } else {
+                stopLoadPoll();
+            }
+        } catch (e) { /* ignore poll errors */ }
+    }, 1000);
+}
+function stopLoadPoll() {
+    if (_loadPollTimer) { clearInterval(_loadPollTimer); _loadPollTimer = null; }
+}
+
 // --- Model Actions ---
 async function loadLLM() {
-    showToast('Loading LLM...', 'info');
+    showOpBar('Loading default LLM...', 'indeterminate');
     try {
         const resp = await fetch('/api/models/llm/load', {
             method: 'POST',
@@ -418,19 +651,35 @@ async function loadLLM() {
             body: JSON.stringify({})
         });
         const data = await resp.json();
-        if (data.success) {
-            showToast('LLM loaded successfully', 'success');
-        } else {
-            showToast(`LLM load failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
+        if (data.success) startLoadPoll();
+        else { showOpBarError(`Load failed: ${data.error}`); refreshModelStatus(); }
     } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
+        showOpBarError(`Error: ${e.message}`);
+    }
+}
+
+async function loadModelById(modelId) {
+    showOpBar('Preparing to load model...', 'indeterminate');
+    const card = document.getElementById(`card-${modelId}`);
+    const btn = card?.querySelector('.btn-primary');
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+    try {
+        const resp = await fetch('/api/models/llm/load', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model_id: modelId })
+        });
+        const data = await resp.json();
+        if (data.success) startLoadPoll();
+        else { showOpBarError(`Failed: ${data.error}`); refreshModelStatus(); }
+    } catch (e) {
+        showOpBarError(`Error: ${e.message}`);
+        refreshModelStatus();
     }
 }
 
 async function loadLLMModel(modelName) {
-    showToast(`Loading ${modelName}...`, 'info');
+    showOpBar(`Loading ${modelName}...`, 'indeterminate');
     try {
         const resp = await fetch('/api/models/llm/load', {
             method: 'POST',
@@ -438,24 +687,21 @@ async function loadLLMModel(modelName) {
             body: JSON.stringify({ model_path: `./models/${modelName}` })
         });
         const data = await resp.json();
-        if (data.success) {
-            showToast(`${modelName} loaded`, 'success');
-        } else {
-            showToast(`Failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
+        if (data.success) startLoadPoll();
+        else { showOpBarError(`Failed: ${data.error}`); refreshModelStatus(); }
     } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
+        showOpBarError(`Error: ${e.message}`);
     }
 }
 
 async function unloadLLM() {
+    showOpBar('Unloading model...', 'indeterminate');
     try {
         await fetch('/api/models/llm/unload', { method: 'POST' });
-        showToast('LLM unloaded', 'info');
+        showOpBarDone('Model unloaded');
         refreshModelStatus();
     } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
+        showOpBarError(`Error: ${e.message}`);
     }
 }
 
@@ -553,16 +799,18 @@ async function unloadVision() {
 }
 
 async function loadAll() {
-    showToast('Loading all services... this may take a few minutes', 'info');
+    showOpBar('Loading all services...', 'indeterminate');
     try {
         const resp = await fetch('/api/models/load-all', { method: 'POST' });
         const data = await resp.json();
         const r = data.results || {};
+        const hasError = Object.values(r).some(v => v.startsWith?.('error'));
         let msg = Object.entries(r).map(([k, v]) => `${k}: ${v}`).join(' | ');
-        showToast(msg, 'success');
+        if (hasError) showOpBarError(msg);
+        else showOpBarDone('All services loaded');
         refreshModelStatus();
     } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
+        showOpBarError(`Error: ${e.message}`);
     }
 }
 

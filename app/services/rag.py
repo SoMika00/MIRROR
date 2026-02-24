@@ -16,13 +16,13 @@ Based on:
 
 import logging
 import time
-from typing import List, Dict, Any, Optional, Generator
+from typing import List, Dict, Any, Optional, Generator, Tuple
 
 from app.services.embedding import embedding_service
 from app.services.llm import llm_service
 from app.services.reranker import reranker_service
 from app.services.qdrant_store import qdrant_store, SearchResult
-from app.config import rag_cfg, reranker_cfg
+from app.config import rag_cfg, reranker_cfg, llm_cfg
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,21 @@ QUESTION: {question}
 
 ANSWER (with citations):"""
 
+DIRECT_CHAT_PROMPT = """You are MIRROR, an AI assistant for Michail Berjaoui's portfolio website.
+
+""" + PERSONAL_CONTEXT + """
+
+RULES:
+- Answer in the same language as the question (French, English, or Japanese)
+- Be concise, helpful, and professional
+- For personal facts (from ABOUT section above), answer directly
+- If asked about something you don't know, say so honestly
+- You can have natural conversations — greetings, jokes, etc. are fine
+
+{history}USER: {question}
+
+ASSISTANT:"""
+
 SCRAPER_PROMPT = """You are MIRROR, an AI assistant. Answer questions based ONLY on the following 
 web page content. Cite specific parts of the page.
 
@@ -73,15 +88,36 @@ QUESTION: {question}
 ANSWER (with citations from the page):"""
 
 
-def build_context(results: List[SearchResult]) -> str:
-    """Build context string from search results with source attribution."""
+def _estimate_tokens(text: str) -> int:
+    """Rough token estimate: ~4 chars per token for English, ~2 for CJK."""
+    return len(text) // 3
+
+
+def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
+    """Build context string from search results with source attribution.
+    Truncates to fit within max_tokens budget (0 = no limit)."""
+    if max_tokens <= 0:
+        # Reserve tokens for system prompt (~600) + generation (max_tokens config)
+        n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
+        max_tokens = max(512, n_ctx - llm_cfg.max_tokens - 800)
+
     context_parts = []
+    total_tokens = 0
     for i, r in enumerate(results):
         source_label = f"[{r.source}"
         if r.page:
             source_label += f", p.{r.page}"
         source_label += f"] (score: {r.score:.2f})"
-        context_parts.append(f"--- Document {i+1} {source_label} ---\n{r.text}\n")
+        chunk = f"--- Document {i+1} {source_label} ---\n{r.text}\n"
+        chunk_tokens = _estimate_tokens(chunk)
+        if total_tokens + chunk_tokens > max_tokens:
+            # Truncate this chunk to fill remaining budget
+            remaining_chars = (max_tokens - total_tokens) * 3
+            if remaining_chars > 100:
+                context_parts.append(chunk[:remaining_chars] + "...")
+            break
+        context_parts.append(chunk)
+        total_tokens += chunk_tokens
     return "\n".join(context_parts)
 
 
@@ -112,14 +148,18 @@ def query_rag(question: str, source_type: Optional[str] = None,
             "timings": {"total": time.time() - start},
         }
 
-    # Step 3: Rerank
+    # Step 3: Rerank + score-based filtering
     rerank_time = 0
     if rag_cfg.rerank and reranker_service.is_loaded():
         t0 = time.time()
         texts = [r.text for r in results]
         reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        results = [results[idx] for idx, _ in reranked]
+        # Filter out low-confidence reranked results (score < 0 typically means irrelevant)
+        reranked = [(idx, score) for idx, score in reranked if score > -5.0]
+        if reranked:
+            results = [results[idx] for idx, _ in reranked]
         rerank_time = time.time() - t0
+        logger.debug(f"Reranked to {len(results)} results in {rerank_time*1000:.0f}ms")
 
     # Step 4: Build context
     context = build_context(results)
@@ -175,11 +215,13 @@ def query_rag_stream(question: str, source_type: Optional[str] = None) -> Genera
         yield "I don't have enough context to answer this question."
         return
 
-    # Rerank
+    # Rerank + score filter
     if rag_cfg.rerank and reranker_service.is_loaded():
         texts = [r.text for r in results]
         reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        results = [results[idx] for idx, _ in reranked]
+        reranked = [(idx, score) for idx, score in reranked if score > -5.0]
+        if reranked:
+            results = [results[idx] for idx, _ in reranked]
 
     context = build_context(results)
     prompt = SYSTEM_PROMPT.format(context=context, question=question)
@@ -188,14 +230,57 @@ def query_rag_stream(question: str, source_type: Optional[str] = None) -> Genera
         yield token
 
 
+def query_direct_chat(question: str, history: Optional[List[Dict]] = None) -> Dict[str, Any]:
+    """Direct chat without RAG — just the LLM + personal context."""
+    start = time.time()
+
+    history_text = ""
+    if history:
+        for msg in history[-6:]:
+            role = "USER" if msg["role"] == "user" else "ASSISTANT"
+            history_text += f"{role}: {msg['content']}\n"
+
+    prompt = DIRECT_CHAT_PROMPT.format(question=question, history=history_text)
+
+    t0 = time.time()
+    answer = llm_service.generate(prompt)
+    gen_time = time.time() - t0
+    total_time = time.time() - start
+
+    return {
+        "answer": answer,
+        "sources": [],
+        "timings": {
+            "generation_ms": round(gen_time * 1000, 1),
+            "total_ms": round(total_time * 1000, 1),
+        },
+    }
+
+
+def query_direct_chat_stream(question: str, history: Optional[List[Dict]] = None) -> Generator[str, None, None]:
+    """Streaming direct chat."""
+    history_text = ""
+    if history:
+        for msg in history[-6:]:
+            role = "USER" if msg["role"] == "user" else "ASSISTANT"
+            history_text += f"{role}: {msg['content']}\n"
+
+    prompt = DIRECT_CHAT_PROMPT.format(question=question, history=history_text)
+    for token in llm_service.generate_stream(prompt):
+        yield token
+
+
 def query_scraped_content(question: str, url: str, title: str, content: str) -> Dict[str, Any]:
     """RAG over scraped web page content (no vector store needed)."""
     start = time.time()
 
+    # Dynamic context limit based on current model's n_ctx
+    n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
+    max_context_chars = max(1000, (n_ctx - llm_cfg.max_tokens - 400) * 3)
     prompt = SCRAPER_PROMPT.format(
         title=title,
         url=url,
-        context=content[:3000],  # Limit context to fit in n_ctx
+        context=content[:max_context_chars],
         question=question,
     )
 

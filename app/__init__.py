@@ -1,6 +1,82 @@
 import os
+import threading
+import logging
 from flask import Flask
 from flask_cors import CORS
+
+logger = logging.getLogger(__name__)
+
+
+def _auto_init_services(app):
+    """Background thread: connect Qdrant, load embedding, reranker, then LLM."""
+    with app.app_context():
+        # 1. Connect Qdrant
+        try:
+            from app.services.qdrant_store import qdrant_store
+            qdrant_store.connect()
+            app.logger.info("Auto-init: Qdrant connected")
+        except Exception as e:
+            app.logger.error(f"Auto-init: Qdrant failed: {e}")
+
+        # 2. Load embedding model
+        try:
+            from app.services.embedding import embedding_service
+            embedding_service.load()
+            app.logger.info("Auto-init: Embedding model loaded")
+        except Exception as e:
+            app.logger.error(f"Auto-init: Embedding failed: {e}")
+
+        # 3. Load reranker
+        try:
+            from app.services.reranker import reranker_service
+            reranker_service.load()
+            app.logger.info("Auto-init: Reranker loaded")
+        except Exception as e:
+            app.logger.error(f"Auto-init: Reranker failed: {e}")
+
+        # 4. Load LLM (last because it's the heaviest)
+        try:
+            from app.services.llm import llm_service
+            from app.config import get_default_model
+            model_path = os.environ.get("MODEL_PATH", "")
+            if model_path and os.path.exists(model_path):
+                app.logger.info(f"Auto-init: Loading LLM from MODEL_PATH: {model_path}")
+                llm_service.load(model_path=model_path)
+            else:
+                default = get_default_model()
+                if default:
+                    default_path = f"./models/{default['filename']}"
+                    # Auto-download from HuggingFace if not on disk
+                    if not os.path.exists(default_path):
+                        app.logger.info(f"Auto-init: Downloading default model {default['name']} from HuggingFace...")
+                        try:
+                            from huggingface_hub import hf_hub_download
+                            hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HF_token")
+                            hf_hub_download(
+                                repo_id=default["hf_repo"],
+                                filename=default["hf_file"],
+                                local_dir="./models",
+                                local_dir_use_symlinks=False,
+                                token=hf_token,
+                            )
+                            # Rename if needed
+                            downloaded = f"./models/{default['hf_file']}"
+                            if downloaded != default_path and os.path.exists(downloaded):
+                                os.rename(downloaded, default_path)
+                            app.logger.info(f"Auto-init: Download complete: {default_path}")
+                        except Exception as dl_err:
+                            app.logger.error(f"Auto-init: Download failed: {dl_err}")
+                    if os.path.exists(default_path):
+                        app.logger.info(f"Auto-init: Loading default model: {default['name']}")
+                        llm_service.load(model_id=default["id"])
+                    else:
+                        app.logger.info("Auto-init: Model file not available, use Model Manager to download")
+                else:
+                    app.logger.info("Auto-init: No default model configured")
+        except Exception as e:
+            app.logger.error(f"Auto-init: LLM failed: {e}")
+
+        app.logger.info("Auto-init: All services initialization complete")
 
 
 def create_app():
@@ -15,18 +91,11 @@ def create_app():
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
     os.makedirs(app.config["ARTICLES_FOLDER"], exist_ok=True)
     os.makedirs("./models", exist_ok=True)
+    os.makedirs("./data", exist_ok=True)
 
-    # Auto-load LLM if model file exists
-    try:
-        from app.services.llm import llm_service
-        model_path = os.environ.get("MODEL_PATH", "./models/phi-4-Q4_K_M.gguf")
-        if os.path.exists(model_path):
-            app.logger.info(f"Auto-loading LLM: {model_path}")
-            llm_service.load(model_path)
-        else:
-            app.logger.info(f"No model found at {model_path}, LLM will be loaded manually")
-    except Exception as e:
-        app.logger.error(f"Failed to auto-load LLM: {e}")
+    # Initialize SQLite database
+    from app.services.database import db
+    db.init_db()
 
     from app.routes.main import main_bp
     from app.routes.chat import chat_bp
@@ -41,5 +110,10 @@ def create_app():
     app.register_blueprint(scraper_bp, url_prefix="/api/scraper")
     app.register_blueprint(articles_bp, url_prefix="/api/articles")
     app.register_blueprint(models_bp, url_prefix="/api/models")
+
+    # Auto-init all services in background so the app starts immediately
+    # (gunicorn worker responds to health checks while models load)
+    thread = threading.Thread(target=_auto_init_services, args=(app,), daemon=True)
+    thread.start()
 
     return app

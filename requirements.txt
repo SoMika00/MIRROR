@@ -4,7 +4,7 @@ python-dotenv==1.1.0
 gunicorn==23.0.0
 
 # LLM Inference (CPU)
-llama-cpp-python==0.3.4
+llama-cpp-python==0.3.8
 
 # Embedding + Reranker (CrossEncoder)
 sentence-transformers==3.3.1
@@ -26,6 +26,9 @@ beautifulsoup4==4.12.3
 requests==2.32.3
 trafilatura==2.0.0
 html2text==2024.2.26
+
+# Model Downloads
+huggingface-hub>=0.25.0
 
 # Utilities
 markdown==3.7

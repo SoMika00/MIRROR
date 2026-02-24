@@ -1,22 +1,80 @@
-"""Chat/RAG API routes."""
+"""Chat API routes — supports multiple modes: chat, rag, scrap, fulldoc."""
 
 import json
-from flask import Blueprint, request, jsonify, Response, stream_with_context
+import time
+import logging
+from flask import Blueprint, request, jsonify, Response, stream_with_context, make_response
 
-from app.services.rag import query_rag, query_rag_stream, query_scraped_content
+from app.services.rag import (
+    query_rag, query_rag_stream, query_scraped_content,
+    query_direct_chat, query_direct_chat_stream,
+)
 from app.services.llm import llm_service
+from app.services.database import db
 
+logger = logging.getLogger(__name__)
 chat_bp = Blueprint("chat", __name__)
 
 
+def _get_user_id() -> str:
+    """Get or create user from cookie."""
+    user_id = request.cookies.get("mirror_uid")
+    return db.get_or_create_user(user_id)
+
+
+def _set_user_cookie(response, user_id: str):
+    """Set persistent user cookie (1 year)."""
+    response.set_cookie("mirror_uid", user_id, max_age=365 * 24 * 3600,
+                         httponly=True, samesite="Lax")
+    return response
+
+
+# --- Conversations ---
+
+@chat_bp.route("/conversations", methods=["GET"])
+def list_conversations():
+    user_id = _get_user_id()
+    convs = db.get_conversations(user_id)
+    resp = make_response(jsonify({"conversations": convs}))
+    return _set_user_cookie(resp, user_id)
+
+
+@chat_bp.route("/conversations", methods=["POST"])
+def create_conversation():
+    user_id = _get_user_id()
+    data = request.get_json() or {}
+    mode = data.get("mode", "chat")
+    title = data.get("title", "New conversation")
+    conv_id = db.create_conversation(user_id, mode=mode, title=title)
+    resp = make_response(jsonify({"conversation_id": conv_id}))
+    return _set_user_cookie(resp, user_id)
+
+
+@chat_bp.route("/conversations/<conv_id>", methods=["DELETE"])
+def delete_conversation(conv_id):
+    user_id = _get_user_id()
+    ok = db.delete_conversation(conv_id, user_id)
+    return jsonify({"deleted": ok})
+
+
+@chat_bp.route("/conversations/<conv_id>/messages", methods=["GET"])
+def get_messages(conv_id):
+    messages = db.get_messages(conv_id)
+    return jsonify({"messages": messages})
+
+
+# --- Chat Query (all modes) ---
+
 @chat_bp.route("/query", methods=["POST"])
 def chat_query():
-    """RAG query with source citations."""
+    """Unified query endpoint. Modes: chat, rag, scrap, fulldoc."""
     data = request.get_json()
     if not data or "question" not in data:
         return jsonify({"error": "Missing 'question' field"}), 400
 
     question = data["question"].strip()
+    mode = data.get("mode", "chat")
+    conv_id = data.get("conversation_id")
     source_type = data.get("source_type")
 
     if not question:
@@ -25,30 +83,99 @@ def chat_query():
     if not llm_service.is_loaded():
         return jsonify({"error": "No LLM loaded. Please load a model first via the model manager."}), 503
 
+    user_id = _get_user_id()
+
+    # Auto-create conversation if needed
+    if not conv_id:
+        conv_id = db.create_conversation(user_id, mode=mode, title=question[:60])
+
+    # Save user message
+    db.add_message(conv_id, "user", question, mode=mode)
+
+    # Log
+    db.add_log("info", "chat", f"Query [{mode}]: {question[:80]}", user_id=user_id)
+
     try:
-        result = query_rag(question, source_type=source_type)
-        return jsonify(result)
+        history = db.get_recent_context(conv_id, n=6)
+
+        if mode == "chat":
+            result = query_direct_chat(question, history=history)
+        elif mode == "rag":
+            result = query_rag(question, source_type=source_type)
+        elif mode == "scrap":
+            content = data.get("content", "")
+            url = data.get("url", "")
+            title_page = data.get("title", "")
+            if not content:
+                result = query_direct_chat(question, history=history)
+            else:
+                result = query_scraped_content(question, url, title_page, content)
+        elif mode == "fulldoc":
+            result = query_rag(question, source_type="document")
+        else:
+            result = query_direct_chat(question, history=history)
+
+        # Save assistant response
+        db.add_message(conv_id, "assistant", result["answer"], mode=mode,
+                       sources=result.get("sources"), timings=result.get("timings"))
+
+        # Auto-title: use first question
+        result["conversation_id"] = conv_id
+
+        resp = make_response(jsonify(result))
+        return _set_user_cookie(resp, user_id)
+
     except Exception as e:
+        logger.error(f"Chat query failed: {e}", exc_info=True)
+        db.add_log("error", "chat", f"Query failed: {e}", user_id=user_id)
         return jsonify({"error": str(e)}), 500
 
 
 @chat_bp.route("/stream", methods=["POST"])
 def chat_stream():
-    """Streaming RAG query."""
+    """Streaming query (all modes)."""
     data = request.get_json()
     if not data or "question" not in data:
         return jsonify({"error": "Missing 'question' field"}), 400
 
     question = data["question"].strip()
+    mode = data.get("mode", "chat")
+    conv_id = data.get("conversation_id")
     source_type = data.get("source_type")
 
     if not llm_service.is_loaded():
         return jsonify({"error": "No LLM loaded."}), 503
 
+    user_id = _get_user_id()
+
+    if not conv_id:
+        conv_id = db.create_conversation(user_id, mode=mode, title=question[:60])
+
+    db.add_message(conv_id, "user", question, mode=mode)
+    history = db.get_recent_context(conv_id, n=6)
+
     def generate():
-        for token in query_rag_stream(question, source_type=source_type):
-            yield f"data: {json.dumps({'token': token})}\n\n"
-        yield "data: [DONE]\n\n"
+        full_answer = []
+        try:
+            if mode == "chat":
+                stream = query_direct_chat_stream(question, history=history)
+            elif mode in ("rag", "fulldoc"):
+                st = "document" if mode == "fulldoc" else source_type
+                stream = query_rag_stream(question, source_type=st)
+            else:
+                stream = query_direct_chat_stream(question, history=history)
+
+            for token in stream:
+                full_answer.append(token)
+                yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Save full answer
+            answer_text = "".join(full_answer)
+            db.add_message(conv_id, "assistant", answer_text, mode=mode)
+
+            yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
     return Response(
         stream_with_context(generate()),
@@ -56,6 +183,8 @@ def chat_stream():
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
+
+# --- Scraper Query (legacy compat) ---
 
 @chat_bp.route("/scraper-query", methods=["POST"])
 def scraper_query():
@@ -79,6 +208,32 @@ def scraper_query():
         return jsonify({"error": str(e)}), 500
 
 
+# --- Sources ---
+
+@chat_bp.route("/sources", methods=["GET"])
+def list_sources():
+    user_id = _get_user_id()
+    sources = db.get_user_sources(user_id)
+    resp = make_response(jsonify({"sources": sources}))
+    return _set_user_cookie(resp, user_id)
+
+
+@chat_bp.route("/sources/<source_id>", methods=["DELETE"])
+def delete_source(source_id):
+    user_id = _get_user_id()
+    source_name = db.delete_user_source(source_id, user_id)
+    if source_name:
+        try:
+            from app.services.qdrant_store import qdrant_store
+            qdrant_store.delete_by_source(source_name)
+        except Exception as e:
+            logger.warning(f"Failed to delete from Qdrant: {e}")
+        return jsonify({"deleted": True, "source_name": source_name})
+    return jsonify({"deleted": False}), 404
+
+
+# --- Status ---
+
 @chat_bp.route("/status", methods=["GET"])
 def chat_status():
     """Check if chat services are ready."""
@@ -92,3 +247,14 @@ def chat_status():
         "embedding_info": embedding_service.get_info(),
         "qdrant_connected": qdrant_store.is_connected(),
     })
+
+
+# --- Logs ---
+
+@chat_bp.route("/logs", methods=["GET"])
+def get_logs():
+    limit = request.args.get("limit", 100, type=int)
+    component = request.args.get("component")
+    level = request.args.get("level")
+    logs = db.get_logs(limit=limit, component=component, level=level)
+    return jsonify({"logs": logs})

@@ -1,0 +1,1933 @@
+{% extends "base.html" %}
+{% block title %}Courses{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container" style="max-width:1060px;">
+        <h1 class="text-center mb-1" style="font-size:2rem;font-weight:800;" data-i18n="courses.title">Courses</h1>
+        <p class="text-center text-muted mb-3" data-i18n="courses.subtitle">A clear, structured overview of core ML topics, explained with lists, examples, and practical intuition.</p>
+
+        <!-- Domain Tabs -->
+        <div class="cx-tabs">
+            <button class="cx-tab active" data-tab="ml">Machine Learning</button>
+            <button class="cx-tab" data-tab="dl">Deep Learning</button>
+            <button class="cx-tab" data-tab="cv">Computer Vision</button>
+            <button class="cx-tab" data-tab="nlp">NLP &amp; LLMs</button>
+            <button class="cx-tab" data-tab="mlops">MLOps &amp; Infra</button>
+            <button class="cx-tab" data-tab="dataeng">Data Engineering</button>
+            <button class="cx-tab" data-tab="databases">Databases</button>
+        </div>
+
+        <!-- ==================== MACHINE LEARNING ==================== -->
+        <div class="cx-panel active" id="panel-ml">
+            <div class="cx-panel-header">
+                <h2 data-i18n="courses.ml.title">Machine Learning (classic)</h2>
+                <p data-i18n="courses.ml.intro">Classical Machine Learning algorithms are the foundation of data science. They're fast, interpretable, and often the best starting point before trying complex deep learning.</p>
+            </div>
+
+            <!-- Subcategory: Supervised, Regression -->
+            <h3 class="cx-subcategory">Supervised Learning: Regression</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="linreg">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Linear Regression</span>
+                        <span class="cx-algo-badge">Regression</span>
+                    </div>
+                    <p class="cx-algo-short">Imagine you have data about house sizes and their prices. Linear Regression draws the best straight line through those points so you can predict the price of a new house just from its size. It's the simplest and most fundamental prediction method in all of ML.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>You want to predict a continuous number (price, revenue, temperature)</li>
+                                <li>You need to understand which factors matter most and by how much</li>
+                                <li>Small to medium datasets where you need quick results</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Extremely fast training and inference</li>
+                                    <li>Fully interpretable coefficients</li>
+                                    <li>No hyperparameter tuning needed (basic form)</li>
+                                    <li>Closed-form solution exists (Normal Equation)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Cannot capture non-linear patterns</li>
+                                    <li>Sensitive to outliers</li>
+                                    <li>Assumes independence of features (multicollinearity)</li>
+                                    <li>Requires feature engineering for complex relations</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <p>The model finds the line that minimizes prediction errors (MSE = average of squared errors). Variants: <strong>Ridge</strong> adds a penalty to keep coefficients small (prevents overfitting), <strong>Lasso</strong> can set some coefficients to zero (automatic feature selection), <strong>ElasticNet</strong> combines both. Quality measured with R² (1.0 = perfect predictions).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="polynomial">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Polynomial Regression</span>
+                        <span class="cx-algo-badge">Regression</span>
+                    </div>
+                    <p class="cx-algo-short">Sometimes a straight line doesn't fit your data well because the relationship is curved (for example, a plant grows fast at first, then slows down). Polynomial Regression lets you fit curves instead of straight lines by adding squared or cubed terms to the equation.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Data shows clear non-linear but smooth trends</li>
+                                <li>Single or few features (avoids combinatorial explosion)</li>
+                                <li>You want a simple baseline before moving to trees/neural nets</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Captures curves without complex models</li>
+                                    <li>Same linear algebra solver (fast)</li>
+                                    <li>Easy to understand and visualize</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Overfits quickly with high degree</li>
+                                    <li>Feature explosion with many input dimensions</li>
+                                    <li>Extrapolation is catastrophic</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Subcategory: Supervised, Classification -->
+            <h3 class="cx-subcategory">Supervised Learning: Classification</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="logreg">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Logistic Regression</span>
+                        <span class="cx-algo-badge">Classification</span>
+                    </div>
+                    <p class="cx-algo-short">Despite its name, Logistic Regression is used to classify things into categories (spam or not spam, approved or rejected). Instead of predicting a number, it outputs a probability between 0% and 100% that tells you how confident the model is about each category.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Binary or multi-class classification with roughly linear decision boundary</li>
+                                <li>Need calibrated probability outputs (not just labels)</li>
+                                <li>Baseline for NLP text classification, CTR prediction</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Probabilistic output (well-calibrated)</li>
+                                    <li>Fast, scales to millions of samples</li>
+                                    <li>Interpretable feature weights</li>
+                                    <li>Robust with regularization (L1/L2)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Linear decision boundary only</li>
+                                    <li>Requires feature engineering for non-linear patterns</li>
+                                    <li>Poor with many irrelevant features (without L1)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <p>Trained with Cross-Entropy loss (penalizes confident wrong predictions heavily). For multiple categories, uses Softmax to distribute probabilities across classes. Key metrics: <strong>Precision</strong> (of predicted positives, how many are correct), <strong>Recall</strong> (of actual positives, how many were found), <strong>F1</strong> (balance of both).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="svm">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Support Vector Machine (SVM)</span>
+                        <span class="cx-algo-badge">Classification</span>
+                    </div>
+                    <p class="cx-algo-short">Picture two groups of dots on a page (cats vs dogs based on weight and height). SVM finds the line that separates them with the widest possible gap. A clever math trick called a 'kernel' lets it handle cases where the groups aren't separable by a straight line, by bending the boundary into curves.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Small to medium datasets with clear margin of separation</li>
+                                <li>High-dimensional data (text, genomics)</li>
+                                <li>Binary classification with kernel trick for non-linearity</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Effective in high-dimensional spaces</li>
+                                    <li>Memory efficient (uses support vectors only)</li>
+                                    <li>Kernel trick: RBF, polynomial, custom</li>
+                                    <li>Strong generalization with proper C and kernel</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>O(n²) to O(n³) training time, bad for large datasets</li>
+                                    <li>No native probability output (requires Platt scaling)</li>
+                                    <li>Kernel + C hyperparameter search is expensive</li>
+                                    <li>Not interpretable with non-linear kernels</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="knn">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">k-Nearest Neighbors (KNN)</span>
+                        <span class="cx-algo-badge">Classification / Regression</span>
+                    </div>
+                    <p class="cx-algo-short">The simplest ML idea: to classify a new data point, just look at its k closest neighbors in the dataset and go with the majority vote. If 3 out of 5 nearest neighbors are cats, predict cat. There's no actual training phase; it simply memorizes all the data and compares at prediction time.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>The intuition: projecting data onto a plane</h4>
+                            <p>Imagine each data point as a dot on a 2D map. If you have two features (say height and weight), each person becomes a point on that map. KNN literally measures the distance between your new point and every existing point, then looks at which class dominates among the k nearest ones. When you have more than 2 features (say 10 medical measurements), the concept is the same but in 10-dimensional space. We can't visualize 10D, but math works the same way. Tools like <strong>PCA</strong> or <strong>t-SNE</strong> can project those 10D points back onto a 2D plane so you can visually check if clusters are well-separated.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Small datasets, low-dimensional features</li>
+                                <li>Non-parametric baseline (no assumptions about data shape)</li>
+                                <li>Recommendation systems (item similarity in embedding space)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Zero training time</li>
+                                    <li>No assumptions on data distribution</li>
+                                    <li>Simple to implement and explain</li>
+                                    <li>Works for both classification and regression</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Slow inference: O(n) per query (or O(log n) with KD-tree)</li>
+                                    <li>Curse of dimensionality: distances become meaningless in high-dim</li>
+                                    <li>Sensitive to feature scaling (always normalize first)</li>
+                                    <li>All data must fit in memory</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="naive-bayes">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Naive Bayes</span>
+                        <span class="cx-algo-badge">Classification</span>
+                    </div>
+                    <p class="cx-algo-short">Uses probability rules (Bayes' theorem) to classify data, especially text. For example, if an email contains "free" and "winner", what's the probability it's spam? Called 'naive' because it assumes each word contributes independently, which is rarely true in real life but works surprisingly well in practice.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Text classification (spam, sentiment): Multinomial NB</li>
+                                <li>Very fast baseline needed</li>
+                                <li>Small training sets, many features</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Extremely fast training and prediction</li>
+                                    <li>Works well with high-dimensional sparse data</li>
+                                    <li>Needs very little training data</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Independence assumption rarely holds</li>
+                                    <li>Poor probability calibration</li>
+                                    <li>Cannot learn feature interactions</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Subcategory: Tree-based & Ensembles -->
+            <h3 class="cx-subcategory">Tree-based &amp; Ensemble Methods</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="dtree">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Decision Tree</span>
+                        <span class="cx-algo-badge">Classification / Regression</span>
+                    </div>
+                    <p class="cx-algo-short">Works exactly like a flowchart of yes/no questions: "Is age > 30? Yes. Is income > 50k? No. Then predict: won't buy." The algorithm figures out which questions to ask and in what order to get the most accurate predictions. Easy to visualize and explain to anyone, even non-technical people.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Explainability is paramount (medical, legal)</li>
+                                <li>Quick EDA to find important feature splits</li>
+                                <li>Mixed feature types (categorical + continuous)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Fully interpretable (visualize the tree)</li>
+                                    <li>Handles mixed types, no scaling needed</li>
+                                    <li>Captures non-linear interactions</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>High variance: small data changes &rarr; different tree</li>
+                                    <li>Overfits easily without pruning</li>
+                                    <li>Piecewise-constant predictions (axis-aligned splits)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="rf">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Random Forest</span>
+                        <span class="cx-algo-badge">Ensemble</span>
+                    </div>
+                    <p class="cx-algo-short">Instead of relying on one decision tree (which can be unreliable), Random Forest builds hundreds of trees, each trained on a random portion of the data. To make a prediction, all trees vote and the majority wins. This 'wisdom of the crowd' approach is much more accurate and stable than any single tree alone.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Tabular data: strong default before trying boosting</li>
+                                <li>Need reliable feature importance estimates</li>
+                                <li>Can afford slightly more compute than a single tree</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Low variance, hard to overfit</li>
+                                    <li>Parallelizable (embarrassingly parallel)</li>
+                                    <li>Built-in OOB error estimate</li>
+                                    <li>Handles missing values (proximity-based)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Slower inference (100s of trees)</li>
+                                    <li>Less accurate than gradient boosting on most benchmarks</li>
+                                    <li>Large model size in memory</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="xgboost">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">XGBoost / LightGBM / CatBoost</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Ensemble, SOTA Tabular</span>
+                    </div>
+                    <p class="cx-algo-short">Builds trees one after another, where each new tree specifically focuses on correcting the mistakes of the previous ones. Think of it like a team of students where each one studies what the previous student got wrong. This is the go-to method for tabular data (spreadsheets, databases) and dominates competitions and real-world production systems.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>Any tabular / structured data problem</strong>: this is your first pick</li>
+                                <li>Kaggle competitions, CTR prediction, fraud detection, ranking</li>
+                                <li>When you need the best accuracy on non-image/non-text data</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Best-in-class on tabular data</li>
+                                    <li>Built-in regularization (L1/L2, max_depth, min_child_weight)</li>
+                                    <li>Handles missing values natively</li>
+                                    <li>GPU training available, fast inference</li>
+                                    <li>SHAP values for explainability</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Many hyperparameters to tune</li>
+                                    <li>Sequential boosting (less parallelizable than RF)</li>
+                                    <li>Can overfit on small, noisy datasets</li>
+                                    <li>Requires careful early stopping</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key differences</h4>
+                            <p><strong>XGBoost</strong>: exact/histogram split, most battle-tested. <strong>LightGBM</strong>: leaf-wise growth, faster on large data, GOSS sampling. <strong>CatBoost</strong>: ordered boosting, best native categorical handling.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Subcategory: Unsupervised -->
+            <h3 class="cx-subcategory">Unsupervised &amp; Representation Learning</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="kmeans">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">K-Means Clustering</span>
+                        <span class="cx-algo-badge">Clustering</span>
+                    </div>
+                    <p class="cx-algo-short">Groups similar data points together without any labels. You tell it how many groups (k) you want, and it figures out how to split the data. For example, given customer purchase data, it could automatically discover "budget shoppers", "premium buyers", and "occasional visitors" without you defining those categories.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Customer segmentation, image compression</li>
+                                <li>Known or estimable number of clusters</li>
+                                <li>Roughly spherical, similarly-sized clusters</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Simple, fast, scales to large datasets</li>
+                                    <li>Easy to interpret centroids</li>
+                                    <li>Mini-batch variant for streaming data</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Must specify k in advance</li>
+                                    <li>Assumes convex, equally-sized clusters</li>
+                                    <li>Sensitive to initialization (use k-means++)</li>
+                                    <li>Fails on non-globular shapes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="dbscan">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">DBSCAN</span>
+                        <span class="cx-algo-badge">Clustering</span>
+                    </div>
+                    <p class="cx-algo-short">Imagine dropping ink on paper and watching it spread: wherever there's a dense concentration of points packed together, DBSCAN calls that a cluster. Points sitting alone far away are flagged as outliers. Unlike K-Means, you don't need to specify the number of groups, and it can find clusters of any shape (circles, crescents, blobs).</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Unknown number of clusters</li>
+                                <li>Clusters have irregular shapes</li>
+                                <li>Need automatic outlier/noise detection</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>No need to specify k</li>
+                                    <li>Finds clusters of any shape</li>
+                                    <li>Built-in noise/outlier detection</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Sensitive to eps and min_samples parameters</li>
+                                    <li>Struggles with varying-density clusters</li>
+                                    <li>O(n²) without spatial indexing</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="pca">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">PCA / UMAP / t-SNE</span>
+                        <span class="cx-algo-badge">Dim. Reduction</span>
+                    </div>
+                    <p class="cx-algo-short">When your data has hundreds of features (columns), it's impossible to visualize. These techniques compress all those dimensions into just 2 or 3, while keeping similar points close together. The result is a 2D scatter plot where you can actually see clusters, patterns, and outliers at a glance. Essential for understanding what's really going on in your data.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>PCA</strong>: preprocessing, denoising, feature compression</li>
+                                <li><strong>UMAP/t-SNE</strong>: 2D/3D visualization of clusters in embedding space</li>
+                                <li>Debugging embeddings (are clusters well-separated?)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>PCA: fast, deterministic, preserves variance</li>
+                                    <li>UMAP: preserves global + local structure</li>
+                                    <li>Essential for high-dim data debugging</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>PCA: linear only, loses non-linear structure</li>
+                                    <li>t-SNE: slow, non-deterministic, crowding</li>
+                                    <li>UMAP: hyperparameter-sensitive (n_neighbors, min_dist)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== DEEP LEARNING ==================== -->
+        <div class="cx-panel" id="panel-dl">
+            <div class="cx-panel-header">
+                <h2 data-i18n="courses.dl.title">Deep Learning (neural networks)</h2>
+                <p data-i18n="courses.dl.intro">Deep learning uses neural networks with many stacked layers to automatically learn patterns from raw data. Instead of hand-crafting features (like in classical ML), you feed the raw data (pixels, text, audio) and the network discovers the relevant features by itself. Different architectures are designed for different types of data: images (CNNs), sequences (RNNs), and the Transformer, which now dominates nearly everything.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Foundations: How Neural Networks Learn</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="mlp">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Multi-Layer Perceptron (MLP)</span>
+                        <span class="cx-algo-badge">Feedforward</span>
+                    </div>
+                    <p class="cx-algo-short">The classic neural network: layers of interconnected neurons that learn to map inputs to outputs. Think of it as a chain of simple math operations: each neuron takes numbers in, multiplies them by weights, adds them up, and passes the result through a function. Stack enough of these, and the network can learn incredibly complex patterns. Every modern deep learning model (CNNs, Transformers, etc.) has MLP components inside.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How a neural network actually learns</h4>
+                            <p>Training a neural network is a loop of three steps, repeated thousands of times:</p>
+                            <ul>
+                                <li><strong>Forward pass</strong>: feed an input (e.g., an image) through the network. Each layer multiplies the input by its weights, adds a bias, and applies an activation function. The output is a prediction (e.g., "80% cat, 20% dog").</li>
+                                <li><strong>Loss calculation</strong>: compare the prediction to the correct answer. The difference is the "loss" (error). Common loss functions: Cross-Entropy for classification, MSE for regression.</li>
+                                <li><strong>Backpropagation + optimizer</strong>: calculate how much each weight contributed to the error (using calculus/chain rule), then adjust every weight slightly to reduce the error. The optimizer (Adam, SGD) decides <em>how much</em> to adjust.</li>
+                            </ul>
+                            <p style="margin-top:0.4rem">After thousands of these loops (called epochs), the weights converge to values that make good predictions on new, unseen data.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key concepts you must know</h4>
+                            <ul>
+                                <li><strong>Activation function</strong> (ReLU, GELU, Sigmoid): introduces non-linearity. Without it, stacking layers would be pointless because a chain of linear operations is just one big linear operation.</li>
+                                <li><strong>Learning rate</strong>: how big each weight adjustment step is. Too high = unstable, too low = takes forever. This is the most important hyperparameter.</li>
+                                <li><strong>Batch size</strong>: how many examples the network sees before updating weights. Larger = more stable gradients but needs more memory.</li>
+                                <li><strong>Dropout</strong>: randomly disables neurons during training (e.g., 20%) to prevent memorization (overfitting). At inference, all neurons are active.</li>
+                                <li><strong>Batch Normalization</strong>: normalizes values between layers, making training faster and more stable.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>As the building block inside larger architectures (classifier head in BERT, FFN layers in Transformers)</li>
+                                <li>Tabular data where tree-based methods underperform (rare, but happens with very large datasets)</li>
+                                <li>Simple function approximation tasks</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Universal approximation: can learn any function (given enough neurons)</li>
+                                    <li>Flexible architecture, easy to implement</li>
+                                    <li>GPU-parallelizable (matrix multiplications)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>No built-in understanding of spatial patterns (images) or sequences (text)</li>
+                                    <li>Prone to overfitting on small datasets</li>
+                                    <li>Requires careful initialization, normalization, and regularization</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Convolutional Neural Networks (CNNs)</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="cnn">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">CNN / ConvNet</span>
+                        <span class="cx-algo-badge">Images / Spatial</span>
+                    </div>
+                    <p class="cx-algo-short">A neural network specifically designed for images. Instead of connecting every neuron to every pixel (which would be millions of connections), CNNs use small sliding filters (e.g., 3x3 pixels) that scan across the image. The first layers detect simple patterns like edges and corners. Deeper layers combine those into textures, shapes, and finally recognizable objects like faces or cars. This hierarchical feature learning is what makes CNNs so powerful for anything visual.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How convolution works (step by step)</h4>
+                            <p>Imagine a tiny 3x3 grid of numbers (the "filter" or "kernel") sliding across your image pixel by pixel. At each position, it multiplies the 9 overlapping pixels by the filter values and sums the result into a single number. This produces a new, smaller image called a "feature map" that highlights specific patterns the filter is looking for.</p>
+                            <ul>
+                                <li><strong>Conv layer</strong>: applies many filters (32, 64, 128...) in parallel, each learning to detect a different pattern</li>
+                                <li><strong>Pooling layer</strong> (MaxPool): shrinks the feature map by keeping only the strongest signal in each small region, making the network robust to small shifts</li>
+                                <li><strong>Stride</strong>: how many pixels the filter jumps between positions. Stride 2 = halves the output size</li>
+                                <li><strong>Padding</strong>: adds zeros around the edge so the output stays the same size as the input</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Image classification, object detection, segmentation</li>
+                                <li>Any grid-structured data (spectrograms, satellite imagery, heatmaps)</li>
+                                <li>When you need fast inference on edge devices (MobileNet, EfficientNet-Lite)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Parameter sharing: the same filter works everywhere in the image (translation equivariance)</li>
+                                    <li>Hierarchical: edges &rarr; textures &rarr; parts &rarr; objects</li>
+                                    <li>Very fast inference, mobile/edge-friendly variants exist</li>
+                                    <li>Decades of proven architectures and pretrained weights available</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Limited receptive field: each neuron only sees a local patch</li>
+                                    <li>Needs very deep stacking for global context understanding</li>
+                                    <li>Being surpassed by Vision Transformers (ViT) on many benchmarks</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key architectures (evolution)</h4>
+                            <p><strong>LeNet (1998)</strong>: the original CNN, digit recognition. <strong>AlexNet (2012)</strong>: won ImageNet, launched the deep learning revolution. <strong>ResNet (2015)</strong>: skip connections enabling 100+ layer networks. <strong>EfficientNet (2019)</strong>: smartly scales width, depth, and resolution together. <strong>ConvNeXt (2022)</strong>: modernized CNN that competes with Vision Transformers by borrowing Transformer design ideas.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Recurrent Neural Networks (RNNs)</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="rnn">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">RNN / LSTM / GRU</span>
+                        <span class="cx-algo-badge">Sequences</span>
+                    </div>
+                    <p class="cx-algo-short">Neural networks with memory, designed for sequential data (text, time series, audio). They process inputs one step at a time, maintaining a hidden state that acts as a "memory" of what came before. When reading a sentence, each word updates the memory, so by the end, the network has a summary of the entire sequence. Largely replaced by Transformers for NLP, but still relevant for streaming and edge applications.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>The vanishing gradient problem (and how LSTM solves it)</h4>
+                            <p>A basic RNN struggles with long sequences: as information passes through many time steps, the gradients used for learning become smaller and smaller (vanish), so the network "forgets" early inputs. <strong>LSTM</strong> (Long Short-Term Memory) solves this with a clever gating mechanism:</p>
+                            <ul>
+                                <li><strong>Forget gate</strong>: decides what to throw away from memory ("the conversation topic changed, forget the old subject")</li>
+                                <li><strong>Input gate</strong>: decides what new information to store ("this word is important, remember it")</li>
+                                <li><strong>Output gate</strong>: decides what to output based on the current memory</li>
+                            </ul>
+                            <p style="margin-top:0.4rem"><strong>GRU</strong> (Gated Recurrent Unit) is a simplified version with only two gates (reset + update), making it faster to train with similar performance.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use (today)</h4>
+                            <ul>
+                                <li>Time series forecasting on short sequences (still competitive)</li>
+                                <li>Streaming / online learning where you process data one step at a time</li>
+                                <li>Edge devices where model size must be tiny (LSTMs are small)</li>
+                                <li>Legacy systems that already use RNNs and work well enough</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Natural fit for variable-length sequences</li>
+                                    <li>Very small parameter count compared to Transformers</li>
+                                    <li>Processes data step-by-step (natural for streaming)</li>
+                                    <li>Well-understood training dynamics and theory</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Sequential processing: cannot parallelize (slow training)</li>
+                                    <li>Struggles with very long sequences even with LSTM gates</li>
+                                    <li>Largely superseded by Transformers for NLP, speech, and most sequence tasks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">The Transformer Architecture</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="transformer">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Transformer</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Foundation, SOTA</span>
+                    </div>
+                    <p class="cx-algo-short">The architecture behind ChatGPT, BERT, Stable Diffusion, and virtually all modern AI. Introduced in 2017 with the paper "Attention Is All You Need," the Transformer replaced RNNs by allowing every element in the input to interact with every other element simultaneously through a mechanism called "self-attention." This parallelism made training much faster and enabled models to scale to billions of parameters.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How self-attention works (the core idea)</h4>
+                            <p>Imagine reading the sentence: "The cat sat on the mat because <strong>it</strong> was tired." What does "it" refer to? You instantly know it's "the cat." Self-attention lets the model learn these connections:</p>
+                            <ul>
+                                <li>Each word is transformed into three vectors: <strong>Query</strong> (what am I looking for?), <strong>Key</strong> (what do I contain?), <strong>Value</strong> (what information should I pass along?)</li>
+                                <li>For each word, compute how much attention to pay to every other word by comparing its Query with all Keys (dot product)</li>
+                                <li>The result: each word gets a weighted mix of all other words' Values, creating a context-aware representation</li>
+                            </ul>
+                            <p style="margin-top:0.4rem"><strong>Multi-head attention</strong>: run several attention patterns in parallel (e.g., 12 heads). One head might focus on grammar (subject-verb agreement), another on semantics (word meaning), another on position (nearby words). The outputs are concatenated and projected.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Transformer block structure</h4>
+                            <p>A single Transformer block repeats this pattern: <strong>Multi-Head Self-Attention</strong> &rarr; <strong>Add &amp; Layer Norm</strong> (residual connection) &rarr; <strong>Feed-Forward Network</strong> (two-layer MLP) &rarr; <strong>Add &amp; Layer Norm</strong>. A model like GPT-4 stacks ~120 of these blocks. The residual connections (skip connections, like ResNet) are critical: they allow gradients to flow directly through the network, enabling very deep models.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Three variants</h4>
+                            <ul>
+                                <li><strong>Encoder-only</strong> (BERT, RoBERTa): reads the entire input at once (bidirectional). Best for understanding tasks: classification, NER, search. Cannot generate text.</li>
+                                <li><strong>Decoder-only</strong> (GPT, Llama, Phi, Qwen): reads left-to-right, predicts the next token. This is the architecture of all modern LLMs. Best for text generation, chatbots, code.</li>
+                                <li><strong>Encoder-Decoder</strong> (T5, BART, Whisper): encoder reads the input, decoder generates the output. Best for translation, summarization, speech-to-text.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Global attention: every token sees every other token from layer 1</li>
+                                    <li>Fully parallelizable training (unlike RNNs)</li>
+                                    <li>Scales beautifully with more data and compute (scaling laws)</li>
+                                    <li>Transfer learning: pretrain once, fine-tune for any task</li>
+                                    <li>Dominates NLP, vision, audio, multimodal, code, science</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>O(n&sup2;) attention complexity: cost grows quadratically with context length</li>
+                                    <li>Pretraining requires massive compute (millions of GPU-hours)</li>
+                                    <li>KV cache memory grows linearly with sequence length during generation</li>
+                                    <li>Needs large datasets to outperform simpler models on small tasks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Generative Models</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="gan">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">GANs / VAEs / Diffusion</span>
+                        <span class="cx-algo-badge">Generative</span>
+                    </div>
+                    <p class="cx-algo-short">Three families of models that create new content (images, music, video, 3D). Each takes a fundamentally different approach to generation: GANs pit two networks against each other in a competition, VAEs learn a compressed representation and sample from it, and Diffusion models learn to gradually remove noise from a random image until a clean result emerges. Diffusion is the current state-of-the-art (Stable Diffusion, DALL-E 3, Midjourney).</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How each approach works</h4>
+                            <ul>
+                                <li><strong>GAN (Generative Adversarial Network)</strong>: two networks compete. The Generator creates fake images, the Discriminator tries to tell real from fake. Over time, the Generator gets so good that the Discriminator can't tell the difference. Think of it as a counterfeiter vs. a detective getting better together.</li>
+                                <li><strong>VAE (Variational Autoencoder)</strong>: compresses data into a small "latent space" (like a summary), then learns to reconstruct the original from that summary. By sampling random points in that latent space, you can generate new, never-seen content. The latent space is smooth: nearby points produce similar outputs.</li>
+                                <li><strong>Diffusion</strong>: starts with a clean image, gradually adds random noise until it's pure static, then trains a network to reverse the process: predict and remove the noise step by step. At generation time, start from random noise and denoise it into a coherent image. Takes many steps (20-50) but produces the highest quality results.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>Diffusion (SOTA)</strong>: image generation, inpainting, super-resolution, video generation (Stable Diffusion, DALL-E, Sora)</li>
+                                <li><strong>VAE</strong>: learned latent representations, anomaly detection, data augmentation with controlled variation</li>
+                                <li><strong>GAN</strong>: style transfer, real-time face generation, data augmentation (less popular since diffusion)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Diffusion: highest quality generation, stable training, text-guided</li>
+                                    <li>VAE: principled latent space, smooth interpolation, fast sampling</li>
+                                    <li>GAN: sharp outputs, very fast inference (single forward pass)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Diffusion: slow generation (many denoising steps), high compute</li>
+                                    <li>GAN: mode collapse (generator only produces a few variations), training instability</li>
+                                    <li>All: expensive to train, hard to objectively evaluate output quality</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="gnn">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Graph Neural Networks (GNN)</span>
+                        <span class="cx-algo-badge">Graphs</span>
+                    </div>
+                    <p class="cx-algo-short">Neural networks designed for data that's naturally a graph: nodes connected by edges. Social networks (people connected by friendships), molecules (atoms connected by bonds), maps (intersections connected by roads). Each node learns a representation by collecting and combining information from its neighbors, propagating knowledge across the graph.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How message passing works</h4>
+                            <p>In each layer, every node: (1) collects messages from its neighbors (their current representations), (2) aggregates them (sum, mean, or attention-weighted), (3) combines the result with its own representation to produce an updated one. After several layers, each node's representation encodes information from its extended neighborhood.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li>Social networks (link prediction, community detection)</li>
+                                <li>Molecule property prediction (drug discovery)</li>
+                                <li>Knowledge graphs, recommendation systems</li>
+                                <li>Any relational/graph-structured data</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Natively handles relational data with arbitrary topology</li>
+                                    <li>Permutation invariant (node order doesn't matter)</li>
+                                    <li>Well-established variants: GCN, GAT (attention), GraphSAGE (sampling)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Over-smoothing: too many layers makes all nodes look the same</li>
+                                    <li>Scalability to very large graphs requires sampling tricks</li>
+                                    <li>Less mature tooling and ecosystem than vision/NLP</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== COMPUTER VISION ==================== -->
+        <div class="cx-panel" id="panel-cv">
+            <div class="cx-panel-header">
+                <h2 data-i18n="courses.cv.title">Computer Vision (SOTA overview)</h2>
+                <p data-i18n="courses.cv.intro">Computer Vision teaches machines to understand images and video. Modern systems combine deep neural networks with massive pretraining to achieve human-level (or better) performance on many visual tasks. The field has evolved from hand-crafted features (HOG, SIFT) to CNNs to Transformers, and now to foundation models that work zero-shot on tasks they've never been explicitly trained for.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Classification Backbones</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="resnet">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">ResNet / ConvNeXt</span>
+                        <span class="cx-algo-badge">Backbone CNN</span>
+                    </div>
+                    <p class="cx-algo-short">ResNet introduced "skip connections" (shortcuts that let information bypass layers), solving the problem of training very deep networks (100+ layers). Without skip connections, deeper networks actually performed worse because gradients disappeared. ConvNeXt is a 2022 modernization: same CNN principles but borrowing design ideas from Transformers (larger kernels, fewer activations, LayerNorm), making it competitive with ViT.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Why these matter</h4>
+                            <p>These are <strong>backbone</strong> networks: the feature extraction engine used by detection, segmentation, and other downstream tasks. When you use YOLO or U-Net, the first half of the model is typically a ResNet or similar backbone that converts raw pixels into meaningful features.</p>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Proven, extremely well-studied, battle-tested in production</li>
+                                    <li>Efficient inference, mobile-friendly variants (MobileNet, EfficientNet-Lite)</li>
+                                    <li>Excellent transfer learning backbone for any vision task</li>
+                                    <li>Thousands of pretrained checkpoints available on HuggingFace</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Limited global context: each neuron only sees a local patch</li>
+                                    <li>Architecture design requires expertise (depth, width, kernel sizes)</li>
+                                    <li>Surpassed by ViT on many benchmarks when data is abundant</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="vit">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Vision Transformer (ViT)</span>
+                        <span class="cx-algo-badge cx-badge-highlight">SOTA Classification</span>
+                    </div>
+                    <p class="cx-algo-short">Takes the Transformer architecture from NLP and applies it to images. The trick: cut the image into small patches (e.g., 16x16 pixels), flatten each patch into a vector, and treat them like words in a sentence. Then self-attention lets every patch interact with every other patch from the very first layer, giving the model global understanding of the whole image instantly.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How it processes an image</h4>
+                            <ul>
+                                <li>Split the image into a grid of patches (e.g., 224x224 image &rarr; 196 patches of 16x16)</li>
+                                <li>Each patch is linearly projected into an embedding vector (like word embeddings in NLP)</li>
+                                <li>Add positional embeddings so the model knows where each patch is</li>
+                                <li>Pass through standard Transformer encoder blocks (self-attention + FFN)</li>
+                                <li>A special [CLS] token collects global information for the final classification</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Global attention from the very first layer (sees the whole image)</li>
+                                    <li>Scales extremely well with more data and compute</li>
+                                    <li>Unifies vision and NLP architectures (shared tooling)</li>
+                                    <li>Variants: DeiT (data-efficient), Swin (hierarchical windows), DINOv2 (self-supervised)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Needs large-scale pretraining to outperform CNNs (ImageNet-21k+)</li>
+                                    <li>Higher compute cost than CNN at inference</li>
+                                    <li>No built-in inductive bias for locality (learns it from data instead)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Object Detection</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="yolo">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">YOLO Family (v5 to v11+)</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Real-time Detection</span>
+                    </div>
+                    <p class="cx-algo-short">YOLO (You Only Look Once) detects and locates objects in images in a single forward pass, fast enough for real-time video (30-300+ FPS). Unlike older two-stage detectors (Faster R-CNN) that first propose regions then classify them, YOLO predicts bounding boxes and classes simultaneously across the whole image. The most popular and battle-tested choice for production object detection.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How detection works</h4>
+                            <p>The image is divided into a grid. For each cell, the model predicts: (1) bounding box coordinates (x, y, width, height), (2) confidence score (is there an object here?), and (3) class probabilities (what object is it?). Non-Maximum Suppression (NMS) removes duplicate detections. Modern versions (YOLOv8+) are anchor-free, simplifying the pipeline.</p>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Real-time: 30-300+ FPS depending on model size and GPU</li>
+                                    <li>End-to-end training, simple deployment (Ultralytics CLI)</li>
+                                    <li>Excellent accuracy/speed tradeoff for production</li>
+                                    <li>Also supports segmentation, pose estimation, tracking (YOLOv8+)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Struggles with very small objects in dense, cluttered scenes</li>
+                                    <li>Many versions with different authors creates compatibility confusion</li>
+                                    <li>Less accurate than two-stage detectors on certain benchmarks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="detr">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">DETR / RT-DETR</span>
+                        <span class="cx-algo-badge">Transformer Detection</span>
+                    </div>
+                    <p class="cx-algo-short">Applies the Transformer to object detection with a clean, elegant design: no anchors, no NMS, no hand-crafted rules. The model uses learned "object queries" that each attend to different parts of the image and directly output detections. RT-DETR (Real-Time DETR) now matches YOLO speed with better accuracy on some benchmarks, making it a serious production alternative.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Elegant end-to-end design, no post-processing hacks</li>
+                                    <li>Global reasoning about object relationships in the scene</li>
+                                    <li>RT-DETR: real-time speed with Transformer accuracy</li>
+                                    <li>Easier to extend to new tasks (panoptic, action detection)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Slow convergence during training (needs many epochs)</li>
+                                    <li>Struggles with many small objects in one image</li>
+                                    <li>Higher memory usage than YOLO for equivalent throughput</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Segmentation</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="unet">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">U-Net / SegFormer</span>
+                        <span class="cx-algo-badge">Semantic Segmentation</span>
+                    </div>
+                    <p class="cx-algo-short">Assigns a class label to every single pixel in an image (this pixel is "road", this one is "car", this one is "sky"). U-Net has an encoder-decoder architecture with skip connections that preserve fine details, making it excellent on small datasets like medical scans. SegFormer brings Transformer efficiency to dense pixel-level predictions with multi-scale features.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Types of segmentation</h4>
+                            <ul>
+                                <li><strong>Semantic</strong>: label every pixel by class (all "car" pixels get the same label, even if there are 5 cars)</li>
+                                <li><strong>Instance</strong>: distinguish individual objects (car #1, car #2, car #3 get different labels)</li>
+                                <li><strong>Panoptic</strong>: semantic + instance combined (both "stuff" like sky and "things" like cars)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>U-Net: works great on small datasets (medical imaging, satellite)</li>
+                                    <li>SegFormer: lightweight Transformer, no positional encoding needed</li>
+                                    <li>Both support transfer learning from pretrained backbones</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Dense prediction is compute-heavy (every pixel needs a label)</li>
+                                    <li>Annotation is extremely expensive (pixel-level labeling)</li>
+                                    <li>U-Net: struggles with varying input resolutions</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="sam">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">SAM / Mask2Former</span>
+                        <span class="cx-algo-badge">Foundation Segmentation</span>
+                    </div>
+                    <p class="cx-algo-short">SAM (Segment Anything Model) by Meta is a foundation model for segmentation: click a point, draw a box, or type text on any image and it segments the object with zero training. It was trained on 11 million images with 1 billion masks. Mask2Former unifies all segmentation types (semantic, instance, panoptic) into a single architecture.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>SAM: zero-shot segmentation with prompts (point, box, text)</li>
+                                    <li>SAM 2: extends to video with temporal tracking</li>
+                                    <li>Mask2Former: single model for all segmentation types</li>
+                                    <li>Both work out-of-the-box on domains they've never seen</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>SAM: heavy ViT backbone, slow without optimization (EfficientSAM helps)</li>
+                                    <li>Mask2Former: complex training setup, slower than specialized models</li>
+                                    <li>Both require significant GPU memory for inference</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Vision-Language Models</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="clip">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">CLIP / SigLIP</span>
+                        <span class="cx-algo-badge">Vision-Language</span>
+                    </div>
+                    <p class="cx-algo-short">Trains an image encoder and a text encoder together so they produce similar vectors for matching image-text pairs. The result: images and text live in the same embedding space. You can search images with text ("a red sports car at sunset"), classify images into any category without training data, or use it as the "eyes" for a multimodal LLM like LLaVA or GPT-4V.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How contrastive learning works</h4>
+                            <p>During training, CLIP sees millions of (image, caption) pairs from the internet. For each batch, it computes image embeddings and text embeddings, then pushes matching pairs close together in vector space and non-matching pairs apart. After training, the model can compare any image to any text description by measuring the distance between their vectors.</p>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Zero-shot classification: describe new classes in text, no labeled data needed</li>
+                                    <li>Cross-modal retrieval: search images with text or vice versa</li>
+                                    <li>Foundation for multimodal LLMs (LLaVA, MiniCPM-V, InternVL)</li>
+                                    <li>SigLIP: improved training with sigmoid loss, better on smaller batches</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Trained on noisy web-scraped data (inherits biases)</li>
+                                    <li>Struggles with fine-grained spatial reasoning and counting</li>
+                                    <li>Large model, significant inference cost</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Metrics Reference</h3>
+            <div class="cx-info-box">
+                <h4>How to measure CV model performance</h4>
+                <ul>
+                    <li><strong>Classification: Top-1 / Top-5 accuracy</strong> measures if the correct label is the model's #1 prediction, or at least in its top 5 guesses. ImageNet Top-1 is the standard benchmark.</li>
+                    <li><strong>Detection: mAP (mean Average Precision)</strong> measures how well the model both finds objects and draws tight bounding boxes. mAP@50 is lenient (50% overlap counts as correct), mAP@50:95 is strict (averages across 50-95% overlap thresholds).</li>
+                    <li><strong>Segmentation: mIoU (mean Intersection over Union)</strong> for each class, measures how much the predicted pixel mask overlaps with ground truth. Dice coefficient is its cousin, common in medical imaging.</li>
+                    <li><strong>OCR: CER (Character Error Rate) and WER (Word Error Rate)</strong> measure how many characters/words the OCR system gets wrong compared to ground truth text.</li>
+                    <li><strong>Speed: FPS and latency</strong> for real-time applications. Report p50 (median) and p95 (worst-case) latency for production SLAs.</li>
+                    <li><strong>Production monitoring</strong>: track data drift (input distribution changes), per-camera/domain accuracy, and model confidence scores to catch performance degradation early.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ==================== NLP & LLMs ==================== -->
+        <div class="cx-panel" id="panel-nlp">
+            <div class="cx-panel-header">
+                <h2 data-i18n="courses.nlp.title">NLP &amp; LLMs (SOTA overview)</h2>
+                <p data-i18n="courses.nlp.intro">Natural Language Processing (NLP) teaches machines to understand, generate, and reason about human language. Today, Large Language Models (LLMs) power most NLP applications, but the ecosystem is much broader: encoder models for understanding, embedding models for search, and retrieval pipelines for grounding answers in real data.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Core NLP Tasks</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="textclass">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Text Classification</span>
+                        <span class="cx-algo-badge">NLP</span>
+                    </div>
+                    <p class="cx-algo-short">Assign a label to a piece of text: is this email spam? Is this review positive or negative? What topic does this article cover? Text classification is one of the most common NLP tasks in production, with approaches ranging from simple keyword rules to fine-tuned Transformers.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Approaches (by complexity)</h4>
+                            <ul>
+                                <li><strong>TF-IDF + LogReg/SVM</strong>: convert text to word frequency vectors, classify with a linear model. Fast, interpretable, strong baseline.</li>
+                                <li><strong>Fine-tuned BERT/RoBERTa</strong>: best accuracy for domain-specific tasks. Needs 500+ labeled examples. Train in minutes on a single GPU.</li>
+                                <li><strong>SetFit</strong>: few-shot learning with sentence transformers. Only 10-50 labeled examples needed. Great when data is scarce.</li>
+                                <li><strong>Zero-shot LLM</strong>: describe your categories in plain text and the LLM classifies without any labeled data. Slower and more expensive but incredibly flexible.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="ner">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">NER / Information Extraction</span>
+                        <span class="cx-algo-badge">NLP</span>
+                    </div>
+                    <p class="cx-algo-short">Named Entity Recognition finds and labels key information in text: names of people, companies, places, dates, amounts. It's essential for turning unstructured text (contracts, resumes, news articles, invoices) into structured data you can store in a database.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Approaches</h4>
+                            <ul>
+                                <li><strong>SpaCy NER</strong>: fast, rule-based + statistical. Good for standard entities (person, org, location). CPU-friendly.</li>
+                                <li><strong>Fine-tuned BERT + token classification</strong>: best for custom entity types specific to your domain (legal clauses, medical terms).</li>
+                                <li><strong>GLiNER</strong>: zero-shot NER. Describe your entities in natural language ("company names", "monetary amounts") and it extracts them without training.</li>
+                                <li><strong>LLM extraction</strong>: use structured output (JSON mode) for complex extraction schemas. Flexible but slower and more expensive.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="embedsearch">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Embeddings &amp; Semantic Search</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Search / RAG</span>
+                    </div>
+                    <p class="cx-algo-short">Embedding models convert text into numerical vectors (arrays of numbers, typically 768-1024 dimensions) that capture meaning. Texts with similar meanings end up as vectors that are close together in this high-dimensional space. This is the foundation of semantic search: instead of matching exact keywords, you find texts that mean the same thing.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How embedding projection works</h4>
+                            <p>Each sentence is transformed into a vector (e.g., 1024 numbers). Think of it as coordinates in a 1024-dimensional space. While we can't visualize 1024D, the principle is the same as 2D/3D: similar texts cluster together, different texts are far apart. You can use <strong>UMAP</strong> or <strong>t-SNE</strong> to project these vectors onto a 2D plane and literally see clusters of related documents. When a user asks a question, you embed it into the same space and find the nearest document vectors using cosine similarity or dot product.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Sparse vs Dense vs Hybrid search</h4>
+                            <ul>
+                                <li><strong>Dense search</strong> (semantic): uses embedding vectors. Great for finding texts with similar meaning even if they use completely different words ("car" matches "automobile"). Models: BGE-M3, E5, GTE.</li>
+                                <li><strong>Sparse search</strong> (lexical, BM25): matches exact keywords and their frequency. Excellent for technical terms, product codes, proper nouns that dense models might miss. Fast and simple.</li>
+                                <li><strong>Hybrid search</strong> (best of both): combines dense + sparse scores. Catches both semantic matches and exact keyword matches. Most production RAG systems use hybrid search (e.g., Qdrant supports both natively).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key embedding models</h4>
+                            <ul>
+                                <li><strong>BGE-M3</strong> (BAAI): multilingual, produces both dense AND sparse vectors, 1024-dim. Used in MIRROR.</li>
+                                <li><strong>E5 / GTE</strong> (Microsoft/Alibaba): instruction-tuned embeddings, top scores on MTEB benchmark.</li>
+                                <li><strong>Nomic Embed</strong>: open-source, long-context (8192 tokens), strong performance.</li>
+                                <li><strong>Cohere Embed v3</strong>: commercial, int8 quantized embeddings for cost-effective production.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Vector databases</h4>
+                            <p><strong>Qdrant</strong> (Rust, HNSW+quantization, hybrid search, used in MIRROR). <strong>Pinecone</strong> (fully managed, serverless). <strong>Weaviate</strong> (modular, GraphQL). <strong>ChromaDB</strong> (simple, great for prototyping). <strong>pgvector</strong> (PostgreSQL extension, use your existing DB).</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Encoder Models</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="bert">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">BERT / RoBERTa</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Encoder, Understanding</span>
+                    </div>
+                    <p class="cx-algo-short">BERT reads text in both directions simultaneously (bidirectional), giving it deep understanding of context. Unlike LLMs which generate text left-to-right, BERT is designed to understand text: classify it, extract information from it, compare sentences. It's small (110M params), fast (runs on CPU), and still the go-to model for many production NLP tasks where you need understanding, not generation.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How it works</h4>
+                            <p>BERT is a <strong>Transformer encoder</strong> pretrained on two tasks: (1) <strong>Masked Language Modeling</strong>: randomly hide 15% of words and predict them from surrounding context (both left and right). This forces the model to deeply understand language. (2) <strong>Next Sentence Prediction</strong>: determine if two sentences follow each other naturally. After pretraining, you add a small classification head on top and fine-tune on your specific task with as few as 500 labeled examples.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>Text classification</strong>: sentiment analysis, intent detection, spam filtering, topic classification</li>
+                                <li><strong>NER</strong>: extracting names, dates, entities from text (token-level classification)</li>
+                                <li><strong>Semantic similarity</strong>: comparing sentences with Sentence-BERT (produces embeddings)</li>
+                                <li><strong>Question answering</strong>: find the answer span in a passage (extractive QA)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Bidirectional context: understands words from both sides simultaneously</li>
+                                    <li>Small and fast (110M params for base, runs on CPU)</li>
+                                    <li>Fine-tunes in minutes on a single GPU</li>
+                                    <li>Massive ecosystem: 50k+ BERT variants on HuggingFace</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Cannot generate text (encoder only, no decoder)</li>
+                                    <li>Max 512 tokens input (limited context window)</li>
+                                    <li>Pretraining data is now outdated (original: 2019)</li>
+                                    <li>For generation tasks, use GPT-style decoder models instead</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key variants</h4>
+                            <p><strong>RoBERTa</strong>: same architecture, better pretraining (more data, longer training, no NSP task). <strong>DeBERTa</strong>: improved attention with disentangled position encoding, often outperforms RoBERTa. <strong>CamemBERT</strong>: French BERT, pretrained on French web data. <strong>DistilBERT</strong>: 40% smaller, 60% faster, retains 97% of BERT's accuracy.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">LLM Architecture &amp; Training</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="llm-arch">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">LLM Architectures</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Foundation</span>
+                    </div>
+                    <p class="cx-algo-short">Large Language Models (ChatGPT, Claude, Llama, Phi, Qwen) are massive Transformer decoder networks trained to predict the next word. By reading billions of documents, they develop an understanding of language, facts, and reasoning. After pretraining, they're refined with human feedback (RLHF/DPO) so they actually follow instructions and give helpful, safe answers instead of just completing text.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Key families (2024-2025)</h4>
+                            <ul>
+                                <li><strong>GPT-4 / GPT-4o</strong> (OpenAI): proprietary, best general reasoning, multimodal</li>
+                                <li><strong>Claude 3.5 Sonnet</strong> (Anthropic): strong on long context (200k tokens), safety-focused</li>
+                                <li><strong>Llama 3.x</strong> (Meta): open-weight, 8B/70B/405B, massive community</li>
+                                <li><strong>Phi-4</strong> (Microsoft): 14B, exceptional quality/size ratio, used in MIRROR</li>
+                                <li><strong>Qwen 2.5</strong> (Alibaba): top multilingual, 0.5B to 72B, open-weight</li>
+                                <li><strong>Mistral / Mixtral</strong> (Mistral AI): MoE architecture, efficient inference, European</li>
+                                <li><strong>DeepSeek-V3/R1</strong>: MoE, top reasoning and code generation, MIT license</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Training pipeline (4 stages)</h4>
+                            <p><strong>Step 1: Pretraining</strong> reads trillions of words from the internet, learning to predict the next word. This gives the model broad knowledge of language, facts, and reasoning patterns. <strong>Step 2: Instruction tuning (SFT)</strong> fine-tunes on curated instruction/response pairs so the model learns to follow instructions instead of just completing text. <strong>Step 3: Alignment (RLHF/DPO)</strong> trains with human preference data to be helpful, harmless, and honest. <strong>Step 4: Quantization</strong> compresses the model (GGUF/GPTQ/AWQ) to run on smaller hardware without significant quality loss.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="finetuning">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Fine-tuning: LoRA / QLoRA</span>
+                        <span class="cx-algo-badge">Training</span>
+                    </div>
+                    <p class="cx-algo-short">Adapt a pre-trained LLM to your specific domain by training only a tiny fraction of its parameters (~1%). Instead of updating all billions of weights, LoRA injects small trainable matrices ("adapters") into each layer. QLoRA loads the frozen model in 4-bit, making fine-tuning possible on a single consumer GPU (24GB VRAM for a 70B model).</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>How LoRA works</h4>
+                            <p>The original weight matrix W (e.g., 4096x4096) is frozen. LoRA adds two small matrices: A (4096x16) and B (16x4096), where 16 is the "rank." The output becomes W*x + A*B*x. Only A and B are trained, which is a tiny fraction of the total parameters. After training, A*B can be merged back into W, so inference has zero additional cost.</p>
+                            <p style="margin-top:0.4rem"><strong>QLoRA</strong> goes further: the frozen W is loaded in 4-bit NF4 precision (instead of 16-bit), cutting base model memory by 4x. The adapters A and B are still trained in FP16/BF16 for precision. This means a 70B model that normally needs 140GB VRAM can be fine-tuned in ~40GB.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>Domain adaptation</strong>: teach medical, legal, or financial terminology and reasoning patterns</li>
+                                <li><strong>Style and format control</strong>: make the model write in your brand's tone, or always output specific JSON structures</li>
+                                <li><strong>RAG improvement</strong>: fine-tune the model to better use retrieved context and produce citations</li>
+                                <li><strong>When prompting isn't enough</strong>: if few-shot prompting fails to get consistent results</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Train &lt;1% of parameters: fast and cheap</li>
+                                    <li>Adapters can be merged back into the base model (zero overhead)</li>
+                                    <li>Stack multiple adapters: one for legal, one for medical, same base</li>
+                                    <li>Tools: HuggingFace PEFT, Unsloth (2x faster), Axolotl, TRL</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Data quality is everything: garbage in, garbage out</li>
+                                    <li>Risk of catastrophic forgetting (model loses general knowledge)</li>
+                                    <li>Rank and learning rate require experimentation</li>
+                                    <li>Evaluation is tricky: benchmarks may not reflect real-world gains</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Typical workflow</h4>
+                            <p><strong>1.</strong> Prepare 500-10k instruction/response pairs. <strong>2.</strong> Choose a base model (Llama, Phi, Qwen). <strong>3.</strong> Configure LoRA: rank (8-64), alpha (2x rank), target modules (attention layers). <strong>4.</strong> Train 1-3 epochs with QLoRA via Unsloth or PEFT. <strong>5.</strong> Evaluate on held-out test set + human review. <strong>6.</strong> Merge adapter into base model and quantize (GGUF) for deployment.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">RAG &amp; Retrieval</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="rag">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">RAG Pipeline</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Production Pattern</span>
+                    </div>
+                    <p class="cx-algo-short">RAG (Retrieval Augmented Generation) gives an LLM access to your own documents. When a user asks a question, the system first searches for relevant passages in your document index, then feeds those passages to the LLM along with the question. The LLM writes an answer grounded in your actual data, with citations. This is how most enterprise AI assistants handle company-specific knowledge without retraining the model.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Pipeline stages</h4>
+                            <ul>
+                                <li><strong>1. Chunking</strong>: split documents into overlapping passages (200-500 words). Strategy matters: semantic chunking respects paragraph boundaries, hierarchical chunking maintains parent-child context.</li>
+                                <li><strong>2. Embedding</strong>: convert each chunk into a dense vector (BGE-M3, E5) and optionally a sparse vector (BM25/SPLADE) for hybrid search.</li>
+                                <li><strong>3. Indexing</strong>: store vectors + metadata in a vector database (Qdrant, Pinecone, ChromaDB) with HNSW index for fast approximate nearest neighbor search.</li>
+                                <li><strong>4. Retrieval</strong>: embed the user's question, find top-k most similar chunks via hybrid search (dense + sparse). Typical k=5-20.</li>
+                                <li><strong>5. Reranking</strong>: a cross-encoder (BGE-Reranker, Cohere Rerank) re-scores retrieved chunks by reading query+chunk together. Much more precise than embedding similarity alone.</li>
+                                <li><strong>6. Generation</strong>: the LLM receives the question + top reranked chunks as context and generates an answer with inline citations.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Grounds answers in real documents: dramatically reduces hallucinations</li>
+                                    <li>No retraining needed: just update the document index</li>
+                                    <li>Citations let users verify every claim in the answer</li>
+                                    <li>Works with any LLM (open-source or API, local or cloud)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Retrieval quality is the bottleneck: bad retrieval = bad answers</li>
+                                    <li>Chunking strategy is critical (too small = missing context, too big = noise)</li>
+                                    <li>Adds latency: embedding + search + reranking + generation</li>
+                                    <li>Complex to evaluate end-to-end (retrieval quality + generation faithfulness)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Production tips</h4>
+                            <p>Always use <strong>hybrid search</strong> (dense + sparse) for better recall on technical queries. Cache embeddings for frequent queries. Cap top-k after reranking (3-5) to control latency and cost. Stream tokens for responsive UX. Monitor retrieval quality (MRR, recall@k) and user feedback. Add fallback to direct LLM chat when no relevant documents are found.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="tokenization">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Tokenization</span>
+                        <span class="cx-algo-badge">Preprocessing</span>
+                    </div>
+                    <p class="cx-algo-short">Before any model can process text, it must be split into "tokens" (small pieces: words, subwords, or characters). The tokenizer converts text into a sequence of integer IDs that the model understands. How text is tokenized affects everything: cost (more tokens = higher price), speed (longer sequences = slower), and quality (non-English languages often need more tokens per word, reducing effective context).</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <ul>
+                                <li><strong>BPE (Byte-Pair Encoding)</strong>: the most common algorithm, used by GPT, Llama, Phi. Starts with individual characters and iteratively merges the most frequent pairs.</li>
+                                <li><strong>Vocabulary size</strong>: 32k-128k tokens typical. Larger vocab = fewer tokens per text but bigger embedding table.</li>
+                                <li><strong>Special tokens</strong>: [CLS], [SEP], &lt;|im_start|&gt;, padding tokens that mark structure in the input.</li>
+                                <li><strong>Context window</strong>: the maximum number of tokens the model can process at once. Ranges from 4k (Phi-4-mini) to 128k+ (GPT-4, Llama 3.1).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Evaluation &amp; Safety</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="llm-eval">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">LLM Evaluation</span>
+                        <span class="cx-algo-badge">Quality</span>
+                    </div>
+                    <p class="cx-algo-short">Evaluating LLMs is notoriously difficult because there's no single metric that captures "quality." You need a combination: standardized benchmarks for model selection, golden test sets for regression testing, LLM-as-judge for scalable scoring, and human evaluation for final validation. In production, user feedback and monitoring complete the picture.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Evaluation approaches</h4>
+                            <ul>
+                                <li><strong>Benchmarks</strong>: MMLU (general knowledge), HumanEval (code), GSM8K (math), MT-Bench (multi-turn chat). Useful for comparing models before selection.</li>
+                                <li><strong>Golden test sets</strong>: curated Q&amp;A pairs with expected answers for your specific use case. Run after every change for regression testing.</li>
+                                <li><strong>LLM-as-judge</strong>: use GPT-4 or Claude to score responses on rubrics (helpfulness, accuracy, safety). Cheaper and faster than human eval, correlates well.</li>
+                                <li><strong>Human evaluation</strong>: gold standard but expensive and slow. Use for final validation, not iteration.</li>
+                                <li><strong>RAG-specific (RAGAS)</strong>: faithfulness (answer supported by context?), answer relevancy, context precision, citation correctness.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="safety">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Safety &amp; Alignment</span>
+                        <span class="cx-algo-badge">Production</span>
+                    </div>
+                    <p class="cx-algo-short">Protecting LLM applications from misuse and failure in production: preventing prompt injection attacks, filtering harmful outputs, detecting hallucinations, and adding guardrails to keep the AI safe, honest, and on-topic.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Key concerns</h4>
+                            <ul>
+                                <li><strong>Prompt injection</strong>: users trick the model into ignoring its instructions or revealing the system prompt. Mitigate with input sanitization, instruction hierarchy, and separate system/user contexts.</li>
+                                <li><strong>Hallucination</strong>: the model invents facts. RAG + citations reduce this significantly but don't eliminate it. Always ground responses in retrieved context.</li>
+                                <li><strong>PII leakage</strong>: the model may reproduce personal data from training. Filter both input and output with regex + NER-based scanners.</li>
+                                <li><strong>Guardrails</strong>: NeMo Guardrails (NVIDIA) for dialog flow control, Llama Guard for content classification, custom classifiers for domain-specific safety.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== MLOps & INFRA ==================== -->
+        <div class="cx-panel" id="panel-mlops">
+            <div class="cx-panel-header">
+                <h2>MLOps &amp; Infrastructure</h2>
+                <p>MLOps bridges the gap between building ML models and running them reliably in production. It borrows practices from DevOps (CI/CD, monitoring, infrastructure as code) and applies them to the unique challenges of machine learning: model versioning, data drift, GPU resource management, and continuous retraining.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Containerization</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="docker">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Docker</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Foundation</span>
+                    </div>
+                    <p class="cx-algo-short">Docker packages your application and all its dependencies (Python, CUDA, libraries, model files) into a single portable container that runs identically on any machine. No more "it works on my machine" problems. Every ML service in production should be containerized.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <ul>
+                                <li><strong>Dockerfile</strong>: a recipe that describes how to build your container image (base OS, install dependencies, copy code, set entrypoint)</li>
+                                <li><strong>Image</strong>: the built artifact, like a snapshot. Immutable, versioned, stored in a registry (Docker Hub, GHCR, ECR)</li>
+                                <li><strong>Container</strong>: a running instance of an image. Lightweight, isolated, starts in seconds</li>
+                                <li><strong>Volume</strong>: persistent storage mounted into the container (for model files, data that survives container restarts)</li>
+                                <li><strong>NVIDIA Container Toolkit</strong>: enables GPU passthrough to Docker containers (essential for ML inference)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Best practices for ML</h4>
+                            <ul>
+                                <li>Use multi-stage builds: build dependencies in stage 1, copy only what's needed to the final slim image</li>
+                                <li>Pin all dependency versions (requirements.txt with exact versions)</li>
+                                <li>Keep model weights outside the image (mount as volume or download at startup)</li>
+                                <li>Use health checks so orchestrators know if the service is ready</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="compose">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Docker Compose</span>
+                        <span class="cx-algo-badge">Multi-container</span>
+                    </div>
+                    <p class="cx-algo-short">When your application has multiple services (API server, vector database, embedding model, LLM, reverse proxy), Docker Compose lets you define and run them all together in a single YAML file. One command starts everything with the right networking, volumes, and environment variables.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Typical ML stack in docker-compose.yml</h4>
+                            <ul>
+                                <li><strong>app</strong>: your FastAPI/Flask API server (CPU)</li>
+                                <li><strong>llm</strong>: LLM inference service with GPU access (vLLM, llama.cpp server)</li>
+                                <li><strong>qdrant</strong>: vector database for RAG (persistent volume)</li>
+                                <li><strong>caddy/nginx</strong>: reverse proxy with HTTPS, rate limiting</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Simple YAML syntax, easy to version control</li>
+                                    <li>Perfect for single-server deployments and development</li>
+                                    <li>Built-in service discovery (services talk by name)</li>
+                                    <li>GPU support via deploy.resources.reservations</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Single-host only (no multi-server scaling)</li>
+                                    <li>No auto-healing or rolling updates (manual restart)</li>
+                                    <li>For multi-server: use Kubernetes or Docker Swarm</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Orchestration</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="kubernetes">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Kubernetes (K8s)</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Production Orchestration</span>
+                    </div>
+                    <p class="cx-algo-short">Kubernetes is the industry standard for running containers at scale across multiple servers. It automatically handles load balancing, scaling (up and down based on demand), self-healing (restarts crashed containers), rolling updates (zero-downtime deploys), and GPU scheduling. Essential when you need to serve ML models to hundreds or thousands of concurrent users.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <ul>
+                                <li><strong>Pod</strong>: the smallest unit, one or more containers running together. Your LLM service = 1 pod.</li>
+                                <li><strong>Deployment</strong>: manages replicas of your pods. "Run 3 copies of my API server."</li>
+                                <li><strong>Service</strong>: stable network endpoint that routes traffic to pods (load balancing)</li>
+                                <li><strong>Ingress</strong>: routes external HTTP/HTTPS traffic to the right service</li>
+                                <li><strong>GPU scheduling</strong>: NVIDIA device plugin lets you request GPUs per pod (resources.limits: nvidia.com/gpu: 1)</li>
+                                <li><strong>HPA (Horizontal Pod Autoscaler)</strong>: automatically adds/removes pods based on CPU, memory, or custom metrics</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Auto-scaling, self-healing, rolling updates out of the box</li>
+                                    <li>GPU-aware scheduling for ML workloads</li>
+                                    <li>Massive ecosystem: Helm charts, operators, monitoring</li>
+                                    <li>Managed options: GKE, EKS, AKS reduce operational burden</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Steep learning curve (YAML manifests, networking, RBAC)</li>
+                                    <li>Overkill for single-server deployments</li>
+                                    <li>Operational overhead: monitoring the orchestrator itself</li>
+                                    <li>GPU node pools are expensive (always-on or with autoscaling delays)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">ML Serving &amp; APIs</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="fastapi">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">FastAPI / Model Serving</span>
+                        <span class="cx-algo-badge">API Framework</span>
+                    </div>
+                    <p class="cx-algo-short">FastAPI is the go-to Python framework for building production ML APIs. It's async (handles many concurrent requests), generates OpenAPI docs automatically, and has built-in data validation with Pydantic. For LLM serving specifically, vLLM and TGI (Text Generation Inference) provide optimized inference servers with OpenAI-compatible APIs.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Serving stack options</h4>
+                            <ul>
+                                <li><strong>FastAPI + llama-cpp-python</strong>: simple, direct, great for single-model CPU/GPU serving (used in MIRROR)</li>
+                                <li><strong>vLLM</strong>: high-throughput LLM serving with PagedAttention, continuous batching, OpenAI-compatible API</li>
+                                <li><strong>TGI (HuggingFace)</strong>: production-ready, supports quantization, speculative decoding, token streaming</li>
+                                <li><strong>TensorRT-LLM (NVIDIA)</strong>: maximum performance on NVIDIA GPUs, compiled inference engine</li>
+                                <li><strong>Triton Inference Server</strong>: multi-model, multi-framework serving (PyTorch, TensorFlow, ONNX)</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Production essentials</h4>
+                            <ul>
+                                <li>Run behind Gunicorn/Uvicorn with multiple workers for CPU tasks</li>
+                                <li>Add health check endpoints (/health, /ready) for orchestrator probes</li>
+                                <li>Implement request timeouts and graceful shutdown</li>
+                                <li>Use structured logging (JSON) for observability</li>
+                                <li>Rate limiting and authentication for public-facing APIs</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Monitoring &amp; CI/CD</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="monitoring">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Monitoring &amp; Observability</span>
+                        <span class="cx-algo-badge">Production</span>
+                    </div>
+                    <p class="cx-algo-short">In production, you need to know when your model degrades before users notice. Monitor latency (time to first token, total generation time), error rates, GPU utilization, and most critically: output quality. Data drift detection alerts you when the input distribution changes and your model's predictions may no longer be reliable.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>What to monitor</h4>
+                            <ul>
+                                <li><strong>Latency</strong>: p50, p95, p99 for time-to-first-token and total generation time</li>
+                                <li><strong>Throughput</strong>: requests per second, tokens per second</li>
+                                <li><strong>Error rate</strong>: HTTP 500s, OOM kills, timeout rate</li>
+                                <li><strong>Resource usage</strong>: GPU memory, GPU utilization, CPU, RAM</li>
+                                <li><strong>Data drift</strong>: compare input embedding distributions over time (KL divergence, PSI)</li>
+                                <li><strong>Quality</strong>: user feedback (thumbs up/down), LLM-as-judge scores, hallucination rate</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Tools</h4>
+                            <p><strong>Prometheus + Grafana</strong>: metrics collection and dashboards. <strong>Loki</strong>: log aggregation. <strong>Langfuse / LangSmith</strong>: LLM-specific tracing (prompt, context, response, latency). <strong>Evidently AI</strong>: data drift and model monitoring.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== DATA ENGINEERING ==================== -->
+        <div class="cx-panel" id="panel-dataeng">
+            <div class="cx-panel-header">
+                <h2>Data Engineering</h2>
+                <p>Data Engineering is about building the pipelines that collect, clean, transform, and deliver data to ML models and analytics systems. Without reliable data pipelines, even the best model is useless. This section covers the tools and patterns used to move and transform data at scale.</p>
+            </div>
+
+            <h3 class="cx-subcategory">ETL &amp; Data Pipelines</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="etl">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">ETL / ELT Pipelines</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Foundation</span>
+                    </div>
+                    <p class="cx-algo-short">ETL (Extract, Transform, Load) is the classic pattern for moving data between systems. Extract data from sources (APIs, databases, files), Transform it (clean, normalize, aggregate), and Load it into a destination (data warehouse, feature store). ELT loads raw data first and transforms in-place, preferred with modern cloud warehouses.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Tools</h4>
+                            <ul>
+                                <li><strong>Apache Airflow</strong>: the most popular workflow orchestrator. Define DAGs (directed acyclic graphs) of tasks in Python. Schedule, retry, monitor pipelines.</li>
+                                <li><strong>Prefect / Dagster</strong>: modern alternatives to Airflow with better developer experience, typing, and testing.</li>
+                                <li><strong>dbt (data build tool)</strong>: SQL-based transformations in your data warehouse. Version-controlled, tested, documented.</li>
+                                <li><strong>Apache Spark</strong>: distributed data processing for very large datasets (TB+). PySpark for Python integration.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>For ML specifically</h4>
+                            <ul>
+                                <li><strong>Feature stores</strong> (Feast, Tecton): compute, store, and serve features consistently between training and serving</li>
+                                <li><strong>Data versioning</strong> (DVC): track dataset versions alongside code versions in Git</li>
+                                <li><strong>Data validation</strong> (Great Expectations): automated checks that your data meets quality expectations before training</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Streaming &amp; Real-time</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="kafka">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Kafka / Message Queues</span>
+                        <span class="cx-algo-badge">Streaming</span>
+                    </div>
+                    <p class="cx-algo-short">When data arrives continuously (user events, IoT sensors, log streams), you need a streaming platform that can handle millions of events per second with guaranteed delivery. Apache Kafka is the industry standard: it's a distributed log that producers write to and consumers read from, with persistence and replay capability.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Options by complexity</h4>
+                            <ul>
+                                <li><strong>Redis Pub/Sub / Redis Streams</strong>: simple, fast, great for lightweight real-time features. No persistence guarantees.</li>
+                                <li><strong>RabbitMQ</strong>: traditional message broker with routing, queues, acknowledgments. Good for task distribution.</li>
+                                <li><strong>Apache Kafka</strong>: distributed, persistent, ordered log. Handles millions of events/sec. Industry standard for event-driven architectures.</li>
+                                <li><strong>Apache Pulsar</strong>: Kafka alternative with multi-tenancy and tiered storage built-in.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Data Formats &amp; Storage</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="formats">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Data Formats</span>
+                        <span class="cx-algo-badge">Storage</span>
+                    </div>
+                    <p class="cx-algo-short">How you store data matters enormously for performance and cost. Columnar formats (Parquet) are orders of magnitude faster than CSV for analytical queries. Choosing the right format for the right use case is a fundamental data engineering skill.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Formats comparison</h4>
+                            <ul>
+                                <li><strong>CSV/JSON</strong>: human-readable, universal, but slow for large datasets. Use for small data exchange and configs.</li>
+                                <li><strong>Parquet</strong>: columnar, compressed, predicate pushdown. Standard for data lakes and ML datasets. 10-100x faster than CSV for analytics.</li>
+                                <li><strong>Arrow</strong>: in-memory columnar format. Zero-copy reads. Used by Pandas 2.0, Polars, DuckDB.</li>
+                                <li><strong>Protobuf / Avro</strong>: schema-enforced binary formats for API communication and streaming (Kafka).</li>
+                                <li><strong>HDF5 / Zarr</strong>: multi-dimensional arrays, common in scientific computing and large tensor datasets.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== DATABASES ==================== -->
+        <div class="cx-panel" id="panel-databases">
+            <div class="cx-panel-header">
+                <h2>Databases</h2>
+                <p>Choosing the right database is one of the most impactful architectural decisions in any project. Each type of database excels at specific access patterns and fails at others. Understanding these tradeoffs helps you pick the right tool instead of forcing one database to do everything.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Relational (SQL)</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="postgres">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">PostgreSQL</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Best General-Purpose</span>
+                    </div>
+                    <p class="cx-algo-short">The most advanced open-source relational database. Supports structured data with strong consistency (ACID transactions), complex queries (JOINs, CTEs, window functions), and extensions for nearly anything: full-text search, JSON, geospatial (PostGIS), and even vector search (pgvector). If you're unsure which database to pick, PostgreSQL is almost always a safe default.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>ACID compliance: data integrity guaranteed, no corruption</li>
+                                    <li>Rich SQL: JOINs, subqueries, CTEs, window functions, full-text search</li>
+                                    <li>Extensions: pgvector (ML embeddings), PostGIS (geospatial), TimescaleDB (time series)</li>
+                                    <li>Mature ecosystem, battle-tested at every scale</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Vertical scaling limits (single-node write bottleneck)</li>
+                                    <li>Horizontal sharding is complex (use Citus or CockroachDB for distributed)</li>
+                                    <li>Not optimized for high-write throughput on append-only workloads</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <p>User accounts, application state, metadata, configuration, anything with relationships. For ML: store experiment metadata, model registry entries, user feedback, evaluation results. With pgvector: can even serve as a simple vector database for small-scale RAG.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="sqlite">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">SQLite</span>
+                        <span class="cx-algo-badge">Embedded</span>
+                    </div>
+                    <p class="cx-algo-short">A serverless, file-based SQL database embedded directly in your application. No separate database server needed: the entire database is a single file on disk. Perfect for local apps, prototypes, mobile apps, and anywhere you need SQL without the overhead of a full database server. Used in MIRROR for local data storage.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Zero configuration: no server, no users, no permissions</li>
+                                    <li>Single file: easy to backup, copy, version</li>
+                                    <li>Incredibly fast for read-heavy workloads</li>
+                                    <li>Ships with Python (sqlite3 module built-in)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Single-writer: only one write at a time (WAL mode helps for reads)</li>
+                                    <li>No user management or network access (local only)</li>
+                                    <li>Not suitable for high-concurrency web applications</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">NoSQL / Document</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="mongodb">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">MongoDB</span>
+                        <span class="cx-algo-badge">Document Store</span>
+                    </div>
+                    <p class="cx-algo-short">Stores data as flexible JSON-like documents (BSON) instead of rigid tables with fixed columns. Each document can have a different structure, making it great for evolving schemas, nested data, and rapid prototyping. Very popular for web applications where the data model changes frequently.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Flexible schema: add fields without migrations</li>
+                                    <li>Nested documents: store complex objects naturally</li>
+                                    <li>Horizontal scaling with sharding built-in</li>
+                                    <li>Atlas (managed) makes operations easy</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>No JOINs: denormalization leads to data duplication</li>
+                                    <li>Weaker consistency guarantees than PostgreSQL</li>
+                                    <li>Aggregation pipeline is powerful but complex</li>
+                                    <li>Schema flexibility can become schema chaos without discipline</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="redis">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Redis</span>
+                        <span class="cx-algo-badge">In-Memory / Cache</span>
+                    </div>
+                    <p class="cx-algo-short">An in-memory key-value store that is incredibly fast (sub-millisecond latency). Used primarily as a cache (store frequently accessed data in memory instead of hitting the database), session store, rate limiter, message broker, and real-time leaderboard. Essential in any high-performance system.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Sub-millisecond latency (everything in RAM)</li>
+                                    <li>Rich data structures: strings, lists, sets, sorted sets, streams, hashes</li>
+                                    <li>Pub/Sub for real-time messaging</li>
+                                    <li>RediSearch: full-text search and vector search module</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Data must fit in RAM (expensive at scale)</li>
+                                    <li>Persistence is optional and adds latency (RDB/AOF)</li>
+                                    <li>Not a primary database: use for caching, not as source of truth</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Vector Databases</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="vectordb">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Qdrant / Pinecone / Weaviate</span>
+                        <span class="cx-algo-badge cx-badge-highlight">AI / RAG</span>
+                    </div>
+                    <p class="cx-algo-short">Purpose-built databases for storing and searching high-dimensional vectors (embeddings). Essential for RAG, semantic search, recommendation systems, and any application that needs to find "similar" items. They use approximate nearest neighbor (ANN) algorithms like HNSW to search billions of vectors in milliseconds.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Options compared</h4>
+                            <ul>
+                                <li><strong>Qdrant</strong> (Rust): fast, HNSW + product quantization, hybrid dense+sparse search, filtering, gRPC/REST. Used in MIRROR. Self-hosted or cloud.</li>
+                                <li><strong>Pinecone</strong>: fully managed, serverless, auto-scaling. No self-hosting option. Best for teams that don't want to manage infrastructure.</li>
+                                <li><strong>Weaviate</strong>: modular (plug in different vectorizers), GraphQL API, hybrid search. Good for complex schemas.</li>
+                                <li><strong>ChromaDB</strong>: simple, Python-native, great for prototyping and small projects. Not production-grade at scale.</li>
+                                <li><strong>pgvector</strong>: PostgreSQL extension. Use your existing database for vector search. Good for small-medium scale, avoids adding another database.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use a dedicated vector DB vs pgvector</h4>
+                            <p><strong>pgvector</strong>: &lt;1M vectors, already using PostgreSQL, simple use case. <strong>Dedicated</strong>: &gt;1M vectors, need advanced features (hybrid search, quantization, sharding), or vector search is your primary access pattern.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Choosing the Right Database</h3>
+            <div class="cx-info-box">
+                <h4>Decision guide</h4>
+                <ul>
+                    <li><strong>Structured data with relationships</strong> (users, orders, products): PostgreSQL. Always the safe default.</li>
+                    <li><strong>Flexible/nested documents, evolving schema</strong> (content, configs, logs): MongoDB or PostgreSQL JSONB.</li>
+                    <li><strong>Caching, sessions, real-time counters</strong>: Redis. Sub-millisecond, in-memory.</li>
+                    <li><strong>Embeddings, semantic search, RAG</strong>: Qdrant (self-hosted) or Pinecone (managed). pgvector for simple cases.</li>
+                    <li><strong>Time series</strong> (metrics, IoT sensors): TimescaleDB (PostgreSQL extension) or InfluxDB.</li>
+                    <li><strong>Graph relationships</strong> (social networks, knowledge graphs): Neo4j or Apache AGE (PostgreSQL extension).</li>
+                    <li><strong>Local/embedded, single-user</strong>: SQLite. Zero setup, ships with Python.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<footer class="footer">
+    <p data-i18n-html="courses.footer">MIRROR &middot; Courses &middot; Michail Berjaoui</p>
+</footer>
+
+<script>
+(function() {
+    const tabs = document.querySelectorAll('.cx-tab');
+    const panels = document.querySelectorAll('.cx-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    document.querySelectorAll('.cx-algo-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('a')) return;
+            card.classList.toggle('expanded');
+        });
+    });
+})();
+</script>
+{% endblock %}

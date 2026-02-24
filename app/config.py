@@ -1,6 +1,7 @@
 import os
 import multiprocessing
 from dataclasses import dataclass, field
+from typing import Dict, List
 
 
 @dataclass
@@ -24,8 +25,18 @@ def _auto_threads() -> int:
     n = int(os.environ.get("MODEL_N_THREADS", "0"))
     if n > 0:
         return n
-    # Leave 2 cores for embedding, qdrant, system
-    available = multiprocessing.cpu_count() or 4
+    # Prefer cpuset/affinity-aware detection so Docker/Compose CPU limits are respected.
+    available = 0
+    try:
+        # Linux: returns CPUs the current process is allowed to run on (respects cpuset)
+        available = len(os.sched_getaffinity(0))
+    except Exception:
+        available = 0
+
+    if available <= 0:
+        available = multiprocessing.cpu_count() or 4
+
+    # Keep a little headroom for Flask, embeddings, Qdrant, and OS noise.
     return max(1, available - 2)
 
 
@@ -94,6 +105,185 @@ class ScraperConfig:
     timeout: int = 15
     max_content_length: int = 500_000  # ~500 KB
     user_agent: str = "MIRROR-Bot/1.0"
+
+
+# ---------------------------------------------------------------------------
+# Model Registry — all supported LLM models with HuggingFace download info
+# ---------------------------------------------------------------------------
+
+MODEL_REGISTRY: List[Dict] = [
+    # --- Phi-4-mini 3.8B (default - fast inference) ---
+    {
+        "id": "phi-4-mini-q4km",
+        "name": "Phi-4 Mini 3.8B Q4_K_M",
+        "family": "Phi-4 Mini",
+        "params": "3.8B",
+        "quant": "Q4_K_M",
+        "ram_gb": 3,
+        "filename": "Phi-4-mini-instruct-Q4_K_M.gguf",
+        "hf_repo": "tensorblock/Phi-4-mini-instruct-GGUF",
+        "hf_file": "Phi-4-mini-instruct-Q4_K_M.gguf",
+        "description": "Fast, compact. Great reasoning for its size. Ideal for CPU.",
+        "n_ctx": 4096,
+        "speed_estimate": "15-25 t/s",
+        "default": True,
+    },
+    # --- Phi-4 14B ---
+    {
+        "id": "phi-4-14b-q8",
+        "name": "Phi-4 14B Q8_0",
+        "family": "Phi-4",
+        "params": "14B",
+        "quant": "Q8_0",
+        "ram_gb": 16,
+        "filename": "phi-4-Q8_0.gguf",
+        "hf_repo": "bartowski/phi-4-GGUF",
+        "hf_file": "phi-4-Q8_0.gguf",
+        "description": "High quality 14B. Slow on CPU (3-6 t/s).",
+        "n_ctx": 4096,
+        "speed_estimate": "3-6 t/s",
+        "default": False,
+    },
+    {
+        "id": "phi-4-14b-q4km",
+        "name": "Phi-4 14B Q4_K_M",
+        "family": "Phi-4",
+        "params": "14B",
+        "quant": "Q4_K_M",
+        "ram_gb": 9,
+        "filename": "phi-4-Q4_K_M.gguf",
+        "hf_repo": "bartowski/phi-4-GGUF",
+        "hf_file": "phi-4-Q4_K_M.gguf",
+        "description": "Phi-4 lighter quantization. Faster than Q8.",
+        "n_ctx": 4096,
+        "speed_estimate": "5-10 t/s",
+        "default": False,
+    },
+    # --- Qwen 2.5 32B ---
+    {
+        "id": "qwen2.5-32b-q6k",
+        "name": "Qwen 2.5 32B Q6_K",
+        "family": "Qwen 2.5",
+        "params": "32B",
+        "quant": "Q6_K",
+        "ram_gb": 28,
+        "filename": "Qwen2.5-32B-Instruct-Q6_K.gguf",
+        "hf_repo": "Qwen/Qwen2.5-32B-Instruct-GGUF",
+        "hf_file": "qwen2.5-32b-instruct-q6_k.gguf",
+        "description": "Top-tier multilingual. Excellent reasoning & code generation.",
+        "n_ctx": 4096,
+        "speed_estimate": "1-3 t/s",
+        "default": False,
+    },
+    {
+        "id": "qwen2.5-32b-q4km",
+        "name": "Qwen 2.5 32B Q4_K_M",
+        "family": "Qwen 2.5",
+        "params": "32B",
+        "quant": "Q4_K_M",
+        "ram_gb": 20,
+        "filename": "qwen2.5-32b-instruct-q4_k_m.gguf",
+        "hf_repo": "Qwen/Qwen2.5-32B-Instruct-GGUF",
+        "hf_file": "qwen2.5-32b-instruct-q4_k_m.gguf",
+        "description": "Qwen 32B lighter quantization. Faster inference, still excellent quality.",
+        "n_ctx": 4096,
+        "speed_estimate": "2-5 t/s",
+        "default": False,
+    },
+    # --- Phi-3.5 MoE 42B ---
+    {
+        "id": "phi3.5-moe-q8",
+        "name": "Phi-3.5 MoE 42B Q8_0",
+        "family": "Phi-3.5 MoE",
+        "params": "42B",
+        "quant": "Q8_0",
+        "ram_gb": 46,
+        "filename": "Phi-3.5-MoE-instruct-Q8_0.gguf",
+        "hf_repo": "bartowski/Phi-3.5-MoE-instruct-GGUF",
+        "hf_file": "Phi-3.5-MoE-instruct-Q8_0.gguf",
+        "description": "MoE architecture — activates 6.6B of 42B per token. Complex reasoning.",
+        "n_ctx": 4096,
+        "speed_estimate": "1-2 t/s",
+        "default": False,
+    },
+    # --- Llama 3.2 8B (multiple quantizations for comparison) ---
+    {
+        "id": "llama3.2-8b-fp16",
+        "name": "Llama 3.1 8B FP16",
+        "family": "Llama 3",
+        "params": "8B",
+        "quant": "FP16",
+        "ram_gb": 16,
+        "filename": "Meta-Llama-3.1-8B-Instruct-f16.gguf",
+        "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "hf_file": "Meta-Llama-3.1-8B-Instruct-f16.gguf",
+        "description": "Full precision baseline for quality comparison.",
+        "n_ctx": 4096,
+        "speed_estimate": "4-8 t/s",
+        "default": False,
+    },
+    {
+        "id": "llama3.2-8b-q8",
+        "name": "Llama 3.1 8B Q8_0",
+        "family": "Llama 3",
+        "params": "8B",
+        "quant": "Q8_0",
+        "ram_gb": 8,
+        "filename": "Meta-Llama-3.1-8B-Instruct-Q8_0.gguf",
+        "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "hf_file": "Meta-Llama-3.1-8B-Instruct-Q8_0.gguf",
+        "description": "Near-lossless quantization. Best quality/speed trade-off.",
+        "n_ctx": 4096,
+        "speed_estimate": "6-12 t/s",
+        "default": False,
+    },
+    {
+        "id": "llama3.2-8b-q6k",
+        "name": "Llama 3.1 8B Q6_K",
+        "family": "Llama 3",
+        "params": "8B",
+        "quant": "Q6_K",
+        "ram_gb": 7,
+        "filename": "Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
+        "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "hf_file": "Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
+        "description": "Balanced quantization. Minimal quality loss.",
+        "n_ctx": 4096,
+        "speed_estimate": "8-14 t/s",
+        "default": False,
+    },
+    {
+        "id": "llama3.2-8b-q4km",
+        "name": "Llama 3.1 8B Q4_K_M",
+        "family": "Llama 3",
+        "params": "8B",
+        "quant": "Q4_K_M",
+        "ram_gb": 5,
+        "filename": "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+        "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+        "hf_file": "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
+        "description": "Aggressive quantization. Fastest, see quality impact.",
+        "n_ctx": 4096,
+        "speed_estimate": "10-18 t/s",
+        "default": False,
+    },
+]
+
+
+def get_model_by_id(model_id: str) -> dict:
+    """Look up a model entry from the registry by its ID."""
+    for m in MODEL_REGISTRY:
+        if m["id"] == model_id:
+            return m
+    return {}
+
+
+def get_default_model() -> dict:
+    """Return the default model entry."""
+    for m in MODEL_REGISTRY:
+        if m.get("default"):
+            return m
+    return MODEL_REGISTRY[0] if MODEL_REGISTRY else {}
 
 
 # Singleton configs

@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}AI Playbook{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container" style="max-width:860px;">
+        <h1 class="text-center mb-1" style="font-size:2rem;font-weight:800;" data-i18n="playbook.title">AI Playbook</h1>
+        <p class="text-center text-muted mb-3" data-i18n="playbook.subtitle">A structured learning map of how I think about Machine Learning, Deep Learning, and shipping AI products.</p>
+
+        <div class="course-kpis">
+            <div class="kpi-card">
+                <div class="kpi-title" data-i18n="playbook.kpi.focus">Focus</div>
+                <div class="kpi-value" data-i18n="playbook.kpi.focus_value">Practical ML that ships</div>
+                <div class="kpi-meta">
+                    <span class="badge">Metrics</span>
+                    <span class="badge">Latency</span>
+                    <span class="badge">Reliability</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title" data-i18n="playbook.kpi.method">Method</div>
+                <div class="kpi-value" data-i18n="playbook.kpi.method_value">Measure → Diagnose → Iterate</div>
+                <div class="kpi-meta">
+                    <span class="badge">A/B</span>
+                    <span class="badge">Error analysis</span>
+                    <span class="badge">Regression tests</span>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title" data-i18n="playbook.kpi.stack">Stack</div>
+                <div class="kpi-value" data-i18n="playbook.kpi.stack_value">LLMs, RAG, Vision</div>
+                <div class="kpi-meta">
+                    <span class="badge">RAG</span>
+                    <span class="badge">Serving</span>
+                    <span class="badge">LLMOps</span>
+                </div>
+            </div>
+        </div>
+
+        <details class="tech-accordion">
+            <summary class="tech-accordion-summary" data-i18n="playbook.ml.title">Machine Learning</summary>
+            <div class="tech-section">
+                <p data-i18n="playbook.ml.intro">The goal is strong baselines, reproducible experiments, and metrics you can trust. I treat classical ML as a first-class tool: fast, interpretable, and often the best production ROI.</p>
+
+                <div class="course-grid">
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ml.foundations">Foundations</h3>
+                        <ul>
+                            <li><strong>Probability & stats</strong>: distributions, Bayes rule, uncertainty</li>
+                            <li><strong>Optimization</strong>: gradients, regularization, early stopping</li>
+                            <li><strong>Bias/variance</strong>: how to decide between data vs model complexity</li>
+                            <li><strong>Calibration</strong>: reliability curves, thresholding, decision costs</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ml.algorithms">Algorithms</h3>
+                        <ul>
+                            <li><strong>Linear/Logistic regression</strong>: robust baselines, interpretability</li>
+                            <li><strong>Tree models</strong>: XGBoost/LightGBM, leakage checks</li>
+                            <li><strong>Clustering</strong>: segment discovery, embeddings-first workflows</li>
+                            <li><strong>Dim reduction</strong>: PCA/UMAP for debugging and comms</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ml.evaluation">Evaluation</h3>
+                        <ul>
+                            <li><strong>Metrics</strong>: PR-AUC vs ROC-AUC, F1, cost-sensitive metrics</li>
+                            <li><strong>Validation</strong>: stratification, time splits, leakage prevention</li>
+                            <li><strong>Experimentation</strong>: A/B tests, guardrails, confidence</li>
+                            <li><strong>Monitoring</strong>: drift, slices, data quality checks</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ml.production">Production checklist</h3>
+                        <ul>
+                            <li><strong>Reproducibility</strong>: pinned features, deterministic pipelines</li>
+                            <li><strong>Latency</strong>: p95 targets, batch vs online decisions</li>
+                            <li><strong>Observability</strong>: structured logs, traceability, dashboards</li>
+                            <li><strong>Failure modes</strong>: fallbacks, safe defaults, rollbacks</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="course-visuals">
+                    <div class="course-visual">
+                        <div class="course-visual-title" data-i18n="playbook.ml.visual1">Bias / Variance</div>
+                        <svg viewBox="0 0 520 120" role="img" aria-label="Bias variance diagram">
+                            <rect x="10" y="12" width="500" height="96" rx="12" fill="rgba(139,92,246,0.08)" stroke="rgba(139,92,246,0.25)" />
+                            <text x="28" y="42" fill="#a0a0b0" font-size="12" font-family="Inter">Model complexity →</text>
+                            <line x1="28" y1="78" x2="492" y2="78" stroke="rgba(232,232,237,0.25)" />
+                            <path d="M40,78 C130,24 220,24 310,78" fill="none" stroke="#8b5cf6" stroke-width="3" />
+                            <path d="M40,30 C170,72 280,84 470,92" fill="none" stroke="rgba(34,197,94,0.9)" stroke-width="3" />
+                            <text x="318" y="54" fill="#8b5cf6" font-size="12" font-family="Inter">variance</text>
+                            <text x="60" y="26" fill="rgba(34,197,94,0.9)" font-size="12" font-family="Inter">bias</text>
+                            <circle cx="310" cy="78" r="5" fill="#e8e8ed" />
+                            <text x="322" y="102" fill="#a0a0b0" font-size="12" font-family="Inter">sweet spot</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="tech-accordion">
+            <summary class="tech-accordion-summary" data-i18n="playbook.dl.title">Deep Learning</summary>
+            <div class="tech-section">
+                <p data-i18n="playbook.dl.intro">Deep learning becomes critical when representation learning wins: language, vision, audio, multimodal. I focus on the fundamentals that transfer across domains and the system constraints that decide whether it ships.</p>
+
+                <div class="course-grid">
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.dl.core">Core building blocks</h3>
+                        <ul>
+                            <li><strong>Backprop</strong>: stability, exploding/vanishing gradients</li>
+                            <li><strong>Normalization</strong>: LayerNorm, RMSNorm</li>
+                            <li><strong>Regularization</strong>: dropout, weight decay, data augmentation</li>
+                            <li><strong>Training ops</strong>: mixed precision, gradient clipping, checkpoints</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.dl.nlp">NLP / LLMs</h3>
+                        <ul>
+                            <li><strong>Tokenization</strong>: BPE/Unigram, context packing</li>
+                            <li><strong>Attention</strong>: causal masking, KV cache</li>
+                            <li><strong>Fine-tuning</strong>: LoRA/QLoRA, eval and regressions</li>
+                            <li><strong>RAG</strong>: retrieval, reranking, citations, prompt injection</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.dl.vision">Vision</h3>
+                        <ul>
+                            <li><strong>Backbones</strong>: CNN vs ViT, patches, positional encodings</li>
+                            <li><strong>Tasks</strong>: OCR, document understanding, detection</li>
+                            <li><strong>Metrics</strong>: mAP/IoU, CER/WER (OCR)</li>
+                            <li><strong>Data</strong>: augmentation, imbalance, labeling strategy</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.dl.systems">Systems & constraints</h3>
+                        <ul>
+                            <li><strong>Latency</strong>: batching vs streaming, TTFT, p95</li>
+                            <li><strong>Memory</strong>: quantization, KV cache sizing, fragmentation</li>
+                            <li><strong>Throughput</strong>: concurrency limits, queueing, backpressure</li>
+                            <li><strong>Safety</strong>: guardrails, refusal behavior, abuse prevention</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="course-visuals">
+                    <div class="course-visual">
+                        <div class="course-visual-title" data-i18n="playbook.dl.visual1">Transformer overview</div>
+                        <svg viewBox="0 0 520 170" role="img" aria-label="Transformer block diagram">
+                            <rect x="10" y="12" width="500" height="146" rx="12" fill="rgba(139,92,246,0.08)" stroke="rgba(139,92,246,0.25)" />
+                            <rect x="30" y="36" width="140" height="44" rx="10" fill="rgba(34,197,94,0.12)" stroke="rgba(34,197,94,0.5)" />
+                            <text x="52" y="64" fill="#e8e8ed" font-size="12" font-family="Inter">Embedding</text>
+                            <rect x="190" y="28" width="300" height="60" rx="12" fill="rgba(139,92,246,0.14)" stroke="rgba(139,92,246,0.5)" />
+                            <text x="206" y="54" fill="#e8e8ed" font-size="12" font-family="Inter">Self-Attention + FFN</text>
+                            <text x="206" y="74" fill="#a0a0b0" font-size="11" font-family="Inter">(repeated N layers)</text>
+                            <rect x="190" y="102" width="140" height="36" rx="10" fill="rgba(59,130,246,0.12)" stroke="rgba(59,130,246,0.45)" />
+                            <text x="206" y="125" fill="#e8e8ed" font-size="12" font-family="Inter">LM Head</text>
+                            <rect x="350" y="102" width="140" height="36" rx="10" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.5)" />
+                            <text x="368" y="125" fill="#e8e8ed" font-size="12" font-family="Inter">Next token</text>
+                            <line x1="170" y1="58" x2="190" y2="58" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <line x1="340" y1="120" x2="350" y2="120" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <line x1="260" y1="88" x2="260" y2="102" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <text x="30" y="154" fill="#6b6b7b" font-size="11" font-family="Inter">Key: quantization reduces RAM; KV cache accelerates attention in generation.</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="tech-accordion">
+            <summary class="tech-accordion-summary" data-i18n="playbook.ship.title">Shipping AI (LLMOps / MLOps)</summary>
+            <div class="tech-section">
+                <p data-i18n="playbook.ship.intro">Shipping is where most projects fail. I focus on evaluation, observability, and controlled iteration so quality improves without surprises.</p>
+
+                <div class="course-grid">
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ship.eval">Evaluation & regression</h3>
+                        <ul>
+                            <li><strong>Golden sets</strong>: targeted examples + edge cases</li>
+                            <li><strong>Rubrics</strong>: correctness, groundedness, style, safety</li>
+                            <li><strong>RAG eval</strong>: retrieval recall, citation accuracy, reranker gains</li>
+                            <li><strong>Release gates</strong>: prevent silent regressions</li>
+                        </ul>
+                    </div>
+                    <div class="course-card">
+                        <h3 data-i18n="playbook.ship.ops">Operations</h3>
+                        <ul>
+                            <li><strong>Telemetry</strong>: TTFT, p95 latency, token usage</li>
+                            <li><strong>Rollbacks</strong>: prompt/model version pinning</li>
+                            <li><strong>Cost</strong>: caching, context budgets, fallbacks</li>
+                            <li><strong>Security</strong>: prompt injection mitigation, secrets</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="course-visuals">
+                    <div class="course-visual">
+                        <div class="course-visual-title" data-i18n="playbook.ship.visual1">Evaluation loop</div>
+                        <svg viewBox="0 0 520 160" role="img" aria-label="LLM evaluation loop diagram">
+                            <rect x="10" y="12" width="500" height="136" rx="12" fill="rgba(139,92,246,0.08)" stroke="rgba(139,92,246,0.25)" />
+                            <rect x="30" y="44" width="110" height="44" rx="12" fill="rgba(59,130,246,0.12)" stroke="rgba(59,130,246,0.45)" />
+                            <text x="56" y="70" fill="#e8e8ed" font-size="12" font-family="Inter">Data</text>
+                            <rect x="160" y="44" width="140" height="44" rx="12" fill="rgba(34,197,94,0.12)" stroke="rgba(34,197,94,0.5)" />
+                            <text x="176" y="70" fill="#e8e8ed" font-size="12" font-family="Inter">Prompt/Model</text>
+                            <rect x="320" y="44" width="85" height="44" rx="12" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.5)" />
+                            <text x="339" y="70" fill="#e8e8ed" font-size="12" font-family="Inter">Eval</text>
+                            <rect x="420" y="44" width="70" height="44" rx="12" fill="rgba(139,92,246,0.14)" stroke="rgba(139,92,246,0.5)" />
+                            <text x="434" y="70" fill="#e8e8ed" font-size="12" font-family="Inter">Ship</text>
+                            <line x1="140" y1="66" x2="160" y2="66" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <line x1="300" y1="66" x2="320" y2="66" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <line x1="405" y1="66" x2="420" y2="66" stroke="rgba(232,232,237,0.35)" stroke-width="2" />
+                            <path d="M455,88 C455,124 80,126 80,92" fill="none" stroke="rgba(232,232,237,0.22)" stroke-width="2" />
+                            <text x="30" y="132" fill="#6b6b7b" font-size="11" font-family="Inter">Measure → diagnose → iterate (avoid silent regressions).</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+    </div>
+</section>
+
+<footer class="footer">
+    <p data-i18n-html="playbook.footer">MIRROR &middot; AI Playbook &middot; Michail Berjaoui</p>
+</footer>
+{% endblock %}

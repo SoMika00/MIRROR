@@ -9,13 +9,14 @@ Phi-4 14B Q4_K_M chosen for:
   - Microsoft MIT license
 """
 
+import gc
 import time
 import logging
 import threading
 import os
 from typing import Optional, Generator
 
-from app.config import llm_cfg
+from app.config import llm_cfg, MODEL_REGISTRY, get_model_by_id, get_default_model
 
 logger = logging.getLogger(__name__)
 
@@ -40,10 +41,41 @@ class LLMService:
         self.model_path = llm_cfg.model_path
         self._loaded = False
         self._gen_lock = threading.Lock()
+        self._current_model_id = None
+        self._current_n_ctx = llm_cfg.n_ctx
 
-    def load(self, model_path: Optional[str] = None):
+    def load(self, model_path: Optional[str] = None, model_id: Optional[str] = None):
+        # Resolve model from registry if model_id is given
+        if model_id:
+            entry = get_model_by_id(model_id)
+            if entry:
+                model_path = f"./models/{entry['filename']}"
+                self._current_model_id = model_id
+                self._current_n_ctx = entry.get("n_ctx", llm_cfg.n_ctx)
+            else:
+                raise ValueError(f"Unknown model_id: {model_id}")
+        elif model_path:
+            self.model_path = model_path
+        else:
+            # No model_path and no model_id: use current model_path
+            pass
+
         if model_path:
             self.model_path = model_path
+
+        # Always try to match registry entry by filename
+        fname = os.path.basename(self.model_path)
+        matched = False
+        for m in MODEL_REGISTRY:
+            if m["filename"] == fname:
+                self._current_model_id = m["id"]
+                self._current_n_ctx = m.get("n_ctx", llm_cfg.n_ctx)
+                matched = True
+                break
+        if not matched and not model_id:
+            self._current_model_id = None
+            self._current_n_ctx = llm_cfg.n_ctx
+
         if not os.path.exists(self.model_path):
             logger.warning(f"Model file not found: {self.model_path}")
             raise FileNotFoundError(f"Model not found at {self.model_path}. Download a GGUF model first.")
@@ -52,7 +84,7 @@ class LLMService:
         from llama_cpp import Llama
         self.model = Llama(
             model_path=self.model_path,
-            n_ctx=llm_cfg.n_ctx,
+            n_ctx=self._current_n_ctx,
             n_threads=llm_cfg.n_threads,
             n_batch=llm_cfg.n_batch,
             verbose=False,
@@ -69,7 +101,9 @@ class LLMService:
             del self.model
             self.model = None
             self._loaded = False
-            logger.info("LLM unloaded")
+            self._current_model_id = None
+            gc.collect()
+            logger.info("LLM unloaded, memory freed")
 
     def generate(self, prompt: str, max_tokens: Optional[int] = None,
                  temperature: Optional[float] = None, stream: bool = False) -> str:
@@ -115,11 +149,20 @@ class LLMService:
         info = {
             "model_path": self.model_path,
             "loaded": self._loaded,
-            "n_ctx": llm_cfg.n_ctx,
+            "n_ctx": self._current_n_ctx if hasattr(self, '_current_n_ctx') else llm_cfg.n_ctx,
             "n_threads": llm_cfg.n_threads,
+            "model_id": getattr(self, '_current_model_id', None),
         }
         if self._loaded and self.model:
             info["n_vocab"] = self.model.n_vocab()
+        # Enrich with registry info
+        mid = info.get("model_id")
+        if mid:
+            entry = get_model_by_id(mid)
+            if entry:
+                info["model_name"] = entry["name"]
+                info["ram_gb"] = entry["ram_gb"]
+                info["speed_estimate"] = entry["speed_estimate"]
         return info
 
     def list_available_models(self) -> list:
@@ -127,6 +170,20 @@ class LLMService:
         if not os.path.exists(models_dir):
             return []
         return [f for f in os.listdir(models_dir) if f.endswith(".gguf")]
+
+    def list_registry_models(self) -> list:
+        """Return full registry with download status for each model."""
+        local_files = set(self.list_available_models())
+        result = []
+        for m in MODEL_REGISTRY:
+            entry = dict(m)
+            entry["downloaded"] = m["filename"] in local_files
+            entry["active"] = (
+                self._loaded
+                and getattr(self, '_current_model_id', None) == m["id"]
+            )
+            result.append(entry)
+        return result
 
 
 llm_service = LLMService()

@@ -1,6 +1,6 @@
 """Main routes — landing page, CV showcase, articles page."""
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, redirect
 
 main_bp = Blueprint("main", __name__)
 
@@ -23,3 +23,13 @@ def articles():
 @main_bp.route("/tech")
 def tech():
     return render_template("tech.html")
+
+
+@main_bp.route("/playbook")
+def playbook():
+    return redirect("/courses")
+
+
+@main_bp.route("/courses")
+def courses():
+    return render_template("courses.html")

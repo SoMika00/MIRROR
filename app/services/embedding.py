@@ -75,14 +75,19 @@ class EmbeddingService:
         return embeddings
 
     def encode_query(self, query: str) -> np.ndarray:
-        return self.encode([query])[0]
+        # BGE-M3 benefits from instruction prefix for queries (not passages)
+        prefixed = f"Represent this sentence for searching relevant passages: {query}"
+        return self.encode([prefixed])[0]
 
     def get_info(self) -> dict:
+        dim = 1024  # BGE-M3 dense vector dimension
+        if self._loaded and self.model:
+            dim = self.model.get_sentence_embedding_dimension() or 1024
         return {
             "model": self.model_name,
             "device": self.device,
             "loaded": self._loaded,
-            "vector_dim": embedding_cfg.max_seq_length,
+            "vector_dim": dim,
             "max_seq_length": embedding_cfg.max_seq_length,
         }
 

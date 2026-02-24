@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   caddy:
     image: caddy:2.8.4
@@ -36,11 +34,14 @@ services:
       - ./models:/app/models
       - ./uploads:/app/uploads
       - ./articles:/app/articles
+      - ./data:/app/data
+    env_file:
+      - .env
     environment:
       - FLASK_DEBUG=0
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
-      - MODEL_PATH=/app/models/phi-4-Q4_K_M.gguf
+      - MODEL_PATH=/app/models/Phi-4-mini-instruct-Q4_K_M.gguf
     depends_on:
       - qdrant
     restart: unless-stopped

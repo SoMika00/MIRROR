@@ -3,13 +3,14 @@
 
 {% block content %}
 <section class="section">
-    <div class="container" style="max-width:860px;">
+    <div class="container" style="max-width:1080px;">
         <h1 class="text-center mb-1" style="font-size:2rem;font-weight:800;" data-i18n="tech.title">Technical Choices</h1>
         <p class="text-center text-muted mb-3" data-i18n="tech.subtitle">Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.</p>
 
-        <!-- Infrastructure -->
-        <div class="tech-section">
-            <h2>1. Infrastructure Constraints</h2>
+        <!-- 1. Infrastructure -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">1. Infrastructure Constraints</h2>
+            <p class="tech-intro">MIRROR runs entirely on a single server with no GPU — a deliberate choice that forces every component to be optimized for CPU inference. This section documents the hardware budget and how each service fits within it.</p>
             <table class="tech-table">
                 <thead>
                     <tr><th>Resource</th><th>Specification</th><th>Budget Allocation</th></tr>
@@ -29,32 +30,48 @@
             </p>
         </div>
 
-        <!-- LLM -->
-        <div class="tech-section">
-            <h2>2. LLM: Phi-4 14B (Q4_K_M GGUF)</h2>
+        <!-- 2. LLM -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">2. LLM: Dynamic Multi-Model Switching</h2>
+            <p class="tech-intro">The LLM is the brain of MIRROR. Instead of locking into a single model, the system supports hot-swapping between multiple models at runtime — download from HuggingFace, load into RAM, and switch without restarting.</p>
 
-            <h3>Why Phi-4?</h3>
-            <ul>
-                <li><strong>Best quality/size ratio at 14B</strong> — Microsoft's Phi-4 matches or exceeds many 30B+ models on reasoning benchmarks (MMLU, HumanEval, GSM8K)</li>
-                <li><strong>Q4_K_M quantization</strong> — ~9 GB RAM footprint with perplexity degradation &lt;0.5 vs FP16, validated by llama.cpp community benchmarks</li>
-                <li><strong>CPU-optimized via llama.cpp</strong> — GGUF format with AVX2/AVX-512 SIMD acceleration, ~5-10 tokens/sec on 12 cores</li>
-                <li><strong>MIT license</strong> — full commercial use, no restrictions for portfolio/client work</li>
-                <li><strong>4096 token context</strong> — sufficient for RAG with 5 retrieved chunks (~500 tokens each)</li>
-            </ul>
+            <h3>Architecture: Model Registry + Hot-Swap</h3>
+            <p>
+                All available models are declared in a central <strong>MODEL_REGISTRY</strong> with their HuggingFace coordinates, RAM estimates, and context window sizes.
+                The user selects a model from the UI, downloads it with one click, and loads it — the previous model is automatically unloaded and garbage-collected to free RAM.
+                The default model is <strong>Phi-4 Mini 3.8B Q4_K_M</strong>, chosen for fast CPU inference.
+            </p>
 
-            <h3>Alternatives Considered</h3>
+            <h3>Available Models</h3>
             <table class="tech-table">
                 <thead>
-                    <tr><th>Model</th><th>Size</th><th>RAM (Q4)</th><th>CPU t/s (est.)</th><th>Verdict</th></tr>
+                    <tr><th>Model</th><th>Params</th><th>Quant</th><th>RAM</th><th>CPU t/s (est.)</th><th>Use Case</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>Phi-4 14B</td><td>14B</td><td>~9 GB</td><td>5-10</td><td class="text-accent"><strong>Selected</strong></td></tr>
-                    <tr><td>Mistral 7B</td><td>7B</td><td>~5 GB</td><td>10-18</td><td>Faster but lower quality for complex RAG</td></tr>
-                    <tr><td>Qwen2.5 14B</td><td>14B</td><td>~9 GB</td><td>5-10</td><td>Comparable, Phi-4 edges on reasoning</td></tr>
-                    <tr><td>Llama 3.3 70B</td><td>70B</td><td>~42 GB</td><td>1-2</td><td>Too slow on CPU, RAM too tight</td></tr>
-                    <tr><td>Phi-4-mini 3.8B</td><td>3.8B</td><td>~2.5 GB</td><td>20-30</td><td>Fallback option for speed-critical use</td></tr>
+                    <tr><td class="text-accent"><strong>Phi-4 14B</strong></td><td>14B</td><td>Q8_0</td><td>~16 GB</td><td>3-6</td><td class="text-accent"><strong>Default — best quality/size</strong></td></tr>
+                    <tr><td>Phi-4 14B</td><td>14B</td><td>Q4_K_M</td><td>~9 GB</td><td>5-10</td><td>Lighter variant, faster</td></tr>
+                    <tr><td>Qwen 2.5 32B</td><td>32B</td><td>Q6_K</td><td>~28 GB</td><td>1-3</td><td>Top multilingual reasoning</td></tr>
+                    <tr><td>Phi-3.5 MoE 42B</td><td>42B (6.6B active)</td><td>Q8_0</td><td>~46 GB</td><td>1-2</td><td>MoE for complex tasks</td></tr>
+                    <tr><td>Llama 3.1 8B</td><td>8B</td><td>FP16/Q8/Q6/Q4</td><td>5-16 GB</td><td>4-18</td><td>Quantization comparison baseline</td></tr>
                 </tbody>
             </table>
+
+            <h3>Why Phi-4 as Default?</h3>
+            <ul>
+                <li><strong>Best quality/size ratio at 14B</strong> — Microsoft's Phi-4 matches or exceeds many 30B+ models on reasoning benchmarks (MMLU, HumanEval, GSM8K)</li>
+                <li><strong>Q8_0 quantization</strong> — ~16 GB RAM, near-lossless quality retention vs FP16</li>
+                <li><strong>CPU-optimized via llama.cpp</strong> — GGUF format with AVX2/AVX-512 SIMD acceleration</li>
+                <li><strong>MIT license</strong> — full commercial use, no restrictions</li>
+                <li><strong>4096 token context</strong> — sufficient for RAG with 3-5 reranked chunks</li>
+            </ul>
+
+            <h3>Model Switching Mechanism</h3>
+            <ul>
+                <li><strong>Registry-based</strong> — all models declared in <code>MODEL_REGISTRY</code> with HuggingFace repo/filename, RAM estimate, per-model <code>n_ctx</code></li>
+                <li><strong>One-click download</strong> — background download from HuggingFace with progress tracking via polling</li>
+                <li><strong>GC-aware unload</strong> — explicit <code>del model</code> + <code>gc.collect()</code> ensures RAM is reclaimed before loading the next model</li>
+                <li><strong>Thread-safe</strong> — generation lock prevents concurrent inference during model swap</li>
+            </ul>
 
             <h3>Inference Engine: llama-cpp-python</h3>
             <p>
@@ -75,9 +92,10 @@
             </ul>
         </div>
 
-        <!-- Embedding Model -->
-        <div class="tech-section">
-            <h2>3. Embedding: BGE-M3</h2>
+        <!-- 3. Embedding -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">3. Embedding: BGE-M3</h2>
+            <p class="tech-intro">Embeddings convert text into numerical vectors that capture meaning. Similar texts end up close in vector space, enabling semantic search. The embedding model is critical for RAG quality — it determines which documents get retrieved.</p>
 
             <h3>Why BGE-M3?</h3>
             <ul>
@@ -114,15 +132,16 @@
             </ul>
         </div>
 
-        <!-- Qdrant -->
-        <div class="tech-section">
-            <h2>4. Vector Store: Qdrant</h2>
+        <!-- 4. Vector Store -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">4. Vector Store: Qdrant</h2>
+            <p class="tech-intro">A vector database stores the embedding vectors and allows fast similarity search ("find the 5 most relevant chunks for this question"). Qdrant is the engine that makes RAG retrieval near-instant.</p>
 
             <h3>Why Qdrant?</h3>
             <ul>
                 <li><strong>Rust-native</strong> — compiled binary, minimal memory overhead, no JVM/GC pauses</li>
                 <li><strong>HNSW indexing</strong> — Hierarchical Navigable Small World graphs for sub-10ms approximate nearest neighbor search</li>
-                <li><strong>Scalar INT8 quantization</strong> — 4× RAM reduction with &lt;1% recall loss, configurable <code>always_ram=True</code> for speed</li>
+                <li><strong>Scalar INT8 quantization</strong> — 4&times; RAM reduction with &lt;1% recall loss, configurable <code>always_ram=True</code> for speed</li>
                 <li><strong>Payload filtering</strong> — indexed keyword filters on <code>source_type</code>, <code>source_name</code> for O(1) pre-filtering</li>
                 <li><strong>Self-hosted</strong> — full data sovereignty, critical for sensitive documents and Japan data residency</li>
                 <li><strong>Active community</strong> — 21k+ GitHub stars, weekly releases, excellent documentation</li>
@@ -137,7 +156,7 @@
                 <tbody>
                     <tr><td><code>m</code></td><td>16</td><td>Default. Each node connects to 16 neighbors. Good recall/memory tradeoff</td></tr>
                     <tr><td><code>ef_construct</code></td><td>200</td><td>High build quality. Slower indexing but better recall at search time</td></tr>
-                    <tr><td><code>ef_search</code></td><td>128</td><td>Search-time beam width. Ensures >95% recall with sub-10ms latency</td></tr>
+                    <tr><td><code>ef_search</code></td><td>128</td><td>Search-time beam width. Ensures &gt;95% recall with sub-10ms latency</td></tr>
                     <tr><td>Quantization</td><td>INT8 scalar</td><td>Reduces 1024-dim float32 vectors from 4KB to 1KB each</td></tr>
                     <tr><td><code>always_ram</code></td><td>True</td><td>With 64GB RAM, we can keep all quantized vectors in memory</td></tr>
                 </tbody>
@@ -159,24 +178,25 @@
 
             <h3>References</h3>
             <ul>
-                <li>Malkov & Yashunin (2018). <em>"Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs"</em>. IEEE TPAMI</li>
+                <li>Malkov &amp; Yashunin (2018). <em>"Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs"</em>. IEEE TPAMI</li>
                 <li>Qdrant Documentation — <a href="https://qdrant.tech/documentation/guides/optimize/" target="_blank">Performance Optimization Guide</a></li>
                 <li>Baranchuk et al. (2022). <em>"Revisiting the Inverted Indices for Billion-Scale Approximate Nearest Neighbors"</em></li>
             </ul>
         </div>
 
-        <!-- RAG Architecture -->
-        <div class="tech-section">
-            <h2>5. RAG Pipeline</h2>
+        <!-- 5. RAG Pipeline -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">5. RAG Pipeline</h2>
+            <p class="tech-intro">RAG (Retrieval-Augmented Generation) is the core pattern: instead of relying on the LLM's memory alone, we search for relevant document passages first, then let the LLM write an answer grounded in those passages — with citations.</p>
 
             <h3>Architecture</h3>
             <p>
                 The pipeline follows the canonical RAG pattern from Lewis et al. (2020), adapted for CPU-only inference:
             </p>
             <ol>
-                <li><strong>Document Ingestion</strong> — PDF/DOCX/TXT/MD → PyMuPDF extraction → sentence-boundary chunking (512 chars, 64 overlap) → BGE-M3 embedding → Qdrant upsert with metadata</li>
-                <li><strong>Query Processing</strong> — User question → BGE-M3 embedding → Qdrant ANN search (top-8, threshold 0.45) → <strong>cross-encoder reranking (top-3)</strong> → context assembly with source tracking</li>
-                <li><strong>Generation</strong> — Context + question → Phi-4 with citation-aware system prompt + personal context → response with [Source: name, page] citations</li>
+                <li><strong>Document Ingestion</strong> — PDF/DOCX/TXT/MD &rarr; PyMuPDF extraction &rarr; sentence-boundary chunking (512 chars, 64 overlap) &rarr; BGE-M3 embedding &rarr; Qdrant upsert with metadata</li>
+                <li><strong>Query Processing</strong> — User question &rarr; BGE-M3 embedding &rarr; Qdrant ANN search (top-8, threshold 0.45) &rarr; <strong>cross-encoder reranking (top-3)</strong> &rarr; context assembly with source tracking</li>
+                <li><strong>Generation</strong> — Context + question &rarr; Phi-4 with citation-aware system prompt + personal context &rarr; response with [Source: name, page] citations</li>
             </ol>
 
             <h3>Chunking Strategy</h3>
@@ -196,7 +216,7 @@
             <h3>Limitations</h3>
             <ul>
                 <li><strong>No hybrid search</strong> — BGE-M3 supports sparse vectors but Qdrant hybrid search adds complexity; dense-only is sufficient for our document corpus size</li>
-                <li><strong>Context window</strong> — 4096 tokens limits us to ~3 reranked chunks per query. Larger models or sliding window approaches would help for complex multi-document questions</li>
+                <li><strong>Context window</strong> — 4096 tokens (configurable per model) limits us to ~3 reranked chunks per query. Context budget is dynamically computed based on loaded model's <code>n_ctx</code></li>
             </ul>
 
             <h3>References</h3>
@@ -207,9 +227,10 @@
             </ul>
         </div>
 
-        <!-- Reranker -->
-        <div class="tech-section">
-            <h2>5b. Reranker: cross-encoder/ms-marco-MiniLM-L-6-v2</h2>
+        <!-- 5b. Reranker -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">5b. Reranker: cross-encoder/ms-marco-MiniLM-L-6-v2</h2>
+            <p class="tech-intro">The initial vector search is fast but approximate. A reranker is a second, more precise model that re-scores the top candidates to select only the most relevant passages for the LLM.</p>
 
             <h3>Why a Cross-Encoder Reranker?</h3>
             <p>
@@ -242,14 +263,15 @@
 
             <h3>References</h3>
             <ul>
-                <li>Nogueira & Cho (2019). <em>"Passage Re-ranking with BERT"</em>. arXiv:1901.04085</li>
+                <li>Nogueira &amp; Cho (2019). <em>"Passage Re-ranking with BERT"</em>. arXiv:1901.04085</li>
                 <li>Wang et al. (2020). <em>"MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression"</em>. NeurIPS 2020</li>
             </ul>
         </div>
 
-        <!-- Vision Model -->
-        <div class="tech-section">
-            <h2>5c. Vision Model: MiniCPM-V 2.6 (INT4)</h2>
+        <!-- 5c. Vision -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">5c. Vision Model: MiniCPM-V 2.6 (INT4)</h2>
+            <p class="tech-intro">Some PDF pages contain charts, diagrams, or complex layouts that text extraction misses. A Vision Language Model (VLM) can "see" the rendered page and describe its visual content, enriching the RAG context.</p>
 
             <h3>Why a Vision Language Model?</h3>
             <p>
@@ -280,27 +302,108 @@
             </ul>
         </div>
 
-        <!-- Docker -->
-        <div class="tech-section">
-            <h2>6. Docker: Full Encapsulation</h2>
+        <!-- 6. Ops & Engineering -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">6. Ops &amp; Engineering: Docker, Compose &amp; Deployment</h2>
+            <p class="tech-intro">The entire MIRROR stack is containerized and runs with a single command. This section covers the Docker architecture, the Compose orchestration, the reverse proxy, and the deployment workflow.</p>
+
+            <h3>Docker: Multi-Stage Build</h3>
             <p>
-                The entire stack runs via <code>docker compose up</code> — zero host dependencies beyond Docker itself.
-                This enables <strong>one-command portability</strong> to any VM.
+                The application image is built from <code>python:3.11-slim</code> with minimal system dependencies
+                (build-essential, cmake for llama.cpp compilation). The resulting image includes all Python packages
+                and the Flask app, but <strong>not the models</strong> — those are downloaded at runtime via the UI
+                or the bootstrap script.
             </p>
-            <h3>Design Decisions</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Layer</th><th>Content</th><th>Size Impact</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Base</td><td><code>python:3.11-slim</code></td><td>~120 MB</td></tr>
+                    <tr><td>System deps</td><td>build-essential, cmake, git</td><td>~200 MB (build only)</td></tr>
+                    <tr><td>Python deps</td><td>llama-cpp-python, sentence-transformers, Flask, PyMuPDF&hellip;</td><td>~2.5 GB (includes PyTorch CPU)</td></tr>
+                    <tr><td>App code</td><td>Flask routes, templates, static files</td><td>~5 MB</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Docker Compose: 3-Service Stack</h3>
+            <p>
+                The <code>docker-compose.yml</code> defines three services that work together:
+            </p>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Service</th><th>Image</th><th>Role</th><th>Ports</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="text-accent"><strong>mirror</strong></td><td>Custom (Dockerfile)</td><td>Flask app + LLM + Embedding + Reranker</td><td>5000 (internal)</td></tr>
+                    <tr><td class="text-accent"><strong>qdrant</strong></td><td>qdrant/qdrant:v1.12.4</td><td>Vector database for RAG retrieval</td><td>6333/6334 (internal)</td></tr>
+                    <tr><td class="text-accent"><strong>caddy</strong></td><td>caddy:2.8.4</td><td>Reverse proxy, auto HTTPS, TLS certificates</td><td>80, 443 (public)</td></tr>
+                </tbody>
+            </table>
+            <p>
+                Key design decisions:
+            </p>
             <ul>
-                <li><strong>No fixed CPU/memory limits</strong> — Docker's cgroup scheduler manages resource contention naturally. Thread count is auto-detected via <code>multiprocessing.cpu_count()</code></li>
-                <li><strong>Qdrant healthcheck</strong> — the app container waits for Qdrant to be healthy before starting</li>
-                <li><strong>Volume mounts</strong> — <code>./models</code>, <code>./uploads</code>, <code>./articles</code> are mounted from host for easy model swaps and data persistence</li>
-                <li><strong>Single worker + 4 threads</strong> — Gunicorn runs with 1 worker (LLM is single-threaded) and 4 threads for concurrent HTTP handling</li>
+                <li><strong>No fixed CPU/memory limits</strong> — Docker's cgroup scheduler manages resource contention naturally. Thread count is auto-detected via <code>os.sched_getaffinity()</code></li>
+                <li><strong>Volume mounts</strong> — <code>./models</code>, <code>./uploads</code>, <code>./articles</code>, <code>./data</code> are mounted from host for persistence and easy access</li>
+                <li><strong>Internal networking</strong> — Qdrant and the app communicate via Docker's internal DNS (<code>qdrant:6333</code>), never exposed to the host</li>
+                <li><strong>env_file integration</strong> — <code>.env</code> passes <code>HF_TOKEN</code> and secrets securely into the container</li>
+                <li><strong>Restart policy</strong> — <code>unless-stopped</code> on all services for automatic recovery after crashes or reboots</li>
+            </ul>
+
+            <h3>Caddy: Reverse Proxy &amp; Auto HTTPS</h3>
+            <p>
+                Caddy sits in front of the Flask app and handles:
+            </p>
+            <ul>
+                <li><strong>Automatic TLS</strong> — Let's Encrypt certificates provisioned and renewed automatically, zero configuration</li>
+                <li><strong>HTTP &rarr; HTTPS redirect</strong> — all traffic forced to HTTPS</li>
+                <li><strong>Reverse proxy</strong> — proxies <code>:443</code> &rarr; <code>mirror:5000</code> internally</li>
+                <li><strong>Zero downtime</strong> — Caddy reloads config without dropping connections</li>
+            </ul>
+
+            <h3>Gunicorn: Application Server</h3>
+            <p>
+                The Flask app runs behind Gunicorn with carefully tuned settings for LLM workloads:
+            </p>
+            <ul>
+                <li><strong>1 worker + 8 threads</strong> — single worker because the LLM is single-threaded internally; 8 threads handle concurrent HTTP requests (downloads, status polls, static files) while the LLM generates</li>
+                <li><strong>600s worker timeout</strong> — large model downloads and slow CPU inference can exceed default timeouts</li>
+                <li><strong>300s graceful shutdown</strong> — allows in-progress generations to complete before stopping</li>
+            </ul>
+
+            <h3>Deployment Workflow</h3>
+            <p>
+                Deploying MIRROR to a new server requires only Docker and one script:
+            </p>
+            <ol>
+                <li><strong>Clone the repo</strong> — <code>git clone</code> + create <code>.env</code> with <code>HF_TOKEN</code></li>
+                <li><strong>Run <code>bash run.sh</code></strong> — builds images, starts the stack, waits for readiness, downloads the default model automatically</li>
+                <li><strong>Open the browser</strong> — the site is live at <code>https://your-domain</code> (or <code>http://localhost</code> for local dev)</li>
+            </ol>
+            <p>
+                The bootstrap script (<code>run.sh</code>) handles the full lifecycle: build &rarr; start &rarr; healthcheck &rarr; model download &rarr; ready.
+                No manual steps required beyond the initial <code>.env</code> setup.
+            </p>
+
+            <h3>Scaling Considerations</h3>
+            <p>
+                MIRROR is designed as a <strong>single-node deployment</strong> optimized for simplicity. For larger-scale deployments:
+            </p>
+            <ul>
+                <li><strong>Kubernetes</strong> — each service maps naturally to a Deployment + Service. Qdrant has an official Helm chart with replication support</li>
+                <li><strong>Model storage</strong> — mount a shared NFS/EFS volume for <code>/models</code> across pods, or use an init container to download models</li>
+                <li><strong>Horizontal scaling</strong> — the Flask app is stateless (SQLite &rarr; PostgreSQL migration needed). Multiple replicas behind a load balancer, each with its own LLM instance</li>
+                <li><strong>GPU upgrade path</strong> — swap llama.cpp CPU backend for vLLM/TensorRT-LLM on GPU nodes, keep the same REST API contract</li>
             </ul>
         </div>
 
-        <!-- Web Scraping -->
-        <div class="tech-section">
-            <h2>7. Web Scraping</h2>
+        <!-- 7. Web Scraping -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">7. Web Scraping</h2>
+            <p class="tech-intro">MIRROR can ingest content from any URL — paste a link, and the system extracts clean text for immediate Q&A or permanent indexing into the knowledge base.</p>
             <p>
-                The scraping tool uses <strong>trafilatura</strong> as primary extractor (precision >90% on web content benchmarks)
+                The scraping tool uses <strong>trafilatura</strong> as primary extractor (precision &gt;90% on web content benchmarks)
                 with <strong>BeautifulSoup</strong> as fallback. Scraped content can be:
             </p>
             <ul>
@@ -313,22 +416,102 @@
             </ul>
         </div>
 
-        <!-- Stack Summary -->
-        <div class="tech-section">
-            <h2>8. Full Stack Summary</h2>
+        <!-- 8. Chat System -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">8. Multi-Mode Chat System</h2>
+            <p class="tech-intro">The chat interface is the main way users interact with MIRROR. Four specialized modes let users choose between direct conversation, document-grounded Q&A, web content analysis, and document-only search.</p>
+
+            <h3>Architecture</h3>
+            <p>
+                MIRROR supports <strong>four chat modes</strong>, each optimized for a different use case:
+            </p>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Mode</th><th>Pipeline</th><th>Use Case</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td class="text-accent"><strong>Chat</strong></td><td>Direct LLM + personal context + conversation history</td><td>Natural conversation, greetings, personal questions</td></tr>
+                    <tr><td class="text-accent"><strong>RAG</strong></td><td>Embed &rarr; Qdrant search &rarr; Rerank &rarr; LLM</td><td>Document Q&amp;A with source citations</td></tr>
+                    <tr><td class="text-accent"><strong>Scrap</strong></td><td>In-memory web content &rarr; LLM</td><td>Questions about scraped web pages</td></tr>
+                    <tr><td class="text-accent"><strong>Full Doc</strong></td><td>RAG filtered to <code>source_type=document</code></td><td>Search only uploaded documents</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Streaming (SSE)</h3>
+            <p>
+                All modes support <strong>Server-Sent Events (SSE)</strong> streaming for real-time token-by-token display.
+                The frontend uses the <code>ReadableStream</code> API to process SSE chunks as they arrive,
+                providing a responsive typing experience even with CPU inference at 3-6 t/s.
+            </p>
+
+            <h3>Conversation History</h3>
+            <p>
+                Chat mode includes <strong>multi-turn conversation context</strong> &mdash; the last 6 messages are injected
+                into the prompt, enabling coherent follow-up questions without re-stating context.
+                History is persisted to SQLite and can be resumed across sessions.
+            </p>
+        </div>
+
+        <!-- 9. SQLite -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">9. SQLite Database &amp; User Sessions</h2>
+            <p class="tech-intro">All persistent state — users, conversations, chat history, uploaded sources, and logs — lives in a single SQLite file. Zero configuration, zero external dependencies, portable with the container.</p>
+
+            <h3>Schema</h3>
+            <table class="tech-table">
+                <thead>
+                    <tr><th>Table</th><th>Purpose</th><th>Key Fields</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>users</code></td><td>Anonymous user sessions (cookie-based)</td><td>id (UUID), created_at, last_seen</td></tr>
+                    <tr><td><code>conversations</code></td><td>Chat threads per user</td><td>id, user_id, title, mode, timestamps</td></tr>
+                    <tr><td><code>messages</code></td><td>Individual messages with metadata</td><td>id, conversation_id, role, content, sources, timings</td></tr>
+                    <tr><td><code>user_sources</code></td><td>Per-user document/web source tracking</td><td>id, user_id, source_name, source_type</td></tr>
+                    <tr><td><code>logs</code></td><td>Structured application logs</td><td>timestamp, level, component, message, details</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Design Decisions</h3>
+            <ul>
+                <li><strong>SQLite + WAL mode</strong> &mdash; zero-config, file-based, concurrent reads with WAL journaling</li>
+                <li><strong>Cookie-based user isolation</strong> &mdash; anonymous UUID cookie (1 year TTL, HttpOnly, SameSite=Lax) &mdash; no login required</li>
+                <li><strong>Thread-local connections</strong> &mdash; each gunicorn thread gets its own SQLite connection, avoiding lock contention</li>
+                <li><strong>CASCADE DELETE</strong> &mdash; deleting a conversation automatically removes all its messages</li>
+                <li><strong>JSON columns</strong> &mdash; sources and timings stored as JSON text for flexibility without schema changes</li>
+            </ul>
+        </div>
+
+        <!-- 10. Logging -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">10. Structured Logging</h2>
+            <p class="tech-intro">Full observability without external dependencies — all events are logged to SQLite with structured metadata, queryable via API.</p>
+            <p>
+                All application events (queries, errors, model loads, document uploads) are logged to the <code>logs</code> SQLite table
+                with structured metadata. Logs can be queried via <code>/api/chat/logs</code> with filters by component and level.
+                This provides full observability without external dependencies (no ELK/Grafana needed).
+            </p>
+        </div>
+
+        <!-- 11. Full Stack -->
+        <div class="tech-section-block">
+            <h2 class="tech-section-heading">11. Full Stack Summary</h2>
             <table class="tech-table">
                 <thead>
                     <tr><th>Layer</th><th>Technology</th><th>Role</th></tr>
                 </thead>
                 <tbody>
                     <tr><td>Web Framework</td><td>Flask 3.1</td><td>Lightweight, Jinja2 templates, blueprint architecture</td></tr>
-                    <tr><td>LLM</td><td>Phi-4 14B Q4_K_M + llama-cpp-python</td><td>CPU inference, ~5-10 t/s, 9GB RAM</td></tr>
+                    <tr><td>LLM</td><td>Multi-model (Phi-4, Qwen 2.5, Llama 3) + llama-cpp-python</td><td>CPU inference, hot-swappable, 5-46 GB RAM</td></tr>
                     <tr><td>Embedding</td><td>BGE-M3 + sentence-transformers</td><td>Multilingual, 1024-dim, &lt;30ms/query</td></tr>
                     <tr><td>Reranker</td><td>ms-marco-MiniLM-L-6-v2</td><td>Cross-encoder, 22M params, ~15ms/pair on CPU</td></tr>
                     <tr><td>Vision (opt.)</td><td>MiniCPM-V 2.6 INT4</td><td>PDF visual understanding, ~4 GB RAM</td></tr>
                     <tr><td>Vector Store</td><td>Qdrant (Docker)</td><td>HNSW + INT8 quantization, sub-10ms search</td></tr>
                     <tr><td>PDF Parsing</td><td>PyMuPDF (fitz)</td><td>Fast, handles complex layouts</td></tr>
                     <tr><td>Scraping</td><td>trafilatura + BeautifulSoup</td><td>High-precision content extraction</td></tr>
+                    <tr><td>Database</td><td>SQLite (WAL mode)</td><td>Users, conversations, chat history, logs</td></tr>
+                    <tr><td>Sessions</td><td>Cookie-based UUID</td><td>Anonymous user isolation, no login required</td></tr>
+                    <tr><td>Streaming</td><td>Server-Sent Events (SSE)</td><td>Real-time token-by-token chat display</td></tr>
+                    <tr><td>Chat Modes</td><td>Chat / RAG / Scrap / Full Doc</td><td>Direct chat, document Q&amp;A, web scraping, doc-only search</td></tr>
                     <tr><td>Containerization</td><td>Docker Compose</td><td>Full encapsulation, zero host deps, portable</td></tr>
                 </tbody>
             </table>
