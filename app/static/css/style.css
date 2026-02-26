@@ -854,8 +854,10 @@ a:hover {
 
 .article-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   margin-top: 0.75rem;
+  overflow: hidden;
 }
 
 .article-content {
@@ -1775,7 +1777,93 @@ a:hover {
   border-top-color: var(--error);
 }
 
+.live-metrics {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 240;
+  background: rgba(22, 22, 31, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.65rem;
+  box-shadow: var(--shadow-md);
+  min-width: 110px;
+}
+
+.live-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  padding: 0.15rem 0;
+}
+
+.live-metrics-label {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.live-metrics-value {
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
 /* --- Left Sidebar --- */
 .chat-sidebar-left {
   min-width: 0;
+}
+
+/* --- Source Citations Collapse --- */
+.message-sources-collapse {
+  margin-top: 0.5rem;
+}
+.source-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+.source-toggle-btn:hover {
+  background: var(--accent-glow);
+}
+.source-toggle-btn svg {
+  transition: transform 0.2s;
+}
+.message-sources-collapse.expanded .source-toggle-btn svg {
+  transform: rotate(180deg);
+}
+.source-details {
+  display: none;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.message-sources-collapse.expanded .source-details {
+  display: block;
+}
+.source-citation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+  font-size: 0.78rem;
+}
+.source-citation-name {
+  color: var(--text-secondary);
+}
+.source-citation-item .source-score {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
 }

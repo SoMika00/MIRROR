@@ -58,8 +58,10 @@
                         <span>LLM Models</span>
                         <div style="display:flex;gap:0.4rem;align-items:center;">
                             <span id="llmStatus" style="font-size:0.8rem;">Checking...</span>
-                            <button class="btn btn-ghost btn-sm" onclick="unloadLLM()" title="Unload current model" style="font-size:0.7rem;">Unload</button>
-                            <button class="btn btn-ghost btn-sm" onclick="testLLM()" title="Test speed" style="font-size:0.7rem;">Test</button>
+                            <div id="llmActions" style="display:none;gap:0.4rem;align-items:center;">
+                                <button class="btn btn-ghost btn-sm" onclick="unloadLLM()" title="Unload current model" style="font-size:0.7rem;">Unload</button>
+                                <button class="btn btn-ghost btn-sm" onclick="testLLM()" title="Test speed" style="font-size:0.7rem;">Test</button>
+                            </div>
                         </div>
                     </div>
                     <div id="testResult" class="text-muted" style="font-size:0.75rem;margin-bottom:0.5rem;"></div>
@@ -68,34 +70,24 @@
                 <!-- Services Section -->
                 <div class="sidebar-section">
                     <div class="sidebar-title">Services</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-                        <div class="model-card-mini">
-                            <div style="font-weight:600;font-size:0.8rem;">Embedding</div>
-                            <div id="embeddingStatus" style="font-size:0.75rem;">Checking...</div>
-                            <button class="btn btn-secondary btn-sm mt-1" onclick="loadEmbedding()" style="font-size:0.7rem;">Load</button>
+                    <div style="display:flex;flex-direction:column;gap:0.35rem;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
+                            <span style="font-weight:600;font-size:0.8rem;">Qdrant</span>
+                            <span id="qdrantStatus" style="font-size:0.75rem;">Checking...</span>
                         </div>
-                        <div class="model-card-mini">
-                            <div style="font-weight:600;font-size:0.8rem;">Reranker</div>
-                            <div id="rerankerStatus" style="font-size:0.75rem;">Checking...</div>
-                            <button class="btn btn-secondary btn-sm mt-1" onclick="loadReranker()" style="font-size:0.7rem;">Load</button>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
+                            <span style="font-weight:600;font-size:0.8rem;">Embedding</span>
+                            <span id="embeddingStatus" style="font-size:0.75rem;">Checking...</span>
                         </div>
-                        <div class="model-card-mini">
-                            <div style="font-weight:600;font-size:0.8rem;">Qdrant</div>
-                            <div id="qdrantStatus" style="font-size:0.75rem;">Checking...</div>
-                            <button class="btn btn-secondary btn-sm mt-1" onclick="connectQdrant()" style="font-size:0.7rem;">Connect</button>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
+                            <span style="font-weight:600;font-size:0.8rem;">Reranker</span>
+                            <span id="rerankerStatus" style="font-size:0.75rem;">Checking...</span>
                         </div>
-                        <div class="model-card-mini">
-                            <div style="font-weight:600;font-size:0.8rem;">Vision</div>
-                            <div id="visionStatus" style="font-size:0.75rem;">Checking...</div>
-                            <div style="display:flex;gap:0.3rem;">
-                                <button class="btn btn-secondary btn-sm mt-1" onclick="loadVision()" style="font-size:0.7rem;">Load</button>
-                                <button class="btn btn-ghost btn-sm mt-1" onclick="unloadVision()" style="font-size:0.7rem;">Unload</button>
-                            </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
+                            <span style="font-weight:600;font-size:0.8rem;">Vision</span>
+                            <span id="visionStatus" style="font-size:0.75rem;">Checking...</span>
                         </div>
                     </div>
-                </div>
-                <div class="sidebar-section" style="text-align:center;">
-                    <button class="btn btn-primary" onclick="loadAll()" style="width:100%;">Load All Services</button>
                 </div>
             </div>
         </div>
@@ -109,6 +101,21 @@
             <div class="model-op-progress-track">
                 <div class="model-op-progress-fill" id="modelOpFill"></div>
             </div>
+        </div>
+    </div>
+
+    <div class="live-metrics" id="liveMetrics" aria-label="Live system metrics">
+        <div class="live-metrics-row">
+            <span class="live-metrics-label">RAM</span>
+            <span class="live-metrics-value" id="metricRam">--%</span>
+        </div>
+        <div class="live-metrics-row">
+            <span class="live-metrics-label">CPU</span>
+            <span class="live-metrics-value" id="metricCpu">--%</span>
+        </div>
+        <div class="live-metrics-row" id="metricGpuRow" style="display:none;">
+            <span class="live-metrics-label">GPU</span>
+            <span class="live-metrics-value" id="metricGpu">--%</span>
         </div>
     </div>
 

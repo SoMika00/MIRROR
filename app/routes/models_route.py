@@ -3,6 +3,8 @@
 import os
 import threading
 import logging
+import subprocess
+import shutil
 from flask import Blueprint, request, jsonify
 
 from app.services.llm import llm_service
@@ -37,6 +39,80 @@ def models_status():
         "reranker": reranker_service.get_info(),
         "vision": vision_service.get_info(),
         "qdrant": qdrant_info,
+    })
+
+
+@models_bp.route("/metrics", methods=["GET"])
+def metrics():
+    def _read_meminfo():
+        total_kb = None
+        avail_kb = None
+        try:
+            with open("/proc/meminfo", "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("MemTotal:"):
+                        total_kb = int(line.split()[1])
+                    elif line.startswith("MemAvailable:"):
+                        avail_kb = int(line.split()[1])
+        except Exception:
+            return None
+        if not total_kb or avail_kb is None:
+            return None
+        used_kb = max(0, total_kb - avail_kb)
+        pct = (used_kb / total_kb) * 100.0 if total_kb else 0.0
+        return {
+            "total_gb": round(total_kb / 1024 / 1024, 2),
+            "used_gb": round(used_kb / 1024 / 1024, 2),
+            "percent": round(pct, 1),
+        }
+
+    def _cpu_percent_estimate():
+        try:
+            load1, _, _ = os.getloadavg()
+            n = os.cpu_count() or 1
+            return round(min(100.0, (load1 / n) * 100.0), 1)
+        except Exception:
+            return None
+
+    def _gpu_metrics():
+        if not shutil.which("nvidia-smi"):
+            return None
+        try:
+            out = subprocess.check_output(
+                [
+                    "nvidia-smi",
+                    "--query-gpu=utilization.gpu,utilization.memory,memory.used,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
+                stderr=subprocess.DEVNULL,
+                text=True,
+                timeout=2,
+            ).strip()
+            if not out:
+                return None
+            first = out.splitlines()[0]
+            parts = [p.strip() for p in first.split(",")]
+            if len(parts) < 4:
+                return None
+            gpu_util = float(parts[0])
+            mem_util = float(parts[1])
+            mem_used = float(parts[2])
+            mem_total = float(parts[3])
+            mem_pct = (mem_used / mem_total) * 100.0 if mem_total else 0.0
+            return {
+                "gpu_percent": round(gpu_util, 1),
+                "mem_percent": round(mem_pct, 1),
+                "mem_used_mb": round(mem_used, 0),
+                "mem_total_mb": round(mem_total, 0),
+                "mem_util_percent": round(mem_util, 1),
+            }
+        except Exception:
+            return None
+
+    return jsonify({
+        "cpu_percent": _cpu_percent_estimate(),
+        "ram": _read_meminfo(),
+        "gpu": _gpu_metrics(),
     })
 
 
@@ -109,63 +185,18 @@ def list_registry():
 
 @models_bp.route("/llm/download", methods=["POST"])
 def download_model():
-    """Download a model from HuggingFace by model_id. Non-blocking."""
-    data = request.get_json() or {}
-    model_id = data.get("model_id")
-    if not model_id:
-        return jsonify({"error": "model_id required"}), 400
-
-    entry = get_model_by_id(model_id)
-    if not entry:
-        return jsonify({"error": f"Unknown model_id: {model_id}"}), 404
-
-    dest = f"./models/{entry['filename']}"
-    if os.path.exists(dest):
-        return jsonify({"success": True, "message": "Already downloaded", "path": dest})
-
-    # Check if download already in progress
-    if model_id in _download_progress and _download_progress[model_id]["status"] == "downloading":
-        return jsonify({"success": True, "message": "Download already in progress"})
-
-    _download_progress[model_id] = {"status": "downloading", "progress": 0.0, "error": None}
-
-    def _do_download():
-        try:
-            hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HF_token")
-            from huggingface_hub import hf_hub_download
-            logger.info(f"Downloading {entry['hf_repo']}/{entry['hf_file']} -> {dest}")
-            _download_progress[model_id]["progress"] = 0.1
-            hf_hub_download(
-                repo_id=entry["hf_repo"],
-                filename=entry["hf_file"],
-                local_dir="./models",
-                local_dir_use_symlinks=False,
-                token=hf_token,
-            )
-            # Rename if the downloaded file name differs from our expected filename
-            downloaded_path = f"./models/{entry['hf_file']}"
-            if downloaded_path != dest and os.path.exists(downloaded_path):
-                os.rename(downloaded_path, dest)
-            _download_progress[model_id] = {"status": "done", "progress": 1.0, "error": None}
-            logger.info(f"Download complete: {dest}")
-        except Exception as e:
-            logger.error(f"Download failed for {model_id}: {e}")
-            _download_progress[model_id] = {"status": "error", "progress": 0.0, "error": str(e)}
-
-    thread = threading.Thread(target=_do_download, daemon=True)
-    thread.start()
-    return jsonify({"success": True, "message": "Download started"})
+    return jsonify({"error": "Model download is disabled. Place model files in the ./models volume."}), 403
 
 
 @models_bp.route("/llm/download-progress/<model_id>", methods=["GET"])
 def download_progress(model_id):
     """Check download progress for a model."""
-    # Also check if file now exists (covers manual downloads)
-    entry = get_model_by_id(model_id)
-    if entry and os.path.exists(f"./models/{entry['filename']}"):
-        return jsonify({"status": "done", "progress": 1.0, "error": None})
-    prog = _download_progress.get(model_id, {"status": "idle", "progress": 0.0, "error": None})
-    return jsonify(prog)
+    return jsonify({"error": "Model download is disabled. Place model files in the ./models volume."}), 403
+
+
+@models_bp.route("/llm/download-all", methods=["POST"])
+def download_all_models():
+    return jsonify({"error": "Model download is disabled. Place model files in the ./models volume."}), 403
 
 
 @models_bp.route("/llm/test", methods=["POST"])

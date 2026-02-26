@@ -55,7 +55,7 @@ const I18N_DICT = {
         'tech.title': 'Technical Choices',
         'tech.subtitle': 'Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.',
         'courses.title': 'Courses',
-        'courses.subtitle': 'A clear, structured overview of core ML topics — explained with lists, examples, and practical intuition.',
+        'courses.subtitle': 'A clear, structured overview of core ML topics, explained with lists, examples, and practical intuition.',
         'courses.ml.title': '1) Machine Learning (classic)',
         'courses.ml.intro': 'Classical ML is often the fastest path to a strong production baseline: interpretable, cheap, and reliable when the data is right.',
         'courses.ml.supervised': 'Supervised learning',
@@ -134,7 +134,7 @@ const I18N_DICT = {
         'tech.title': 'Choix techniques',
         'tech.subtitle': 'Décisions d’architecture, benchmarks et optimisation infra pour MIRROR.',
         'courses.title': 'Cours',
-        'courses.subtitle': 'Une vue structurée et claire des sujets clés ML — expliqués avec listes, exemples et intuition.',
+        'courses.subtitle': 'Une vue structurée et claire des sujets clés ML, expliqués avec listes, exemples et intuition.',
         'courses.ml.title': '1) Machine Learning (classique)',
         'courses.ml.intro': 'Le ML classique est souvent la voie la plus rapide vers un baseline solide en production : interprétable, peu coûteux et fiable.',
         'courses.dl.title': '2) Deep Learning (réseaux de neurones)',
@@ -371,14 +371,17 @@ async function refreshModelStatus() {
         const resp = await fetch('/api/models/status');
         const data = await resp.json();
 
-        // LLM Status (compact header)
+        // LLM Status (compact header) + show/hide Unload & Test buttons
         const llmEl = document.getElementById('llmStatus');
+        const llmActions = document.getElementById('llmActions');
         if (llmEl) {
             if (data.llm.loaded) {
                 const name = data.llm.model_name || data.llm.model_path.split('/').pop();
                 llmEl.innerHTML = `<span style="color:var(--success);">●</span> ${name}`;
+                if (llmActions) llmActions.style.display = 'flex';
             } else {
                 llmEl.innerHTML = '<span style="color:var(--text-muted);">○ None</span>';
+                if (llmActions) llmActions.style.display = 'none';
             }
         }
 
@@ -420,8 +423,10 @@ async function refreshModelStatus() {
         if (visEl) {
             if (data.vision?.loaded) {
                 visEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
+            } else if (data.vision?.loading) {
+                visEl.innerHTML = '<span style="color:orange;">● Loading...</span>';
             } else if (data.vision?.enabled) {
-                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
+                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Available</span>';
             } else {
                 visEl.innerHTML = '<span style="color:var(--text-muted);">○ Disabled</span>';
             }
@@ -466,7 +471,7 @@ async function refreshRegistryCards() {
                 } else if (isDownloaded) {
                     actionBtn = `<button class="btn btn-primary btn-sm" onclick="loadModelById('${m.id}')" style="font-size:0.7rem;padding:0.2rem 0.6rem;">Load</button>`;
                 } else {
-                    actionBtn = `<button class="btn btn-secondary btn-sm" onclick="downloadModelById('${m.id}')" style="font-size:0.7rem;padding:0.2rem 0.6rem;">Download</button>`;
+                    actionBtn = `<span style="color:var(--text-muted);font-size:0.7rem;">Not on disk</span>`;
                 }
 
                 html += `<div class="model-card" style="border-color:${borderColor};background:${bgColor};" id="card-${m.id}">
@@ -612,6 +617,47 @@ function showOpBarError(text) {
     if (bar) bar.className = 'model-op-bar visible error';
     hideOpBar(5000);
 }
+
+// --- Live Metrics Widget ---
+let _metricsTimer = null;
+async function refreshLiveMetrics() {
+    const ramEl = document.getElementById('metricRam');
+    const cpuEl = document.getElementById('metricCpu');
+    const gpuEl = document.getElementById('metricGpu');
+    const gpuRow = document.getElementById('metricGpuRow');
+    if (!ramEl || !cpuEl) return;
+
+    try {
+        const resp = await fetch('/api/models/metrics');
+        const data = await resp.json();
+
+        const ramPct = data?.ram?.percent;
+        ramEl.textContent = (ramPct === 0 || ramPct) ? `${ramPct}%` : '--%';
+
+        const cpuPct = data?.cpu_percent;
+        cpuEl.textContent = (cpuPct === 0 || cpuPct) ? `${cpuPct}%` : '--%';
+
+        const gpuPct = data?.gpu?.gpu_percent;
+        if (gpuRow) {
+            if (gpuPct === 0 || gpuPct) {
+                gpuRow.style.display = '';
+                if (gpuEl) gpuEl.textContent = `${gpuPct}%`;
+            } else {
+                gpuRow.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        // ignore
+    }
+}
+
+function startLiveMetrics() {
+    if (_metricsTimer) return;
+    refreshLiveMetrics();
+    _metricsTimer = setInterval(refreshLiveMetrics, 2000);
+}
+
+document.addEventListener('DOMContentLoaded', startLiveMetrics);
 
 // --- Model Load Status Polling ---
 let _loadPollTimer = null;

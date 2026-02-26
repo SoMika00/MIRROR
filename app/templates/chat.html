@@ -33,7 +33,10 @@
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-title">Indexed Sources</div>
+            <div class="sidebar-title" style="display:flex;align-items:center;gap:0.4rem;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                RAG — Indexed Sources
+            </div>
             <div class="doc-list" id="docList">
                 <div class="text-muted" style="font-size:0.8rem;">No sources</div>
             </div>
@@ -42,38 +45,12 @@
 
     <!-- Main Chat -->
     <div class="chat-main">
-        <!-- Mode Selector Bar -->
-        <div class="chat-mode-bar">
-            <div class="mode-tabs">
-                <button class="mode-tab active" data-mode="chat" onclick="setMode('chat')" title="Direct conversation with MIRROR">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Chat
-                </button>
-                <button class="mode-tab" data-mode="rag" onclick="setMode('rag')" title="Answer using indexed documents (RAG)">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    RAG
-                </button>
-                <button class="mode-tab" data-mode="scrap" onclick="setMode('scrap')" title="Query scraped web pages">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    Scrap
-                </button>
-                <button class="mode-tab" data-mode="fulldoc" onclick="setMode('fulldoc')" title="Search only uploaded documents">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Full Doc
-                </button>
-            </div>
-            <div class="mode-indicator" id="modeIndicator">
-                <span class="mode-dot"></span>
-                <span id="modeLabel">Direct Chat</span>
-            </div>
-        </div>
-
         <div class="chat-messages" id="chatMessages">
             <div class="message message-assistant">
                 <div class="message-bubble">
                     <strong>MIRROR</strong> — Michail's AI assistant.<br>
                     <span class="text-muted" style="font-size:0.85rem;">
-                        Switch modes above: <strong>Chat</strong> for conversation, <strong>RAG</strong> for document Q&A, <strong>Scrap</strong> for web pages, <strong>Full Doc</strong> for uploaded docs only.
+                        Ask me anything. Toggle sources in the sidebar to use RAG — I'll search your documents and cite relevant chunks.
                     </span>
                 </div>
             </div>
@@ -101,29 +78,20 @@
 {% block scripts %}
 <script>
 // --- State ---
-let currentMode = 'chat';
 let currentConvId = null;
 let isGenerating = false;
-
-const MODE_LABELS = {
-    chat: 'Direct Chat',
-    rag: 'RAG (Documents + Web)',
-    scrap: 'Web Scraper Q&A',
-    fulldoc: 'Full Document Search'
-};
+let enabledSources = new Set(); // source names that are enabled for RAG
+let processingDocs = new Set(); // source names currently being indexed
 
 document.addEventListener('DOMContentLoaded', () => {
     loadConversations();
     loadDocumentList();
-    loadScrapedPages();
     setupDropZone();
 });
 
-// --- Mode ---
-function setMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
-    document.getElementById('modeLabel').textContent = MODE_LABELS[mode] || mode;
+// --- Auto-mode: if any sources are enabled, use RAG; otherwise direct chat ---
+function getEffectiveMode() {
+    return enabledSources.size > 0 ? 'rag' : 'chat';
 }
 
 // --- Conversations ---
@@ -138,9 +106,8 @@ async function loadConversations() {
         }
         list.innerHTML = data.conversations.map(c => {
             const active = c.id === currentConvId ? 'conv-item-active' : '';
-            const modeIcon = {chat:'&#128172;', rag:'&#128269;', scrap:'&#128279;', fulldoc:'&#128196;'}[c.mode] || '&#128172;';
             return `<div class="conv-item ${active}" onclick="loadConversation('${c.id}')" title="${c.title}">
-                <span class="conv-icon">${modeIcon}</span>
+                <span class="conv-icon">&#128172;</span>
                 <span class="conv-title">${escapeHtml(c.title)}</span>
                 <button class="conv-delete" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="Delete">&times;</button>
             </div>`;
@@ -154,7 +121,7 @@ function newConversation() {
         <div class="message message-assistant">
             <div class="message-bubble">
                 <strong>MIRROR</strong> — New conversation started.<br>
-                <span class="text-muted" style="font-size:0.85rem;">Mode: ${MODE_LABELS[currentMode]}</span>
+                <span class="text-muted" style="font-size:0.85rem;">Toggle sources in the sidebar to use RAG.</span>
             </div>
         </div>`;
     loadConversations();
@@ -203,51 +170,106 @@ function setupDropZone() {
     });
 }
 
-// --- File Upload ---
+// --- File Upload (with processing indicator) ---
 async function uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    processingDocs.add(safeName);
+    loadDocumentList(); // show orange indicator
     showToast(`Uploading ${file.name}...`, 'info');
     try {
         const resp = await fetch('/api/documents/upload', { method: 'POST', body: formData });
         const data = await resp.json();
+        processingDocs.delete(safeName);
         if (data.success) {
             showToast(`${file.name}: ${data.chunks} chunks indexed`, 'success');
-            loadDocumentList();
+            // Auto-enable the newly uploaded source
+            if (data.filename) enabledSources.add(data.filename);
         } else {
             showToast(`Error: ${data.error}`, 'error');
         }
+        loadDocumentList();
     } catch (e) {
+        processingDocs.delete(safeName);
         showToast(`Upload failed: ${e.message}`, 'error');
+        loadDocumentList();
     }
 }
 
-// --- Document List ---
+// --- Document List with toggle & processing indicator ---
 async function loadDocumentList() {
     try {
         const resp = await fetch('/api/documents/list');
         const data = await resp.json();
         const list = document.getElementById('docList');
-        if (!data.sources || data.sources.length === 0) {
-            list.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">No sources</div>';
-            return;
+        const allSources = data.sources || [];
+
+        // Also show processing docs that aren't indexed yet
+        const indexedNames = new Set(allSources.map(s => s.source_name));
+        let html = '';
+
+        // Processing docs (orange indicator)
+        for (const pName of processingDocs) {
+            if (!indexedNames.has(pName)) {
+                html += `<div class="doc-item" style="border-left:3px solid var(--warning);opacity:0.8;">
+                    <span class="doc-item-name" title="${pName}">${pName}</span>
+                    <span style="font-size:0.7rem;color:var(--warning);">indexing...</span>
+                </div>`;
+            }
         }
-        list.innerHTML = data.sources.map(s => `
-            <div class="doc-item">
-                <span class="doc-item-name" title="${s.source_name}">${s.source_name}</span>
+
+        // Indexed sources with toggle
+        for (const s of allSources) {
+            const isEnabled = enabledSources.has(s.source_name);
+            const isProcessing = processingDocs.has(s.source_name);
+            const borderColor = isProcessing ? 'var(--warning)' : isEnabled ? 'var(--success)' : 'var(--border)';
+            const toggleColor = isEnabled ? 'var(--success)' : 'var(--text-muted)';
+            const toggleTitle = isEnabled ? 'Disable for RAG' : 'Enable for RAG';
+            const escapedName = s.source_name.replace(/'/g, "\\'");
+            html += `<div class="doc-item" style="border-left:3px solid ${borderColor};">
+                <button class="doc-toggle-btn" onclick="toggleSource('${escapedName}')" title="${toggleTitle}"
+                    style="background:none;border:none;cursor:pointer;padding:0 0.3rem;font-size:0.9rem;color:${toggleColor};flex-shrink:0;">
+                    ${isEnabled ? '●' : '○'}
+                </button>
+                <span class="doc-item-name" title="${s.source_name}" style="flex:1;">${s.source_name}</span>
                 <span class="doc-item-chunks">${s.chunks}</span>
-                <button class="doc-item-delete" onclick="deleteDoc('${s.source_name}')" title="Delete">&times;</button>
-            </div>
-        `).join('');
+                <button class="doc-item-delete" onclick="deleteDoc('${escapedName}')" title="Delete">&times;</button>
+            </div>`;
+        }
+
+        if (!html) {
+            list.innerHTML = '<div class="text-muted" style="font-size:0.8rem;">No sources</div>';
+        } else {
+            list.innerHTML = html;
+        }
     } catch (e) {}
 }
 
+function toggleSource(name) {
+    if (enabledSources.has(name)) {
+        enabledSources.delete(name);
+    } else {
+        enabledSources.add(name);
+    }
+    loadDocumentList();
+}
+
 async function deleteDoc(name) {
+    // Remove from UI immediately
+    enabledSources.delete(name);
+    const list = document.getElementById('docList');
+    list.querySelectorAll('.doc-item').forEach(item => {
+        if (item.querySelector('.doc-item-name')?.title === name) {
+            item.style.opacity = '0.3';
+            item.style.pointerEvents = 'none';
+        }
+    });
     try {
         await fetch(`/api/documents/delete/${encodeURIComponent(name)}`, { method: 'DELETE' });
         showToast(`Deleted: ${name}`, 'info');
         loadDocumentList();
-    } catch (e) { showToast('Delete failed', 'error'); }
+    } catch (e) { showToast('Delete failed', 'error'); loadDocumentList(); }
 }
 
 // --- Scraper ---
@@ -267,14 +289,10 @@ async function scrapeUrl() {
         else {
             status.textContent = `${data.char_count} chars scraped`;
             showToast(`Scraped: ${data.title || url}`, 'success');
-            loadScrapedPages(); loadDocumentList();
+            loadDocumentList();
         }
     } catch (e) { status.textContent = `Failed: ${e.message}`; }
     document.getElementById('scrapeBtn').disabled = false;
-}
-
-async function loadScrapedPages() {
-    // Scraped pages show up in docList via Qdrant, no separate list needed
 }
 
 // --- Chat ---
@@ -292,10 +310,12 @@ async function sendMessage() {
     document.getElementById('sendBtn').disabled = true;
 
     const useStream = document.getElementById('useStreaming').checked;
+    const mode = getEffectiveMode();
     const payload = {
         question,
-        mode: currentMode,
+        mode: mode,
         conversation_id: currentConvId || undefined,
+        enabled_sources: mode === 'rag' ? Array.from(enabledSources) : undefined,
     };
 
     if (useStream) {
@@ -342,6 +362,7 @@ async function sendStreaming(payload) {
     container.scrollTop = container.scrollHeight;
 
     let fullText = '';
+    let streamSources = null;
     try {
         const resp = await fetch('/api/chat/stream', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -371,8 +392,12 @@ async function sendStreaming(payload) {
                         bubble.innerHTML = escapeHtml(fullText).replace(/\n/g, '<br>') + '<span class="cursor-blink">|</span>';
                         container.scrollTop = container.scrollHeight;
                     }
+                    if (parsed.sources) {
+                        streamSources = parsed.sources;
+                    }
                     if (parsed.done && parsed.conversation_id) {
                         currentConvId = parsed.conversation_id;
+                        if (parsed.sources) streamSources = parsed.sources;
                     }
                     if (parsed.error) {
                         bubble.innerHTML = `<span style="color:var(--error);">Error: ${escapeHtml(parsed.error)}</span>`;
@@ -380,12 +405,36 @@ async function sendStreaming(payload) {
                 } catch (e) {}
             }
         }
-        // Remove cursor
+        // Remove cursor and add source citations
         bubble.classList.remove('streaming-bubble');
         bubble.innerHTML = escapeHtml(fullText).replace(/\n/g, '<br>');
+        if (streamSources && streamSources.length > 0) {
+            const srcDiv = buildSourceCitations(streamSources);
+            msgDiv.appendChild(srcDiv);
+        }
     } catch (e) {
         bubble.innerHTML = `<span style="color:var(--error);">Stream error: ${escapeHtml(e.message)}</span>`;
     }
+}
+
+function buildSourceCitations(sources) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'message-sources-collapse';
+    wrapper.innerHTML = `
+        <button class="source-toggle-btn" onclick="this.parentElement.classList.toggle('expanded')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            <span style="font-size:0.75rem;color:var(--accent-light);font-weight:600;">${sources.length} source${sources.length > 1 ? 's' : ''} used</span>
+        </button>
+        <div class="source-details">
+            ${sources.map(s => `
+                <div class="source-citation-item">
+                    <span class="source-citation-name">${escapeHtml(s.source)}${s.page ? `, p.${s.page}` : ''}${s.chunk_index !== undefined ? ` · chunk ${s.chunk_index}` : ''}</span>
+                    <span class="source-score">${s.score || ''}</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    return wrapper;
 }
 
 function appendMessage(role, text, sources, timings, scroll = true) {
@@ -395,16 +444,11 @@ function appendMessage(role, text, sources, timings, scroll = true) {
 
     let html = `<div class="message-bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
 
-    if (sources && sources.length > 0) {
-        html += `<div class="message-sources">
-            <div class="message-sources-title">Sources</div>
-            ${sources.map(s => `
-                <div class="source-item">
-                    <span>${escapeHtml(s.source)}${s.page ? `, p.${s.page}` : ''}</span>
-                    <span class="source-score">${s.score || ''}</span>
-                </div>
-            `).join('')}
-        </div>`;
+    div.innerHTML = html;
+
+    // Add collapsible source citations for assistant messages
+    if (role === 'assistant' && sources && sources.length > 0) {
+        div.appendChild(buildSourceCitations(sources));
     }
 
     if (timings) {
@@ -415,11 +459,13 @@ function appendMessage(role, text, sources, timings, scroll = true) {
         if (timings.generation_ms) parts.push(`gen: ${timings.generation_ms}ms`);
         if (timings.total_ms) parts.push(`total: ${timings.total_ms}ms`);
         if (parts.length > 0) {
-            html += `<div class="message-timings">${parts.join(' · ')}</div>`;
+            const timDiv = document.createElement('div');
+            timDiv.className = 'message-timings';
+            timDiv.textContent = parts.join(' · ');
+            div.appendChild(timDiv);
         }
     }
 
-    div.innerHTML = html;
     container.appendChild(div);
     if (scroll) container.scrollTop = container.scrollHeight;
 }

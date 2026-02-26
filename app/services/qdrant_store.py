@@ -135,16 +135,18 @@ class QdrantStore:
 
     def search(self, query_vector: List[float], top_k: int = 5,
                score_threshold: float = 0.0,
-               source_type: Optional[str] = None) -> List[SearchResult]:
+               source_type: Optional[str] = None,
+               source_names: Optional[List[str]] = None) -> List[SearchResult]:
         if not self._connected:
             self.connect()
-        from qdrant_client.models import Filter, FieldCondition, MatchValue, SearchParams
+        from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchAny, SearchParams
 
-        query_filter = None
+        conditions = []
         if source_type:
-            query_filter = Filter(
-                must=[FieldCondition(key="source_type", match=MatchValue(value=source_type))]
-            )
+            conditions.append(FieldCondition(key="source_type", match=MatchValue(value=source_type)))
+        if source_names:
+            conditions.append(FieldCondition(key="source_name", match=MatchAny(any=source_names)))
+        query_filter = Filter(must=conditions) if conditions else None
 
         start = time.time()
         results = self.client.search(

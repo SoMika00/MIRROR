@@ -122,7 +122,7 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
 
 
 def query_rag(question: str, source_type: Optional[str] = None,
-              stream: bool = False) -> Dict[str, Any]:
+              stream: bool = False, enabled_sources: Optional[List[str]] = None) -> Dict[str, Any]:
     """Execute full RAG pipeline: embed → search → generate."""
     start = time.time()
 
@@ -138,6 +138,7 @@ def query_rag(question: str, source_type: Optional[str] = None,
         top_k=rag_cfg.top_k,
         score_threshold=rag_cfg.score_threshold,
         source_type=source_type,
+        source_names=enabled_sources,
     )
     search_time = time.time() - t0
 
@@ -177,13 +178,14 @@ def query_rag(question: str, source_type: Optional[str] = None,
     sources = []
     seen = set()
     for r in results:
-        key = (r.source, r.page)
+        key = (r.source, r.page, r.chunk_index)
         if key not in seen:
             seen.add(key)
             sources.append({
                 "source": r.source,
                 "source_type": r.source_type,
                 "page": r.page,
+                "chunk_index": r.chunk_index,
                 "score": round(r.score, 3),
                 "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
             })
@@ -201,14 +203,16 @@ def query_rag(question: str, source_type: Optional[str] = None,
     }
 
 
-def query_rag_stream(question: str, source_type: Optional[str] = None) -> Generator[str, None, None]:
-    """Streaming RAG: yields answer tokens one by one."""
+def query_rag_stream(question: str, source_type: Optional[str] = None,
+                     enabled_sources: Optional[List[str]] = None) -> Generator:
+    """Streaming RAG: yields answer tokens (str) and a sources dict."""
     query_vector = embedding_service.encode_query(question).tolist()
     results = qdrant_store.search(
         query_vector=query_vector,
         top_k=rag_cfg.top_k,
         score_threshold=rag_cfg.score_threshold,
         source_type=source_type,
+        source_names=enabled_sources,
     )
 
     if not results:
@@ -222,6 +226,22 @@ def query_rag_stream(question: str, source_type: Optional[str] = None) -> Genera
         reranked = [(idx, score) for idx, score in reranked if score > -5.0]
         if reranked:
             results = [results[idx] for idx, _ in reranked]
+
+    # Emit sources before tokens so the frontend knows what was retrieved
+    sources = []
+    seen = set()
+    for r in results:
+        key = (r.source, r.page, r.chunk_index)
+        if key not in seen:
+            seen.add(key)
+            sources.append({
+                "source": r.source,
+                "source_type": r.source_type,
+                "page": r.page,
+                "chunk_index": r.chunk_index,
+                "score": round(r.score, 3),
+            })
+    yield {"sources": sources}
 
     context = build_context(results)
     prompt = SYSTEM_PROMPT.format(context=context, question=question)

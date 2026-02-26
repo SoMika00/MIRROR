@@ -46,26 +46,6 @@ def _auto_init_services(app):
                 default = get_default_model()
                 if default:
                     default_path = f"./models/{default['filename']}"
-                    # Auto-download from HuggingFace if not on disk
-                    if not os.path.exists(default_path):
-                        app.logger.info(f"Auto-init: Downloading default model {default['name']} from HuggingFace...")
-                        try:
-                            from huggingface_hub import hf_hub_download
-                            hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HF_token")
-                            hf_hub_download(
-                                repo_id=default["hf_repo"],
-                                filename=default["hf_file"],
-                                local_dir="./models",
-                                local_dir_use_symlinks=False,
-                                token=hf_token,
-                            )
-                            # Rename if needed
-                            downloaded = f"./models/{default['hf_file']}"
-                            if downloaded != default_path and os.path.exists(downloaded):
-                                os.rename(downloaded, default_path)
-                            app.logger.info(f"Auto-init: Download complete: {default_path}")
-                        except Exception as dl_err:
-                            app.logger.error(f"Auto-init: Download failed: {dl_err}")
                     if os.path.exists(default_path):
                         app.logger.info(f"Auto-init: Loading default model: {default['name']}")
                         llm_service.load(model_id=default["id"])
@@ -73,6 +53,13 @@ def _auto_init_services(app):
                         app.logger.info("Auto-init: Model file not available, use Model Manager to download")
                 else:
                     app.logger.info("Auto-init: No default model configured")
+
+            if llm_service.is_loaded():
+                try:
+                    llm_service.generate("warmup", max_tokens=1, temperature=0.0)
+                    app.logger.info("Auto-init: LLM warmup complete")
+                except Exception as e:
+                    app.logger.warning(f"Auto-init: LLM warmup failed: {e}")
         except Exception as e:
             app.logger.error(f"Auto-init: LLM failed: {e}")
 

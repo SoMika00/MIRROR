@@ -128,7 +128,7 @@ Pour une page PDF (~500-1000 tokens), BGE-M3 chunke et embed en **<5 secondes su
 
 ---
 
-## 5. Pipeline RAG
+## 5. Pipeline RAG & Reranking
 
 ### Architecture
 
@@ -146,7 +146,23 @@ Le pipeline suit le pattern RAG canonique de Lewis et al. (2020), adapté pour l
 
 ### Mécanisme de citations
 
-Chaque chunk récupéré porte des métadonnées (`source_name`, `page`, `chunk_index`). Le prompt système instruit le LLM de citer les sources au format `[Source: nom, p.X]`. Les sources sont également retournées en JSON structuré pour l'affichage frontend.
+Chaque chunk récupéré porte des métadonnées (`source_name`, `page`, `chunk_index`). Le prompt système instruit le LLM de citer les sources au format `[Source: nom, p.X]`. Les sources sont également retournées en JSON structuré pour l'affichage frontend avec toggle par source.
+
+### Reranker : cross-encoder/ms-marco-MiniLM-L-6-v2
+
+- **Seulement 22M paramètres** — extrêmement rapide sur CPU (~5-15ms par paire query-document)
+- **Entraîné sur MS MARCO** — 500M+ paires query-passage, le standard pour le passage reranking
+- **NDCG@10 de 39.01** sur TREC Deep Learning 2019 — meilleur ratio vitesse/qualité pour CPU
+- **API CrossEncoder sentence-transformers** — intégration directe, pas de dépendances supplémentaires
+
+### Pipeline complet avec latences
+
+| Étape | Modèle | Latence (CPU) | Sortie |
+|-------|--------|--------------|--------|
+| 1. Embedding | BGE-M3 | <30ms | Vecteur 1024-dim |
+| 2. Recherche ANN | Qdrant HNSW | <10ms | Top-8 candidats |
+| 3. Reranking | MiniLM-L-6-v2 | ~40-120ms (8 paires) | Top-3 reranked |
+| 4. Génération | Phi-4 14B | 5-50s | Réponse avec citations |
 
 ### Limites identifiées
 
@@ -157,36 +173,12 @@ Chaque chunk récupéré porte des métadonnées (`source_name`, `page`, `chunk_
 
 - Lewis et al. (2020). *"Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"*. NeurIPS 2020
 - Gao et al. (2024). *"Retrieval-Augmented Generation for Large Language Models: A Survey"*. arXiv:2312.10997
-- Shi et al. (2023). *"REPLUG: Retrieval-Augmented Black-Box Language Models"*. arXiv:2301.12652
-
----
-
-## 6. Reranker : cross-encoder/ms-marco-MiniLM-L-6-v2
-
-### Justification
-
-- **Seulement 22M paramètres** — extrêmement rapide sur CPU (~5-15ms par paire query-document)
-- **Entraîné sur MS MARCO** — 500M+ paires query-passage, le standard pour le passage reranking
-- **NDCG@10 de 39.01** sur TREC Deep Learning 2019 — meilleur ratio vitesse/qualité pour CPU
-- **API CrossEncoder sentence-transformers** — intégration directe, pas de dépendances supplémentaires
-
-### Intégration Pipeline
-
-| Étape | Modèle | Latence (CPU) | Sortie |
-|-------|--------|--------------|--------|
-| 1. Embedding | BGE-M3 | <30ms | Vecteur 1024-dim |
-| 2. Recherche ANN | Qdrant HNSW | <10ms | Top-8 candidats |
-| 3. Reranking | MiniLM-L-6-v2 | ~40-120ms (8 paires) | Top-3 reranked |
-| 4. Génération | Phi-4 14B | 5-50s | Réponse avec citations |
-
-### Références
-
 - Nogueira & Cho (2019). *"Passage Re-ranking with BERT"*. arXiv:1901.04085
 - Wang et al. (2020). *"MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression"*. NeurIPS 2020
 
 ---
 
-## 7. Modèle de Vision : MiniCPM-V 2.6 (INT4)
+## 6. Modèle de Vision : MiniCPM-V 2.6 (INT4)
 
 ### Justification
 
@@ -206,7 +198,7 @@ Le modèle de vision est **optionnel** (activé via `VISION_ENABLED=1`). Quand a
 
 ---
 
-## 8. Docker : Encapsulation Complète
+## 7. Docker : Encapsulation Complète
 
 L'ensemble du stack tourne via `docker compose up` — zéro dépendance hôte au-delà de Docker.
 
@@ -219,7 +211,7 @@ L'ensemble du stack tourne via `docker compose up` — zéro dépendance hôte a
 
 ---
 
-## 9. Web Scraping
+## 8. Web Scraping
 
 - **trafilatura** (extraction principale) — précision >90% sur les benchmarks d'extraction web (Barbaresi, ACL 2021)
 - **BeautifulSoup** (fallback) — parsing HTML robuste pour les cas non gérés par trafilatura
@@ -231,7 +223,56 @@ L'ensemble du stack tourne via `docker compose up` — zéro dépendance hôte a
 
 ---
 
-## 10. Stack Technique Complet
+## 9. Bases de Données
+
+### Architecture de stockage
+
+MIRROR utilise deux bases de données complémentaires :
+
+| Base | Type | Rôle | Scaling |
+|------|------|------|---------|
+| **SQLite** | Relationnelle embarquée | Conversations, logs, métadonnées utilisateur | Vertical (fichier unique) |
+| **Qdrant** | Vectorielle (Rust) | Embeddings, recherche sémantique RAG | Horizontal (sharding natif) |
+
+### Vertical vs Horizontal
+
+- **Scaling vertical** — augmenter les ressources d'un serveur unique (CPU, RAM, SSD). Simple, pas de code distribué. Limité par le hardware disponible. Adapté à SQLite, PostgreSQL, MySQL pour des charges modérées.
+- **Scaling horizontal** — distribuer les données sur plusieurs nœuds. Scaling quasi-infini, tolérance aux pannes. Complexité accrue (sharding, réplication, consistance). Adapté à MongoDB, Cassandra, Qdrant, Kafka.
+- **Théorème CAP** — un système distribué ne peut garantir que 2 des 3 : Consistance, Disponibilité, Tolérance au partitionnement. En pratique : choix entre CP (PostgreSQL, CockroachDB) et AP (Cassandra, DynamoDB).
+
+### Pourquoi pas PostgreSQL ?
+
+Pour un portfolio mono-utilisateur, SQLite offre zéro configuration, backup trivial (copie du fichier), et performances excellentes en lecture. PostgreSQL serait le choix pour une application multi-utilisateurs avec concurrence d'écriture.
+
+---
+
+## 10. CI/CD & Monitoring
+
+### Pipeline de déploiement
+
+| Outil | Rôle | Justification |
+|-------|------|---------------|
+| **GitHub Actions** | CI/CD | Lint, tests, build Docker, push registry. Gratuit pour open source. |
+| **Docker Compose** | Déploiement | Stack complète en une commande. Adapté au mono-serveur. |
+| **Caddy** | Reverse proxy | HTTPS automatique (Let's Encrypt), HTTP/2, config minimale. |
+
+### Monitoring (cibles futures)
+
+| Outil | Rôle |
+|-------|------|
+| **Prometheus** | Collecte de métriques (latence, tokens/s, erreurs, RAM/CPU) |
+| **Grafana** | Dashboards et alertes visuelles |
+| **Loki** | Agrégation de logs (intégré Grafana) |
+| **Langfuse** | Tracing LLM spécifique (prompt, contexte, réponse, latence) |
+
+### Orchestration de pipelines ML
+
+- **Apache Airflow** — orchestrateur de workflows Python (DAGs). Standard pour ETL, pipelines d'entraînement, validation de données. Alternatives : Prefect (DX moderne), Dagster (asset-centric).
+- **Snowflake** — data warehouse cloud avec séparation stockage/compute. Snowpark pour ML en Python directement dans le warehouse. Cortex AI pour LLM en SQL.
+
+---
+
+## 11. Stack Technique Complet
 
 | Couche | Technologie | Rôle |
 |--------|------------|------|
@@ -241,13 +282,16 @@ L'ensemble du stack tourne via `docker compose up` — zéro dépendance hôte a
 | Reranker | ms-marco-MiniLM-L-6-v2 | Cross-encoder, 22M params, ~15ms/paire sur CPU |
 | Vision (opt.) | MiniCPM-V 2.6 INT4 | Compréhension visuelle PDF, ~4 Go RAM |
 | Base Vectorielle | Qdrant (Docker) | HNSW + quantification INT8, recherche sub-10ms |
+| Base Relationnelle | SQLite (WAL) | Conversations, logs, métadonnées |
 | Parsing PDF | PyMuPDF (fitz) | Rapide, gère les layouts complexes |
 | Scraping | trafilatura + BeautifulSoup | Extraction haute précision |
+| Reverse Proxy | Caddy 2.8 | HTTPS auto, HTTP/2, config minimale |
 | Conteneurisation | Docker Compose | Encapsulation complète, portable |
+| CI/CD | GitHub Actions | Lint, test, build, deploy |
 
 ---
 
-## 11. Optimisations Futures
+## 12. Optimisations Futures
 
 1. **ONNX Runtime** pour BGE-M3 — gagner 30-40% de vitesse d'embedding
 2. **Streaming SSE** — afficher les tokens en temps réel pendant la génération

@@ -14,7 +14,6 @@
             <button class="cx-tab" data-tab="cv">Computer Vision</button>
             <button class="cx-tab" data-tab="nlp">NLP &amp; LLMs</button>
             <button class="cx-tab" data-tab="mlops">MLOps &amp; Infra</button>
-            <button class="cx-tab" data-tab="dataeng">Data Engineering</button>
             <button class="cx-tab" data-tab="databases">Databases</button>
         </div>
 
@@ -517,7 +516,7 @@
                 <p data-i18n="courses.dl.intro">Deep learning uses neural networks with many stacked layers to automatically learn patterns from raw data. Instead of hand-crafting features (like in classical ML), you feed the raw data (pixels, text, audio) and the network discovers the relevant features by itself. Different architectures are designed for different types of data: images (CNNs), sequences (RNNs), and the Transformer, which now dominates nearly everything.</p>
             </div>
 
-            <h3 class="cx-subcategory">Foundations: How Neural Networks Learn</h3>
+            <h3 class="cx-subcategory">Foundations &amp; Core Architectures</h3>
             <div class="cx-algo-grid">
 
                 <div class="cx-algo-card" data-algo="mlp">
@@ -576,11 +575,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <h3 class="cx-subcategory">Convolutional Neural Networks (CNNs)</h3>
-            <div class="cx-algo-grid">
-
                 <div class="cx-algo-card" data-algo="cnn">
                     <div class="cx-algo-header">
                         <span class="cx-algo-name">CNN / ConvNet</span>
@@ -632,11 +626,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <h3 class="cx-subcategory">Recurrent Neural Networks (RNNs)</h3>
-            <div class="cx-algo-grid">
-
                 <div class="cx-algo-card" data-algo="rnn">
                     <div class="cx-algo-header">
                         <span class="cx-algo-name">RNN / LSTM / GRU</span>
@@ -687,7 +676,7 @@
 
             </div>
 
-            <h3 class="cx-subcategory">The Transformer Architecture</h3>
+            <h3 class="cx-subcategory">Transformers &amp; Generative Models</h3>
             <div class="cx-algo-grid">
 
                 <div class="cx-algo-card" data-algo="transformer">
@@ -742,11 +731,6 @@
                         </div>
                     </div>
                 </div>
-
-            </div>
-
-            <h3 class="cx-subcategory">Generative Models</h3>
-            <div class="cx-algo-grid">
 
                 <div class="cx-algo-card" data-algo="gan">
                     <div class="cx-algo-header">
@@ -1095,17 +1079,141 @@
 
             </div>
 
-            <h3 class="cx-subcategory">Metrics Reference</h3>
-            <div class="cx-info-box">
-                <h4>How to measure CV model performance</h4>
-                <ul>
-                    <li><strong>Classification: Top-1 / Top-5 accuracy</strong> measures if the correct label is the model's #1 prediction, or at least in its top 5 guesses. ImageNet Top-1 is the standard benchmark.</li>
-                    <li><strong>Detection: mAP (mean Average Precision)</strong> measures how well the model both finds objects and draws tight bounding boxes. mAP@50 is lenient (50% overlap counts as correct), mAP@50:95 is strict (averages across 50-95% overlap thresholds).</li>
-                    <li><strong>Segmentation: mIoU (mean Intersection over Union)</strong> for each class, measures how much the predicted pixel mask overlaps with ground truth. Dice coefficient is its cousin, common in medical imaging.</li>
-                    <li><strong>OCR: CER (Character Error Rate) and WER (Word Error Rate)</strong> measure how many characters/words the OCR system gets wrong compared to ground truth text.</li>
-                    <li><strong>Speed: FPS and latency</strong> for real-time applications. Report p50 (median) and p95 (worst-case) latency for production SLAs.</li>
-                    <li><strong>Production monitoring</strong>: track data drift (input distribution changes), per-camera/domain accuracy, and model confidence scores to catch performance degradation early.</li>
-                </ul>
+            <h3 class="cx-subcategory">How to Measure CV Model Performance</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="cv-metrics">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Evaluation Metrics</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Essential</span>
+                    </div>
+                    <p class="cx-algo-short">Choosing the right metric is as important as choosing the right model. A metric tells you what "good" means for your specific task. Using the wrong metric can make a terrible model look great (e.g., 99% accuracy on a dataset where 99% of samples are one class).</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Classification metrics</h4>
+                            <ul>
+                                <li><strong>Top-1 / Top-5 Accuracy</strong>: is the correct label the model's #1 prediction (Top-1) or at least in its top 5 guesses (Top-5)? ImageNet Top-1 is the standard benchmark. Simple but misleading on imbalanced data.</li>
+                                <li><strong>Precision</strong>: of all samples the model predicted as positive, how many were actually positive? High precision = few false alarms. Critical when false positives are costly (spam filter, fraud detection).</li>
+                                <li><strong>Recall (Sensitivity)</strong>: of all actual positives, how many did the model catch? High recall = few missed detections. Critical when false negatives are costly (cancer screening, safety systems).</li>
+                                <li><strong>F1 Score</strong>: harmonic mean of precision and recall. Balances both. Use when you need a single number and classes are imbalanced.</li>
+                                <li><strong>AUC-ROC</strong>: measures how well the model separates classes across all confidence thresholds. 1.0 = perfect separation, 0.5 = random. Threshold-independent, great for comparing models.</li>
+                                <li><strong>Confusion Matrix</strong>: the full picture. Shows exactly which classes are confused with which. Always look at this first before choosing a single metric.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Detection metrics</h4>
+                            <ul>
+                                <li><strong>IoU (Intersection over Union)</strong>: measures how well a predicted bounding box overlaps with the ground truth. IoU = area of overlap / area of union. An IoU &gt; 0.5 is typically considered a correct detection.</li>
+                                <li><strong>mAP@50</strong>: mean Average Precision at 50% IoU threshold. Lenient: a box with 50% overlap counts as correct. Standard for PASCAL VOC.</li>
+                                <li><strong>mAP@50:95</strong>: averages mAP across IoU thresholds from 50% to 95% in steps of 5%. Much stricter, rewards tight bounding boxes. Standard for COCO benchmark.</li>
+                                <li><strong>AP per class</strong>: some classes are much harder to detect than others. Always check per-class AP, not just the mean.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Segmentation metrics</h4>
+                            <ul>
+                                <li><strong>mIoU (mean Intersection over Union)</strong>: for each class, measures pixel-level overlap between predicted mask and ground truth, then averages across classes. The standard segmentation metric.</li>
+                                <li><strong>Dice Coefficient (F1 for pixels)</strong>: 2 &times; overlap / (predicted + ground truth). Equivalent to pixel-level F1. Very common in medical imaging because it handles class imbalance well (most pixels are background).</li>
+                                <li><strong>Pixel Accuracy</strong>: % of pixels correctly classified. Misleading when classes are imbalanced (a model that predicts "background" everywhere gets 95%+ accuracy).</li>
+                                <li><strong>Boundary IoU</strong>: measures IoU only near object boundaries, rewarding models that get the edges right (important for precise cutouts).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Other task-specific metrics</h4>
+                            <ul>
+                                <li><strong>OCR: CER / WER</strong>: Character Error Rate and Word Error Rate measure edit distance between predicted and ground truth text.</li>
+                                <li><strong>Tracking: MOTA / IDF1</strong>: Multi-Object Tracking Accuracy and Identity F1 measure how well objects are tracked across video frames without ID switches.</li>
+                                <li><strong>Speed: FPS, latency</strong>: report p50 (median) and p95 (worst-case) latency. For real-time applications, throughput at target latency matters more than peak FPS.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="cv-losses">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Loss Functions</span>
+                        <span class="cx-algo-badge">Training</span>
+                    </div>
+                    <p class="cx-algo-short">The loss function defines what the model optimizes during training. It's the mathematical expression of "how wrong is this prediction?" Different tasks need different loss functions, and choosing the right one directly impacts model quality. Understanding why each loss works helps you debug training issues.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Classification losses</h4>
+                            <ul>
+                                <li><strong>Cross-Entropy Loss</strong>: the standard for classification. Measures the difference between predicted probability distribution and the true label. For binary classification: BCE (Binary Cross-Entropy). For multi-class: Categorical CE. Works because it heavily penalizes confident wrong predictions (predicting 0.01 for the correct class is much worse than predicting 0.4).</li>
+                                <li><strong>Focal Loss</strong>: modified CE that down-weights easy examples and focuses training on hard ones. Invented for object detection (RetinaNet) where 99% of candidate boxes are "background" (easy negatives). The &gamma; parameter controls how much to focus on hard examples. Focal Loss = -&alpha;(1-p)^&gamma; log(p).</li>
+                                <li><strong>Label Smoothing</strong>: instead of hard labels (0 or 1), use soft labels (0.1 or 0.9). Prevents overconfidence, improves generalization. Common in modern image classification (ViT uses 0.1 smoothing).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Detection losses</h4>
+                            <ul>
+                                <li><strong>Bounding box regression</strong>: L1 Loss (mean absolute error) or Smooth L1 (less sensitive to outliers) for predicting box coordinates (x, y, w, h). Modern detectors use <strong>CIoU Loss</strong> (Complete IoU) which directly optimizes the overlap between predicted and ground truth boxes, considering center distance and aspect ratio.</li>
+                                <li><strong>Objectness loss</strong>: BCE that predicts "is there an object here?" for each anchor/grid cell.</li>
+                                <li><strong>Total YOLO loss</strong> = box_loss + objectness_loss + classification_loss, each weighted differently.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Segmentation losses</h4>
+                            <ul>
+                                <li><strong>Pixel-wise Cross-Entropy</strong>: standard CE applied to every pixel independently. Simple but struggles with class imbalance (tiny objects get overwhelmed by background loss).</li>
+                                <li><strong>Dice Loss</strong>: 1 - Dice coefficient. Directly optimizes the overlap metric. Handles class imbalance naturally because it measures ratios, not absolute counts. Standard in medical imaging.</li>
+                                <li><strong>Combined: CE + Dice</strong>: many SOTA segmentation models use both, getting the benefits of each. CE provides stable gradients, Dice handles imbalance.</li>
+                                <li><strong>Boundary Loss</strong>: penalizes predictions that are wrong near object edges. Improves boundary quality without extra annotation cost.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Contrastive &amp; self-supervised losses</h4>
+                            <ul>
+                                <li><strong>Contrastive Loss (CLIP, SimCLR)</strong>: pull matching pairs (same image augmented twice, or matching image-text) close in embedding space, push non-matching pairs apart. InfoNCE is the most common variant.</li>
+                                <li><strong>Triplet Loss</strong>: given an anchor, a positive (same class), and a negative (different class), ensure the anchor is closer to the positive than the negative by a margin. Common in face recognition (FaceNet).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>How to choose a loss function</h4>
+                            <ul>
+                                <li><strong>Balanced classification</strong>: standard Cross-Entropy works great</li>
+                                <li><strong>Imbalanced classification</strong>: Focal Loss or weighted CE (weight rare classes higher)</li>
+                                <li><strong>Detection</strong>: CIoU for boxes + Focal Loss for classification (YOLOv8 default)</li>
+                                <li><strong>Segmentation (imbalanced)</strong>: Dice Loss + CE combined</li>
+                                <li><strong>Embeddings/similarity</strong>: Contrastive (InfoNCE) or Triplet Loss</li>
+                                <li><strong>Regression (continuous output)</strong>: MSE (penalizes large errors) or Huber Loss (robust to outliers)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="cx-algo-grid" style="margin-top:1rem;">
+
+                <div class="cx-algo-card" data-algo="cv-prod-monitoring">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Production Monitoring for CV</span>
+                        <span class="cx-algo-badge">Production</span>
+                    </div>
+                    <p class="cx-algo-short">Deploying a CV model is only half the job. In production, image distributions shift (new cameras, lighting changes, seasonal differences), and model performance silently degrades if you're not monitoring. A structured monitoring pipeline catches issues before users do.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>What to monitor</h4>
+                            <ul>
+                                <li><strong>Data drift</strong>: compare input image distribution over time (brightness, resolution, domain shift). Use statistical tests (KL divergence, PSI) on embedding distributions. Alert when distribution diverges beyond a threshold.</li>
+                                <li><strong>Per-domain accuracy</strong>: track accuracy per camera, source, region, or time window separately. A model may degrade on one domain while looking fine overall. Break metrics down by every axis that matters.</li>
+                                <li><strong>Confidence calibration</strong>: a model saying "95% confident" should be right 95% of the time. Plot reliability diagrams (predicted confidence vs actual accuracy). Uncalibrated models give misleading confidence scores.</li>
+                                <li><strong>Latency &amp; throughput</strong>: track p50, p95, p99 inference time. Monitor GPU utilization, queue depth, batch throughput. Set SLA alerts for real-time applications.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>How to improve continuously</h4>
+                            <ul>
+                                <li><strong>Failure analysis</strong>: regularly review the worst predictions. Cluster error patterns to find systematic issues (night images, occluded objects, rare classes). Feed these hard cases back into the training set.</li>
+                                <li><strong>A/B testing</strong>: when deploying a new model, serve both old and new in parallel and compare live metrics before full rollout. Shadow deployment (new model runs but doesn't serve) is even safer.</li>
+                                <li><strong>Active learning</strong>: prioritize labeling the samples where the model is most uncertain. This gives the best return per labeled sample, reducing annotation costs.</li>
+                                <li><strong>Retraining triggers</strong>: define automatic retraining when drift exceeds a threshold or accuracy drops below a target. Automate the pipeline with Airflow or similar.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -1599,30 +1707,243 @@
 
             </div>
 
-            <h3 class="cx-subcategory">Monitoring &amp; CI/CD</h3>
+            <h3 class="cx-subcategory">Monitoring &amp; Observability</h3>
             <div class="cx-algo-grid">
 
-                <div class="cx-algo-card" data-algo="monitoring">
+                <div class="cx-algo-card" data-algo="prometheus">
                     <div class="cx-algo-header">
-                        <span class="cx-algo-name">Monitoring &amp; Observability</span>
-                        <span class="cx-algo-badge">Production</span>
+                        <span class="cx-algo-name">Prometheus</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Metrics</span>
                     </div>
-                    <p class="cx-algo-short">In production, you need to know when your model degrades before users notice. Monitor latency (time to first token, total generation time), error rates, GPU utilization, and most critically: output quality. Data drift detection alerts you when the input distribution changes and your model's predictions may no longer be reliable.</p>
+                    <p class="cx-algo-short">The industry standard for collecting and storing time-series metrics. Prometheus scrapes /metrics HTTP endpoints from your services at regular intervals, stores the data efficiently, and fires alerts when thresholds are breached. Used by virtually every Kubernetes cluster and production ML system.</p>
                     <div class="cx-algo-detail">
                         <div class="cx-detail-section">
-                            <h4>What to monitor</h4>
+                            <h4>When and why to use it</h4>
+                            <p>Use Prometheus whenever you need to answer "how is my system performing right now?" It's the source of truth for latency, throughput, error rates, and resource utilization. For ML: track tokens/sec, time-to-first-token, GPU memory, queue depth, and model confidence distributions.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>How it works</h4>
                             <ul>
-                                <li><strong>Latency</strong>: p50, p95, p99 for time-to-first-token and total generation time</li>
-                                <li><strong>Throughput</strong>: requests per second, tokens per second</li>
-                                <li><strong>Error rate</strong>: HTTP 500s, OOM kills, timeout rate</li>
-                                <li><strong>Resource usage</strong>: GPU memory, GPU utilization, CPU, RAM</li>
-                                <li><strong>Data drift</strong>: compare input embedding distributions over time (KL divergence, PSI)</li>
-                                <li><strong>Quality</strong>: user feedback (thumbs up/down), LLM-as-judge scores, hallucination rate</li>
+                                <li><strong>Pull model</strong>: Prometheus scrapes your app's /metrics endpoint every 15-30s. Your app exposes counters, gauges, and histograms.</li>
+                                <li><strong>PromQL</strong>: powerful query language. Example: <code>rate(http_requests_total[5m])</code> gives requests/sec over 5 minutes.</li>
+                                <li><strong>Alertmanager</strong>: companion service that routes alerts to Slack, PagerDuty, email. Groups, silences, and deduplicates.</li>
+                                <li><strong>Service discovery</strong>: automatically finds targets in Kubernetes (no manual config per service).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="grafana">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Grafana</span>
+                        <span class="cx-algo-badge">Dashboards</span>
+                    </div>
+                    <p class="cx-algo-short">The visualization layer for your entire infrastructure. Grafana connects to Prometheus (metrics), Loki (logs), and dozens of other data sources to create beautiful, interactive dashboards. For ML teams: build dashboards showing model latency, GPU utilization, request throughput, error rates, and data drift all in one view.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use Grafana whenever you need a visual overview of system health. It's the single pane of glass where everyone (engineers, PMs, execs) checks production status. Create team-specific dashboards: one for infra (CPU, memory, disk), one for ML (model performance, drift), one for business (requests, users, cost).</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key features</h4>
+                            <ul>
+                                <li><strong>Multi-datasource</strong>: connect Prometheus, Loki, PostgreSQL, Elasticsearch, CloudWatch in one dashboard</li>
+                                <li><strong>Alerting</strong>: define alert rules directly in Grafana (simpler than Alertmanager for basic cases)</li>
+                                <li><strong>Templating</strong>: variables let you switch between services, environments, or time ranges dynamically</li>
+                                <li><strong>Community dashboards</strong>: thousands of pre-built dashboards for common stacks (Node Exporter, NGINX, GPU metrics)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="loki">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Loki</span>
+                        <span class="cx-algo-badge">Logs</span>
+                    </div>
+                    <p class="cx-algo-short">Log aggregation system designed by Grafana Labs. Like Prometheus but for logs: lightweight, label-based indexing (not full-text), and native Grafana integration. Collects logs from all your containers and lets you search, filter, and correlate them with metrics on the same timeline.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use Loki when you need to debug issues by reading logs across services. "The model returned an error at 14:32 — what happened?" Loki lets you jump from a Grafana alert to the exact logs in the same dashboard. Much cheaper than Elasticsearch for log storage because it only indexes labels (service, level, pod), not the full text.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>How it works</h4>
+                            <ul>
+                                <li><strong>Promtail</strong> (agent): runs on each node, tails log files and ships them to Loki with labels</li>
+                                <li><strong>LogQL</strong>: query language similar to PromQL. <code>{job="mirror"} |= "error"</code> finds all error logs from the mirror service.</li>
+                                <li><strong>Correlation</strong>: click a metric spike in Grafana, instantly see the logs from that exact time window</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="langfuse">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Langfuse / LangSmith</span>
+                        <span class="cx-algo-badge">LLM Tracing</span>
+                    </div>
+                    <p class="cx-algo-short">Specialized observability for LLM applications. While Prometheus monitors infrastructure, Langfuse and LangSmith trace the AI layer: every prompt, context, tool call, response, and latency. Essential for debugging RAG quality, hallucinations, and cost optimization.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use LLM tracing tools as soon as you deploy any LLM-powered feature. Without them, you're blind to prompt quality, retrieval relevance, hallucination rate, and per-request cost. They let you replay any conversation, see what context was retrieved, and score response quality.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>What they track</h4>
+                            <ul>
+                                <li><strong>Traces</strong>: full request lifecycle — prompt, retrieved chunks, reranking scores, LLM response, latency per step</li>
+                                <li><strong>Scores</strong>: user feedback (thumbs up/down), LLM-as-judge evaluation, custom metrics (hallucination, relevance)</li>
+                                <li><strong>Cost</strong>: token usage per request, cost breakdown by model and feature</li>
+                                <li><strong>Datasets</strong>: build evaluation sets from production traces for regression testing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">CI/CD &amp; Automation</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="github-actions">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">GitHub Actions</span>
+                        <span class="cx-algo-badge cx-badge-highlight">CI/CD</span>
+                    </div>
+                    <p class="cx-algo-short">CI/CD built directly into GitHub. Define workflows in YAML that trigger on push, PR, schedule, or manual dispatch. Free for open source. The most popular choice for teams already on GitHub — runs lint, tests, Docker builds, and deployments without any external infrastructure.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use GitHub Actions as your default CI/CD if your code lives on GitHub. It's zero-setup (no server to manage), has a massive marketplace of reusable actions, and integrates natively with GitHub PRs (status checks, comments, deploy environments). For ML: trigger model evaluation on every PR, build and push Docker images, deploy to staging.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Typical ML workflow</h4>
+                            <ul>
+                                <li><strong>on: push</strong> &rarr; lint (ruff/black) &rarr; unit tests (pytest) &rarr; build Docker image &rarr; push to GHCR/ECR</li>
+                                <li><strong>on: pull_request</strong> &rarr; run model evaluation benchmark &rarr; post accuracy comparison as PR comment</li>
+                                <li><strong>on: release</strong> &rarr; deploy to production (SSH, K8s apply, or cloud deploy)</li>
+                                <li><strong>Self-hosted runners</strong>: run jobs on your own GPU machines for training and evaluation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="jenkins">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Jenkins</span>
+                        <span class="cx-algo-badge">CI/CD</span>
+                    </div>
+                    <p class="cx-algo-short">The veteran CI/CD server, self-hosted and extremely customizable. Jenkins has been the backbone of enterprise CI/CD for 15+ years. Groovy-based pipelines, thousands of plugins, and complete control over the build environment. Best for on-prem, air-gapped, or complex multi-team enterprise workflows.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use Jenkins when you need full control: on-premises infrastructure, strict security requirements (air-gapped networks), complex approval chains, or legacy systems integration. It's also the choice when you need GPU build agents with custom CUDA setups that cloud CI can't provide easily.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <ul>
+                                <li><strong>Jenkinsfile</strong>: pipeline-as-code in Groovy. Declarative or scripted syntax. Lives in your repo.</li>
+                                <li><strong>Agents/Nodes</strong>: distributed build agents. Tag agents by capability (gpu, docker, arm64) and route jobs accordingly.</li>
+                                <li><strong>Plugins</strong>: 1800+ plugins for everything (Docker, K8s, Slack, SonarQube, JIRA). This extensibility is Jenkins' superpower and curse.</li>
+                                <li><strong>Blue Ocean</strong>: modern UI for pipeline visualization (replaces the dated classic UI).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Complete control: self-hosted, customizable, on-prem friendly</li>
+                                    <li>Massive plugin ecosystem for any integration</li>
+                                    <li>Battle-tested at enterprise scale (thousands of jobs)</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Operational overhead: you manage the server, updates, security</li>
+                                    <li>Groovy DSL is complex, hard to debug</li>
+                                    <li>UI feels dated compared to modern alternatives</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="argocd">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">ArgoCD</span>
+                        <span class="cx-algo-badge">GitOps</span>
+                    </div>
+                    <p class="cx-algo-short">GitOps continuous delivery for Kubernetes. The desired state of your cluster (all YAML manifests, Helm charts, Kustomize configs) lives in a Git repo. ArgoCD watches that repo and automatically syncs changes to the cluster. Push to Git = deploy to production. No manual kubectl apply.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use ArgoCD when you run Kubernetes and want declarative, auditable deployments. Every change goes through a PR, gets reviewed, and is automatically applied. Rollback = git revert. For ML: update model image tag in Git, ArgoCD deploys the new version with a rolling update or canary strategy.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>How it works</h4>
+                            <ul>
+                                <li><strong>Application CRD</strong>: define which Git repo + path maps to which K8s namespace</li>
+                                <li><strong>Sync</strong>: ArgoCD compares Git state vs live state and reconciles diffs</li>
+                                <li><strong>UI</strong>: visual dependency tree of all K8s resources, health status, diff view</li>
+                                <li><strong>Rollback</strong>: one-click rollback to any previous Git commit</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Workflow Orchestration</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="airflow">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Apache Airflow</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Pipeline Orchestration</span>
+                    </div>
+                    <p class="cx-algo-short">The most popular open-source workflow orchestrator. Define data and ML pipelines as DAGs (directed acyclic graphs) in pure Python. Schedule, retry, monitor, and backfill. Used by Airbnb, Spotify, and thousands of companies to manage ETL, training pipelines, and data quality checks.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use Airflow when you need to orchestrate multi-step workflows that run on a schedule or on trigger: data ingestion &rarr; validation &rarr; feature engineering &rarr; model training &rarr; evaluation &rarr; deployment. It's the glue that connects all your tools into a reliable, monitored pipeline.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Core concepts</h4>
+                            <ul>
+                                <li><strong>DAG</strong>: directed acyclic graph of tasks. Each task is a unit of work. Dependencies define execution order.</li>
+                                <li><strong>Operators</strong>: pre-built task types. PythonOperator, BashOperator, DockerOperator, KubernetesPodOperator.</li>
+                                <li><strong>Sensors</strong>: wait for an external condition (file appeared, API responded) before proceeding.</li>
+                                <li><strong>Scheduler</strong>: triggers DAG runs based on cron expressions or external events.</li>
                             </ul>
                         </div>
                         <div class="cx-detail-section">
-                            <h4>Tools</h4>
-                            <p><strong>Prometheus + Grafana</strong>: metrics collection and dashboards. <strong>Loki</strong>: log aggregation. <strong>Langfuse / LangSmith</strong>: LLM-specific tracing (prompt, context, response, latency). <strong>Evidently AI</strong>: data drift and model monitoring.</p>
+                            <h4>Alternatives</h4>
+                            <p><strong>Prefect</strong>: modern Python-native with better DX (decorators, built-in retries, UI). <strong>Dagster</strong>: asset-centric, strong typing, great for data-aware pipelines. <strong>Kubeflow Pipelines</strong>: Kubernetes-native, designed for ML workflows with GPU support.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="mlflow">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">MLflow / W&amp;B</span>
+                        <span class="cx-algo-badge">Experiment Tracking</span>
+                    </div>
+                    <p class="cx-algo-short">Track every experiment you run: hyperparameters, metrics, artifacts, and model versions. Without experiment tracking, you're lost after a few dozen training runs ("which config gave the best F1?"). MLflow is open-source and self-hosted, Weights &amp; Biases (W&amp;B) is cloud-hosted with richer visualization.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When and why to use it</h4>
+                            <p>Use experiment tracking from day 1 of any ML project. It pays off immediately: compare runs side-by-side, reproduce results, share with the team. MLflow also includes a model registry (version, stage, approve) and a deployment component. W&amp;B adds real-time dashboards, hyperparameter sweeps, and collaborative reports.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>What to track</h4>
+                            <ul>
+                                <li><strong>Parameters</strong>: learning rate, batch size, model architecture, data version</li>
+                                <li><strong>Metrics</strong>: loss curves, accuracy, F1, latency, per-epoch and final</li>
+                                <li><strong>Artifacts</strong>: model weights, evaluation plots, confusion matrices, sample predictions</li>
+                                <li><strong>Model registry</strong>: version models, promote to staging/production, rollback</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -1630,94 +1951,7 @@
             </div>
         </div>
 
-        <!-- ==================== DATA ENGINEERING ==================== -->
-        <div class="cx-panel" id="panel-dataeng">
-            <div class="cx-panel-header">
-                <h2>Data Engineering</h2>
-                <p>Data Engineering is about building the pipelines that collect, clean, transform, and deliver data to ML models and analytics systems. Without reliable data pipelines, even the best model is useless. This section covers the tools and patterns used to move and transform data at scale.</p>
-            </div>
-
-            <h3 class="cx-subcategory">ETL &amp; Data Pipelines</h3>
-            <div class="cx-algo-grid">
-
-                <div class="cx-algo-card" data-algo="etl">
-                    <div class="cx-algo-header">
-                        <span class="cx-algo-name">ETL / ELT Pipelines</span>
-                        <span class="cx-algo-badge cx-badge-highlight">Foundation</span>
-                    </div>
-                    <p class="cx-algo-short">ETL (Extract, Transform, Load) is the classic pattern for moving data between systems. Extract data from sources (APIs, databases, files), Transform it (clean, normalize, aggregate), and Load it into a destination (data warehouse, feature store). ELT loads raw data first and transforms in-place, preferred with modern cloud warehouses.</p>
-                    <div class="cx-algo-detail">
-                        <div class="cx-detail-section">
-                            <h4>Tools</h4>
-                            <ul>
-                                <li><strong>Apache Airflow</strong>: the most popular workflow orchestrator. Define DAGs (directed acyclic graphs) of tasks in Python. Schedule, retry, monitor pipelines.</li>
-                                <li><strong>Prefect / Dagster</strong>: modern alternatives to Airflow with better developer experience, typing, and testing.</li>
-                                <li><strong>dbt (data build tool)</strong>: SQL-based transformations in your data warehouse. Version-controlled, tested, documented.</li>
-                                <li><strong>Apache Spark</strong>: distributed data processing for very large datasets (TB+). PySpark for Python integration.</li>
-                            </ul>
-                        </div>
-                        <div class="cx-detail-section">
-                            <h4>For ML specifically</h4>
-                            <ul>
-                                <li><strong>Feature stores</strong> (Feast, Tecton): compute, store, and serve features consistently between training and serving</li>
-                                <li><strong>Data versioning</strong> (DVC): track dataset versions alongside code versions in Git</li>
-                                <li><strong>Data validation</strong> (Great Expectations): automated checks that your data meets quality expectations before training</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <h3 class="cx-subcategory">Streaming &amp; Real-time</h3>
-            <div class="cx-algo-grid">
-
-                <div class="cx-algo-card" data-algo="kafka">
-                    <div class="cx-algo-header">
-                        <span class="cx-algo-name">Kafka / Message Queues</span>
-                        <span class="cx-algo-badge">Streaming</span>
-                    </div>
-                    <p class="cx-algo-short">When data arrives continuously (user events, IoT sensors, log streams), you need a streaming platform that can handle millions of events per second with guaranteed delivery. Apache Kafka is the industry standard: it's a distributed log that producers write to and consumers read from, with persistence and replay capability.</p>
-                    <div class="cx-algo-detail">
-                        <div class="cx-detail-section">
-                            <h4>Options by complexity</h4>
-                            <ul>
-                                <li><strong>Redis Pub/Sub / Redis Streams</strong>: simple, fast, great for lightweight real-time features. No persistence guarantees.</li>
-                                <li><strong>RabbitMQ</strong>: traditional message broker with routing, queues, acknowledgments. Good for task distribution.</li>
-                                <li><strong>Apache Kafka</strong>: distributed, persistent, ordered log. Handles millions of events/sec. Industry standard for event-driven architectures.</li>
-                                <li><strong>Apache Pulsar</strong>: Kafka alternative with multi-tenancy and tiered storage built-in.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <h3 class="cx-subcategory">Data Formats &amp; Storage</h3>
-            <div class="cx-algo-grid">
-
-                <div class="cx-algo-card" data-algo="formats">
-                    <div class="cx-algo-header">
-                        <span class="cx-algo-name">Data Formats</span>
-                        <span class="cx-algo-badge">Storage</span>
-                    </div>
-                    <p class="cx-algo-short">How you store data matters enormously for performance and cost. Columnar formats (Parquet) are orders of magnitude faster than CSV for analytical queries. Choosing the right format for the right use case is a fundamental data engineering skill.</p>
-                    <div class="cx-algo-detail">
-                        <div class="cx-detail-section">
-                            <h4>Formats comparison</h4>
-                            <ul>
-                                <li><strong>CSV/JSON</strong>: human-readable, universal, but slow for large datasets. Use for small data exchange and configs.</li>
-                                <li><strong>Parquet</strong>: columnar, compressed, predicate pushdown. Standard for data lakes and ML datasets. 10-100x faster than CSV for analytics.</li>
-                                <li><strong>Arrow</strong>: in-memory columnar format. Zero-copy reads. Used by Pandas 2.0, Polars, DuckDB.</li>
-                                <li><strong>Protobuf / Avro</strong>: schema-enforced binary formats for API communication and streaming (Kafka).</li>
-                                <li><strong>HDF5 / Zarr</strong>: multi-dimensional arrays, common in scientific computing and large tensor datasets.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
+        <!-- Data Engineering panel removed — content merged into MLOps & Databases -->
 
         <!-- ==================== DATABASES ==================== -->
         <div class="cx-panel" id="panel-databases">
@@ -1886,18 +2120,119 @@
 
             </div>
 
-            <h3 class="cx-subcategory">Choosing the Right Database</h3>
-            <div class="cx-info-box">
-                <h4>Decision guide</h4>
-                <ul>
-                    <li><strong>Structured data with relationships</strong> (users, orders, products): PostgreSQL. Always the safe default.</li>
-                    <li><strong>Flexible/nested documents, evolving schema</strong> (content, configs, logs): MongoDB or PostgreSQL JSONB.</li>
-                    <li><strong>Caching, sessions, real-time counters</strong>: Redis. Sub-millisecond, in-memory.</li>
-                    <li><strong>Embeddings, semantic search, RAG</strong>: Qdrant (self-hosted) or Pinecone (managed). pgvector for simple cases.</li>
-                    <li><strong>Time series</strong> (metrics, IoT sensors): TimescaleDB (PostgreSQL extension) or InfluxDB.</li>
-                    <li><strong>Graph relationships</strong> (social networks, knowledge graphs): Neo4j or Apache AGE (PostgreSQL extension).</li>
-                    <li><strong>Local/embedded, single-user</strong>: SQLite. Zero setup, ships with Python.</li>
-                </ul>
+            <h3 class="cx-subcategory">Scaling: Vertical vs Horizontal</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="db-scaling">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Vertical vs Horizontal Scaling</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Architecture</span>
+                    </div>
+                    <p class="cx-algo-short">When your database can't handle the load, you have two fundamental options: make the machine bigger (vertical) or add more machines (horizontal). This is one of the most important architectural decisions because it affects cost, complexity, consistency guarantees, and which databases you can use.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col">
+                                <h4>Vertical Scaling (Scale Up)</h4>
+                                <ul>
+                                    <li><strong>What</strong>: bigger machine (more CPU, RAM, faster SSD). Same single server, just more powerful.</li>
+                                    <li><strong>Pros</strong>: simple (no code changes), ACID transactions stay easy, no distributed complexity</li>
+                                    <li><strong>Cons</strong>: hardware ceiling (you can't buy a 10TB RAM server), single point of failure, expensive at the top end</li>
+                                    <li><strong>Best for</strong>: PostgreSQL, MySQL, SQLite. Works until ~1TB data / ~10K queries/sec for most workloads.</li>
+                                    <li><strong>Example</strong>: upgrade from 16GB RAM to 128GB RAM, from HDD to NVMe SSD</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col">
+                                <h4>Horizontal Scaling (Scale Out)</h4>
+                                <ul>
+                                    <li><strong>What</strong>: add more machines (nodes/shards). Data is distributed across servers.</li>
+                                    <li><strong>Pros</strong>: near-infinite scaling, fault tolerance (if one node dies, others continue), cost-effective with commodity hardware</li>
+                                    <li><strong>Cons</strong>: complex (distributed transactions, rebalancing, consistency), more operational overhead, not all queries are efficient</li>
+                                    <li><strong>Best for</strong>: MongoDB, Cassandra, CockroachDB, Qdrant, Kafka. Required above ~10TB or ~100K queries/sec.</li>
+                                    <li><strong>Patterns</strong>: sharding (split by key), replication (copies for reads), partitioning (time-based splits)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>CAP Theorem (the fundamental tradeoff)</h4>
+                            <p>A distributed database can only guarantee two of three: <strong>Consistency</strong> (all nodes see the same data), <strong>Availability</strong> (every request gets a response), <strong>Partition tolerance</strong> (system works despite network failures). Since network partitions are unavoidable in production, you're really choosing between <strong>CP</strong> (consistent but may reject requests: PostgreSQL, CockroachDB) and <strong>AP</strong> (always available but may return stale data: Cassandra, DynamoDB).</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Cloud Data Warehouses</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="snowflake">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Snowflake</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Cloud Warehouse</span>
+                    </div>
+                    <p class="cx-algo-short">A cloud-native data warehouse that separates storage and compute, allowing you to scale each independently. SQL-based, fully managed, supports semi-structured data (JSON, Parquet). Widely used for analytics, feature engineering, and as the data layer feeding ML pipelines. Snowpark lets you run Python ML code directly inside the warehouse.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <p>Use Snowflake (or BigQuery/Redshift) when you need to analyze terabytes of data with SQL, build feature pipelines for ML, or serve analytics dashboards. The separation of storage and compute means you only pay for compute when queries run. Not for low-latency transactional workloads (use PostgreSQL for that).</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key features</h4>
+                            <ul>
+                                <li><strong>Separation of storage and compute</strong>: scale compute (virtual warehouses) without moving data. Spin up/down in seconds. Pay only for compute time.</li>
+                                <li><strong>Zero-copy cloning</strong>: instantly clone databases or tables for testing without duplicating storage.</li>
+                                <li><strong>Time travel</strong>: query data as it was at any point in the past (up to 90 days). Undo mistakes, audit changes.</li>
+                                <li><strong>Snowpark</strong>: run Python, Scala, Java directly inside Snowflake. Build feature engineering and ML pipelines without moving data out.</li>
+                                <li><strong>Cortex AI</strong>: built-in LLM functions (COMPLETE, EMBED_TEXT) for AI directly in SQL queries.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Alternatives</h4>
+                            <ul>
+                                <li><strong>BigQuery (Google)</strong>: serverless, pay-per-query, integrated with Vertex AI. Best in the Google Cloud ecosystem.</li>
+                                <li><strong>Redshift (AWS)</strong>: columnar warehouse, tight S3 integration, Redshift ML for in-warehouse training.</li>
+                                <li><strong>Databricks</strong>: unified analytics + ML platform on top of Delta Lake. Spark-based, strong for both ETL and model training.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Massive scale without ops burden (fully managed)</li>
+                                    <li>Excellent SQL support, familiar to data teams</li>
+                                    <li>Strong governance: RBAC, data masking, audit logs</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Expensive at scale (compute costs add up)</li>
+                                    <li>Vendor lock-in (proprietary platform)</li>
+                                    <li>Not suitable for low-latency transactional workloads</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="timeseries-graph">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">TimescaleDB / Neo4j</span>
+                        <span class="cx-algo-badge">Specialized</span>
+                    </div>
+                    <p class="cx-algo-short">Specialized databases optimized for specific access patterns. TimescaleDB is a PostgreSQL extension for time-series data (metrics, IoT, logs) with automatic partitioning and compression. Neo4j is a graph database for data with complex relationships (social networks, knowledge graphs, fraud detection) where traversal queries need to be fast.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use</h4>
+                            <ul>
+                                <li><strong>TimescaleDB</strong>: metrics, IoT sensors, financial data, server logs. Any time-stamped data where you query by time range and aggregate. Extension on PostgreSQL = use your existing PG skills and tools.</li>
+                                <li><strong>InfluxDB</strong>: alternative to TimescaleDB. Purpose-built time-series DB with its own query language (Flux). Better for very high write throughput.</li>
+                                <li><strong>Neo4j</strong>: social networks (friend-of-friend queries), knowledge graphs, recommendation engines, fraud detection (follow chains of transactions). Cypher query language for graph traversals.</li>
+                                <li><strong>Apache AGE</strong>: graph extension for PostgreSQL. Use graph queries without adding a separate database. Good for simpler graph use cases.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

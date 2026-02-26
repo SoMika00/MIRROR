@@ -128,8 +128,8 @@ def list_articles():
         except Exception:
             continue
 
-    # sort by date ascending (oldest first)
-    articles.sort(key=lambda a: a.get("date", ""), reverse=False)
+    # sort by date descending (newest first)
+    articles.sort(key=lambda a: a.get("date", ""), reverse=True)
     return jsonify({"articles": articles})
 
 

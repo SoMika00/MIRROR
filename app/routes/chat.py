@@ -76,6 +76,7 @@ def chat_query():
     mode = data.get("mode", "chat")
     conv_id = data.get("conversation_id")
     source_type = data.get("source_type")
+    enabled_sources = data.get("enabled_sources")
 
     if not question:
         return jsonify({"error": "Empty question"}), 400
@@ -98,10 +99,8 @@ def chat_query():
     try:
         history = db.get_recent_context(conv_id, n=6)
 
-        if mode == "chat":
-            result = query_direct_chat(question, history=history)
-        elif mode == "rag":
-            result = query_rag(question, source_type=source_type)
+        if mode == "rag":
+            result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources)
         elif mode == "scrap":
             content = data.get("content", "")
             url = data.get("url", "")
@@ -111,7 +110,7 @@ def chat_query():
             else:
                 result = query_scraped_content(question, url, title_page, content)
         elif mode == "fulldoc":
-            result = query_rag(question, source_type="document")
+            result = query_rag(question, source_type="document", enabled_sources=enabled_sources)
         else:
             result = query_direct_chat(question, history=history)
 
@@ -142,6 +141,7 @@ def chat_stream():
     mode = data.get("mode", "chat")
     conv_id = data.get("conversation_id")
     source_type = data.get("source_type")
+    enabled_sources = data.get("enabled_sources")
 
     if not llm_service.is_loaded():
         return jsonify({"error": "No LLM loaded."}), 503
@@ -156,24 +156,31 @@ def chat_stream():
 
     def generate():
         full_answer = []
+        sources_data = []
         try:
-            if mode == "chat":
-                stream = query_direct_chat_stream(question, history=history)
-            elif mode in ("rag", "fulldoc"):
+            if mode in ("rag", "fulldoc"):
                 st = "document" if mode == "fulldoc" else source_type
-                stream = query_rag_stream(question, source_type=st)
+                stream = query_rag_stream(question, source_type=st, enabled_sources=enabled_sources)
+                # query_rag_stream yields either tokens (str) or a sources dict
+                for item in stream:
+                    if isinstance(item, dict) and 'sources' in item:
+                        sources_data = item['sources']
+                        yield f"data: {json.dumps({'sources': sources_data})}\n\n"
+                    else:
+                        full_answer.append(item)
+                        yield f"data: {json.dumps({'token': item})}\n\n"
             else:
                 stream = query_direct_chat_stream(question, history=history)
-
-            for token in stream:
-                full_answer.append(token)
-                yield f"data: {json.dumps({'token': token})}\n\n"
+                for token in stream:
+                    full_answer.append(token)
+                    yield f"data: {json.dumps({'token': token})}\n\n"
 
             # Save full answer
             answer_text = "".join(full_answer)
-            db.add_message(conv_id, "assistant", answer_text, mode=mode)
+            db.add_message(conv_id, "assistant", answer_text, mode=mode,
+                           sources=sources_data if sources_data else None)
 
-            yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id})}\n\n"
+            yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id, 'sources': sources_data})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
 
