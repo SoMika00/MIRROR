@@ -1812,6 +1812,31 @@ a:hover {
   font-weight: 700;
 }
 
+.live-metrics-cores {
+  display: flex;
+  gap: 2px;
+  padding: 0.15rem 0;
+  height: 24px;
+  align-items: flex-end;
+}
+
+.core-bar {
+  flex: 1;
+  height: 100%;
+  background: var(--bg-tertiary);
+  border-radius: 1px;
+  position: relative;
+  min-width: 3px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.core-bar-fill {
+  width: 100%;
+  border-radius: 1px;
+  transition: height 0.3s ease, background 0.3s ease;
+}
+
 /* --- Left Sidebar --- */
 .chat-sidebar-left {
   min-width: 0;

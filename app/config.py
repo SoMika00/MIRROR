@@ -36,16 +36,19 @@ def _auto_threads() -> int:
     if available <= 0:
         available = multiprocessing.cpu_count() or 4
 
-    # Keep a little headroom for Flask, embeddings, Qdrant, and OS noise.
-    return max(1, available - 2)
+    # Use all available cores for maximum inference throughput.
+    # Flask/embedding/Qdrant run in separate threads and won't contend significantly.
+    return max(1, available)
 
 
 @dataclass
 class LLMConfig:
     model_path: str = os.environ.get("MODEL_PATH", "./models/phi-4-Q4_K_M.gguf")
-    n_ctx: int = int(os.environ.get("MODEL_N_CTX", "4096"))
+    n_ctx: int = int(os.environ.get("MODEL_N_CTX", "8192"))
     n_threads: int = _auto_threads()
-    n_batch: int = int(os.environ.get("MODEL_N_BATCH", "512"))
+    n_batch: int = int(os.environ.get("MODEL_N_BATCH", "1024"))
+    use_mlock: bool = os.environ.get("MODEL_MLOCK", "1") == "1"
+    use_mmap: bool = os.environ.get("MODEL_MMAP", "1") == "1"
     temperature: float = 0.7
     max_tokens: int = 1024
     top_p: float = 0.9
@@ -80,7 +83,7 @@ class QdrantConfig:
 class RerankerConfig:
     model_name: str = os.environ.get("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
     device: str = "cpu"
-    top_k: int = 3  # keep top 3 after reranking
+    top_k: int = 5  # keep top 5 after reranking (8192 ctx can handle more)
 
 
 @dataclass
@@ -93,10 +96,10 @@ class VisionConfig:
 
 @dataclass
 class RAGConfig:
-    chunk_size: int = 512
-    chunk_overlap: int = 64
-    top_k: int = 8  # retrieve more, reranker narrows down
-    score_threshold: float = 0.45
+    chunk_size: int = 768
+    chunk_overlap: int = 128
+    top_k: int = 12  # retrieve more, reranker narrows down
+    score_threshold: float = 0.35
     rerank: bool = True  # cross-encoder reranking enabled
 
 
@@ -124,7 +127,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "unsloth/Phi-4-mini-instruct-GGUF",
         "hf_file": "Phi-4-mini-instruct-Q4_K_M.gguf",
         "description": "Fast, compact. Great reasoning for its size. Ideal for CPU.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "15-25 t/s",
         "default": True,
     },
@@ -140,7 +143,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/phi-4-GGUF",
         "hf_file": "phi-4-Q8_0.gguf",
         "description": "High quality 14B. Slow on CPU (3-6 t/s).",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "3-6 t/s",
         "default": False,
     },
@@ -155,7 +158,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/phi-4-GGUF",
         "hf_file": "phi-4-Q4_K_M.gguf",
         "description": "Phi-4 lighter quantization. Faster than Q8.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "5-10 t/s",
         "default": False,
     },
@@ -171,7 +174,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Qwen2.5-32B-Instruct-GGUF",
         "hf_file": "Qwen2.5-32B-Instruct-Q6_K.gguf",
         "description": "Top-tier multilingual. Excellent reasoning & code generation.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "1-3 t/s",
         "default": False,
     },
@@ -186,7 +189,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Qwen2.5-32B-Instruct-GGUF",
         "hf_file": "Qwen2.5-32B-Instruct-Q4_K_M.gguf",
         "description": "Qwen 32B lighter quantization. Faster inference, still excellent quality.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "2-5 t/s",
         "default": False,
     },
@@ -202,7 +205,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Phi-3.5-MoE-instruct-GGUF",
         "hf_file": "Phi-3.5-MoE-instruct-Q8_0.gguf",
         "description": "MoE architecture — activates 6.6B of 42B per token. Complex reasoning.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "1-2 t/s",
         "default": False,
     },
@@ -218,7 +221,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
         "hf_file": "Meta-Llama-3.1-8B-Instruct-f16.gguf",
         "description": "Full precision baseline for quality comparison.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "4-8 t/s",
         "default": False,
     },
@@ -233,7 +236,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
         "hf_file": "Meta-Llama-3.1-8B-Instruct-Q8_0.gguf",
         "description": "Near-lossless quantization. Best quality/speed trade-off.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "6-12 t/s",
         "default": False,
     },
@@ -248,7 +251,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
         "hf_file": "Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
         "description": "Balanced quantization. Minimal quality loss.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "8-14 t/s",
         "default": False,
     },
@@ -263,7 +266,7 @@ MODEL_REGISTRY: List[Dict] = [
         "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
         "hf_file": "Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf",
         "description": "Aggressive quantization. Fastest, see quality impact.",
-        "n_ctx": 4096,
+        "n_ctx": 8192,
         "speed_estimate": "10-18 t/s",
         "default": False,
     },

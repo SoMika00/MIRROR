@@ -40,37 +40,42 @@ PERSONAL_CONTEXT = """ABOUT MICHAIL BERJAOUI (always available, no citation need
 - Open to: Data Science, Data Engineer, Chief Data Architect, AI Engineer, ML Engineer roles
 - Interests: Anthropic, OpenAI, United World Inc, Noeon Research"""
 
-SYSTEM_PROMPT = """You are MIRROR, an AI assistant for Michail Berjaoui's portfolio website.
-You answer questions using the provided context documents AND the personal context below.
-If the documents don't contain enough information, use personal context. If neither helps, say so.
+SYSTEM_PROMPT = """You are MIRROR, an AI assistant powering Michail Berjaoui's portfolio website.
+You have access to retrieved document excerpts below AND personal context about Michail.
 
 """ + PERSONAL_CONTEXT + """
 
-RULES:
-- Answer in the same language as the question (French, English, or Japanese)
-- Cite your sources using [Source: name, page X] format after each claim from documents
-- For personal facts (from ABOUT section above), no citation is needed
-- Be concise and professional
-- Never invent information not present in the context or personal info
+INSTRUCTIONS:
+1. Read ALL the document excerpts carefully before answering.
+2. Synthesize information across multiple sources when relevant.
+3. Cite every claim from documents using [Source: name, p.X] format.
+4. For personal facts (ABOUT section), answer directly without citation.
+5. Answer in the SAME language as the question (French, English, or Japanese).
+6. If the documents contain relevant code, include it in your answer.
+7. Be precise, structured, and professional. Use bullet points or numbered lists when helpful.
+8. If the retrieved documents don't answer the question, say so explicitly — do NOT hallucinate.
 
-CONTEXT DOCUMENTS:
+RETRIEVED DOCUMENTS (ordered by relevance):
 {context}
 
-QUESTION: {question}
+---
+USER QUESTION: {question}
 
-ANSWER (with citations):"""
+ANSWER:"""
 
-DIRECT_CHAT_PROMPT = """You are MIRROR, an AI assistant for Michail Berjaoui's portfolio website.
+DIRECT_CHAT_PROMPT = """You are MIRROR, an AI assistant powering Michail Berjaoui's portfolio website.
 
 """ + PERSONAL_CONTEXT + """
 
-RULES:
-- Answer in the same language as the question (French, English, or Japanese)
-- Be concise, helpful, and professional
-- For personal facts (from ABOUT section above), answer directly
-- If asked about something you don't know, say so honestly
-- You can have natural conversations — greetings, jokes, etc. are fine
+INSTRUCTIONS:
+- Answer in the SAME language as the question (French, English, or Japanese).
+- Be concise, helpful, and professional.
+- For personal facts, answer directly and confidently.
+- If asked about something you don't know, say so honestly.
+- You can have natural conversations — greetings, technical discussions, etc.
+- When discussing technical topics (AI, RAG, LLM, MLOps), provide detailed, expert-level answers.
 
+CONVERSATION:
 {history}USER: {question}
 
 ASSISTANT:"""
@@ -97,18 +102,18 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
     """Build context string from search results with source attribution.
     Truncates to fit within max_tokens budget (0 = no limit)."""
     if max_tokens <= 0:
-        # Reserve tokens for system prompt (~600) + generation (max_tokens config)
+        # Reserve tokens for system prompt (~800) + generation (max_tokens config)
         n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
-        max_tokens = max(512, n_ctx - llm_cfg.max_tokens - 800)
+        max_tokens = max(1024, n_ctx - llm_cfg.max_tokens - 1000)
 
     context_parts = []
     total_tokens = 0
     for i, r in enumerate(results):
-        source_label = f"[{r.source}"
+        source_label = f"{r.source}"
         if r.page:
             source_label += f", p.{r.page}"
-        source_label += f"] (score: {r.score:.2f})"
-        chunk = f"--- Document {i+1} {source_label} ---\n{r.text}\n"
+        relevance = "HIGH" if r.score > 0.7 else "MEDIUM" if r.score > 0.5 else "LOW"
+        chunk = f"[Document {i+1}] Source: {source_label} | Relevance: {relevance} ({r.score:.2f})\n{r.text}\n"
         chunk_tokens = _estimate_tokens(chunk)
         if total_tokens + chunk_tokens > max_tokens:
             # Truncate this chunk to fill remaining budget
@@ -118,6 +123,9 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
             break
         context_parts.append(chunk)
         total_tokens += chunk_tokens
+
+    if not context_parts:
+        return "(No relevant documents found)"
     return "\n".join(context_parts)
 
 
@@ -155,12 +163,23 @@ def query_rag(question: str, source_type: Optional[str] = None,
         t0 = time.time()
         texts = [r.text for r in results]
         reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        # Filter out low-confidence reranked results (score < 0 typically means irrelevant)
-        reranked = [(idx, score) for idx, score in reranked if score > -5.0]
+        # Filter out clearly irrelevant results (cross-encoder score < -3)
+        reranked = [(idx, score) for idx, score in reranked if score > -3.0]
         if reranked:
             results = [results[idx] for idx, _ in reranked]
+            # Update scores with reranker scores for better context ordering
+            for i, (_, rerank_score) in enumerate(reranked[:len(results)]):
+                results[i] = SearchResult(
+                    text=results[i].text,
+                    score=max(results[i].score, (rerank_score + 10) / 20),  # normalize to ~0-1
+                    source=results[i].source,
+                    source_type=results[i].source_type,
+                    page=results[i].page,
+                    chunk_index=results[i].chunk_index,
+                    metadata=results[i].metadata,
+                )
         rerank_time = time.time() - t0
-        logger.debug(f"Reranked to {len(results)} results in {rerank_time*1000:.0f}ms")
+        logger.info(f"Reranked to {len(results)} results in {rerank_time*1000:.0f}ms")
 
     # Step 4: Build context
     context = build_context(results)
@@ -190,7 +209,7 @@ def query_rag(question: str, source_type: Optional[str] = None,
                 "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
             })
 
-    return {
+    result = {
         "answer": answer,
         "sources": sources,
         "timings": {
@@ -201,6 +220,8 @@ def query_rag(question: str, source_type: Optional[str] = None,
             "total_ms": round(total_time * 1000, 1),
         },
     }
+
+    return result
 
 
 def query_rag_stream(question: str, source_type: Optional[str] = None,
@@ -223,7 +244,7 @@ def query_rag_stream(question: str, source_type: Optional[str] = None,
     if rag_cfg.rerank and reranker_service.is_loaded():
         texts = [r.text for r in results]
         reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        reranked = [(idx, score) for idx, score in reranked if score > -5.0]
+        reranked = [(idx, score) for idx, score in reranked if score > -3.0]
         if reranked:
             results = [results[idx] for idx, _ in reranked]
 

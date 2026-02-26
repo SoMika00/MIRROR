@@ -625,18 +625,65 @@ async function refreshLiveMetrics() {
     const cpuEl = document.getElementById('metricCpu');
     const gpuEl = document.getElementById('metricGpu');
     const gpuRow = document.getElementById('metricGpuRow');
+    const processEl = document.getElementById('metricProcess');
+    const coresRow = document.getElementById('metricCoresRow');
+    const coresEl = document.getElementById('metricCores');
+    const infRow = document.getElementById('metricInferenceRow');
+    const infEl = document.getElementById('metricInference');
     if (!ramEl || !cpuEl) return;
 
     try {
         const resp = await fetch('/api/models/metrics');
         const data = await resp.json();
 
+        // RAM
         const ramPct = data?.ram?.percent;
         ramEl.textContent = (ramPct === 0 || ramPct) ? `${ramPct}%` : '--%';
+        if (ramPct > 70) ramEl.style.color = 'var(--warning)';
+        else if (ramPct > 90) ramEl.style.color = 'var(--error)';
+        else ramEl.style.color = '';
 
+        // Process RSS
+        if (processEl && data?.process?.rss_gb !== undefined) {
+            processEl.textContent = `${data.process.rss_gb} GB`;
+        }
+
+        // CPU (aggregate)
         const cpuPct = data?.cpu_percent;
         cpuEl.textContent = (cpuPct === 0 || cpuPct) ? `${cpuPct}%` : '--%';
+        if (cpuPct > 70) cpuEl.style.color = 'var(--accent-light)';
+        else if (cpuPct > 90) cpuEl.style.color = 'var(--error)';
+        else cpuEl.style.color = '';
 
+        // Per-core CPU bars
+        const cores = data?.cpu_per_core;
+        if (coresRow && coresEl && cores && cores.length > 0) {
+            coresRow.style.display = '';
+            let html = '';
+            cores.forEach((pct, i) => {
+                const color = pct > 80 ? 'var(--accent-light)' : pct > 50 ? 'var(--accent)' : 'var(--border)';
+                html += `<div class="core-bar" title="Core ${i}: ${pct}%"><div class="core-bar-fill" style="height:${Math.max(2, pct)}%;background:${color};"></div></div>`;
+            });
+            coresEl.innerHTML = html;
+        }
+
+        // Inference telemetry
+        const inf = data?.inference;
+        if (infRow && infEl) {
+            if (inf?.active) {
+                infRow.style.display = '';
+                infEl.textContent = `${inf.tokens_per_sec} t/s · ${inf.tokens_generated} tok`;
+                infEl.style.color = 'var(--success)';
+            } else if (inf?.tokens_generated > 0) {
+                infRow.style.display = '';
+                infEl.textContent = `${inf.tokens_per_sec} t/s · ${inf.tokens_generated} tok`;
+                infEl.style.color = 'var(--accent-light)';
+            } else {
+                infRow.style.display = 'none';
+            }
+        }
+
+        // GPU
         const gpuPct = data?.gpu?.gpu_percent;
         if (gpuRow) {
             if (gpuPct === 0 || gpuPct) {
@@ -654,7 +701,8 @@ async function refreshLiveMetrics() {
 function startLiveMetrics() {
     if (_metricsTimer) return;
     refreshLiveMetrics();
-    _metricsTimer = setInterval(refreshLiveMetrics, 2000);
+    // Poll every 1s for responsive real-time metrics during inference
+    _metricsTimer = setInterval(refreshLiveMetrics, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', startLiveMetrics);

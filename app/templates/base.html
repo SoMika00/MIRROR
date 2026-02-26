@@ -110,8 +110,19 @@
             <span class="live-metrics-value" id="metricRam">--%</span>
         </div>
         <div class="live-metrics-row">
+            <span class="live-metrics-label">APP</span>
+            <span class="live-metrics-value" id="metricProcess">--</span>
+        </div>
+        <div class="live-metrics-row">
             <span class="live-metrics-label">CPU</span>
             <span class="live-metrics-value" id="metricCpu">--%</span>
+        </div>
+        <div id="metricCoresRow" style="display:none;">
+            <div class="live-metrics-cores" id="metricCores"></div>
+        </div>
+        <div class="live-metrics-row" id="metricInferenceRow" style="display:none;">
+            <span class="live-metrics-label" style="color:var(--accent-light);">INF</span>
+            <span class="live-metrics-value" id="metricInference" style="color:var(--accent-light);">--</span>
         </div>
         <div class="live-metrics-row" id="metricGpuRow" style="display:none;">
             <span class="live-metrics-label">GPU</span>

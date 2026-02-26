@@ -42,11 +42,71 @@ def models_status():
     })
 
 
+# ---------------------------------------------------------------------------
+# Real-time CPU measurement state (differential /proc/stat sampling)
+# ---------------------------------------------------------------------------
+_prev_cpu_times = None
+_prev_cpu_timestamp = 0.0
+_cpu_lock = threading.Lock()
+
+# Inference telemetry — updated live during generation
+inference_telemetry = {
+    "active": False,
+    "tokens_generated": 0,
+    "tokens_per_sec": 0.0,
+    "start_time": 0.0,
+    "model_name": "",
+}
+
+
+def _read_proc_stat():
+    """Read aggregate CPU times from /proc/stat (jiffies)."""
+    try:
+        with open("/proc/stat", "r", encoding="utf-8") as f:
+            line = f.readline()  # first line: cpu  user nice system idle iowait irq softirq steal
+        parts = line.split()
+        if parts[0] != "cpu":
+            return None
+        times = [int(x) for x in parts[1:]]
+        idle = times[3] + (times[4] if len(times) > 4 else 0)  # idle + iowait
+        total = sum(times)
+        return {"idle": idle, "total": total}
+    except Exception:
+        return None
+
+
+def _read_per_core_stat():
+    """Read per-core CPU usage from /proc/stat."""
+    cores = []
+    try:
+        with open("/proc/stat", "r", encoding="utf-8") as f:
+            for line in f:
+                if line.startswith("cpu") and line[3] != " ":
+                    parts = line.split()
+                    times = [int(x) for x in parts[1:]]
+                    idle = times[3] + (times[4] if len(times) > 4 else 0)
+                    total = sum(times)
+                    cores.append({"idle": idle, "total": total})
+    except Exception:
+        pass
+    return cores
+
+
+_prev_per_core = []
+_prev_per_core_ts = 0.0
+
+
 @models_bp.route("/metrics", methods=["GET"])
 def metrics():
+    import time as _time
+    global _prev_cpu_times, _prev_cpu_timestamp, _prev_per_core, _prev_per_core_ts
+
+    # --- RAM (from /proc/meminfo — always real-time) ---
     def _read_meminfo():
         total_kb = None
         avail_kb = None
+        buffers_kb = 0
+        cached_kb = 0
         try:
             with open("/proc/meminfo", "r", encoding="utf-8") as f:
                 for line in f:
@@ -54,6 +114,10 @@ def metrics():
                         total_kb = int(line.split()[1])
                     elif line.startswith("MemAvailable:"):
                         avail_kb = int(line.split()[1])
+                    elif line.startswith("Buffers:"):
+                        buffers_kb = int(line.split()[1])
+                    elif line.startswith("Cached:"):
+                        cached_kb = int(line.split()[1])
         except Exception:
             return None
         if not total_kb or avail_kb is None:
@@ -64,16 +128,64 @@ def metrics():
             "total_gb": round(total_kb / 1024 / 1024, 2),
             "used_gb": round(used_kb / 1024 / 1024, 2),
             "percent": round(pct, 1),
+            "buffers_cached_gb": round((buffers_kb + cached_kb) / 1024 / 1024, 2),
         }
 
-    def _cpu_percent_estimate():
-        try:
-            load1, _, _ = os.getloadavg()
-            n = os.cpu_count() or 1
-            return round(min(100.0, (load1 / n) * 100.0), 1)
-        except Exception:
+    # --- CPU (real-time differential from /proc/stat) ---
+    def _cpu_percent_realtime():
+        global _prev_cpu_times, _prev_cpu_timestamp
+        now = _time.monotonic()
+        current = _read_proc_stat()
+        if current is None:
             return None
 
+        with _cpu_lock:
+            if _prev_cpu_times is None or (now - _prev_cpu_timestamp) < 0.05:
+                _prev_cpu_times = current
+                _prev_cpu_timestamp = now
+                # First call: fall back to load average for initial value
+                try:
+                    load1, _, _ = os.getloadavg()
+                    n = os.cpu_count() or 1
+                    return round(min(100.0, (load1 / n) * 100.0), 1)
+                except Exception:
+                    return 0.0
+
+            d_total = current["total"] - _prev_cpu_times["total"]
+            d_idle = current["idle"] - _prev_cpu_times["idle"]
+            _prev_cpu_times = current
+            _prev_cpu_timestamp = now
+
+        if d_total <= 0:
+            return 0.0
+        return round(((d_total - d_idle) / d_total) * 100.0, 1)
+
+    # --- Per-core CPU ---
+    def _per_core_percent():
+        global _prev_per_core, _prev_per_core_ts
+        now = _time.monotonic()
+        current = _read_per_core_stat()
+        if not current:
+            return []
+
+        if not _prev_per_core or len(_prev_per_core) != len(current):
+            _prev_per_core = current
+            _prev_per_core_ts = now
+            return [0.0] * len(current)
+
+        percents = []
+        for prev, cur in zip(_prev_per_core, current):
+            dt = cur["total"] - prev["total"]
+            di = cur["idle"] - prev["idle"]
+            if dt <= 0:
+                percents.append(0.0)
+            else:
+                percents.append(round(((dt - di) / dt) * 100.0, 1))
+        _prev_per_core = current
+        _prev_per_core_ts = now
+        return percents
+
+    # --- GPU ---
     def _gpu_metrics():
         if not shutil.which("nvidia-smi"):
             return None
@@ -109,10 +221,27 @@ def metrics():
         except Exception:
             return None
 
+    # --- Process-level memory breakdown ---
+    def _process_memory():
+        """Read RSS of current process from /proc/self/status."""
+        rss_kb = 0
+        try:
+            with open("/proc/self/status", "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("VmRSS:"):
+                        rss_kb = int(line.split()[1])
+                        break
+        except Exception:
+            pass
+        return {"rss_gb": round(rss_kb / 1024 / 1024, 2)}
+
     return jsonify({
-        "cpu_percent": _cpu_percent_estimate(),
+        "cpu_percent": _cpu_percent_realtime(),
+        "cpu_per_core": _per_core_percent(),
         "ram": _read_meminfo(),
+        "process": _process_memory(),
         "gpu": _gpu_metrics(),
+        "inference": inference_telemetry,
     })
 
 

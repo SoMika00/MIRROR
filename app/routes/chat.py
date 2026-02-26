@@ -11,6 +11,7 @@ from app.services.rag import (
 )
 from app.services.llm import llm_service
 from app.services.database import db
+from app.services.query_router import classify_query
 
 logger = logging.getLogger(__name__)
 chat_bp = Blueprint("chat", __name__)
@@ -99,9 +100,21 @@ def chat_query():
     try:
         history = db.get_recent_context(conv_id, n=6)
 
-        if mode == "rag":
+        # Adaptive routing: classify query complexity
+        has_sources = bool(enabled_sources) or mode in ("rag", "fulldoc")
+        route = classify_query(question, has_sources=has_sources)
+        logger.info(f"Route: {route.tier}/{route.mode} — {route.reason}")
+
+        # Auto-upgrade mode based on router if user didn't explicitly choose
+        effective_mode = mode
+        if mode == "chat" and route.mode == "rag" and has_sources:
+            effective_mode = "rag"
+        elif mode == "rag" and route.mode == "chat" and not enabled_sources:
+            effective_mode = "chat"
+
+        if effective_mode == "rag":
             result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources)
-        elif mode == "scrap":
+        elif effective_mode == "scrap":
             content = data.get("content", "")
             url = data.get("url", "")
             title_page = data.get("title", "")
@@ -109,10 +122,13 @@ def chat_query():
                 result = query_direct_chat(question, history=history)
             else:
                 result = query_scraped_content(question, url, title_page, content)
-        elif mode == "fulldoc":
+        elif effective_mode == "fulldoc":
             result = query_rag(question, source_type="document", enabled_sources=enabled_sources)
         else:
             result = query_direct_chat(question, history=history)
+
+        # Attach routing metadata
+        result["route"] = {"tier": route.tier, "mode": effective_mode, "reason": route.reason}
 
         # Save assistant response
         db.add_message(conv_id, "assistant", result["answer"], mode=mode,

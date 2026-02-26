@@ -87,6 +87,8 @@ class LLMService:
             n_ctx=self._current_n_ctx,
             n_threads=llm_cfg.n_threads,
             n_batch=llm_cfg.n_batch,
+            use_mlock=llm_cfg.use_mlock,
+            use_mmap=llm_cfg.use_mmap,
             verbose=False,
         )
         elapsed = time.time() - start
@@ -105,11 +107,25 @@ class LLMService:
             gc.collect()
             logger.info("LLM unloaded, memory freed")
 
+    def _update_telemetry(self, active, tokens=0, tps=0.0):
+        """Update inference telemetry for the live metrics dashboard."""
+        try:
+            from app.routes.models_route import inference_telemetry
+            inference_telemetry["active"] = active
+            inference_telemetry["tokens_generated"] = tokens
+            inference_telemetry["tokens_per_sec"] = round(tps, 1)
+            if active:
+                inference_telemetry["start_time"] = time.time()
+                inference_telemetry["model_name"] = getattr(self, '_current_model_id', '') or ''
+        except ImportError:
+            pass
+
     def generate(self, prompt: str, max_tokens: Optional[int] = None,
                  temperature: Optional[float] = None, stream: bool = False) -> str:
         if not self._loaded:
             raise RuntimeError("LLM not loaded. Load a model first via /api/models/load.")
         with self._gen_lock:
+            self._update_telemetry(True)
             start = time.time()
             response = self.model.create_chat_completion(
                 messages=[{"role": "user", "content": prompt}],
@@ -122,8 +138,10 @@ class LLMService:
             elapsed = time.time() - start
             text = response["choices"][0]["message"]["content"]
             tokens_used = response.get("usage", {}).get("completion_tokens", 0)
+            tps = tokens_used / elapsed if tokens_used and elapsed > 0 else 0
+            self._update_telemetry(False, tokens_used, tps)
             if tokens_used and elapsed > 0:
-                logger.info(f"Generated {tokens_used} tokens in {elapsed:.1f}s ({tokens_used/elapsed:.1f} t/s)")
+                logger.info(f"Generated {tokens_used} tokens in {elapsed:.1f}s ({tps:.1f} t/s)")
             return text
 
     def generate_stream(self, prompt: str, max_tokens: Optional[int] = None,
@@ -131,6 +149,9 @@ class LLMService:
         if not self._loaded:
             raise RuntimeError("LLM not loaded.")
         with self._gen_lock:
+            self._update_telemetry(True)
+            start = time.time()
+            token_count = 0
             stream = self.model.create_chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens or llm_cfg.max_tokens,
@@ -143,7 +164,16 @@ class LLMService:
                 delta = chunk["choices"][0].get("delta", {})
                 content = delta.get("content", "")
                 if content:
+                    token_count += 1
+                    elapsed = time.time() - start
+                    tps = token_count / elapsed if elapsed > 0 else 0
+                    self._update_telemetry(True, token_count, tps)
                     yield content
+            elapsed = time.time() - start
+            tps = token_count / elapsed if elapsed > 0 else 0
+            self._update_telemetry(False, token_count, tps)
+            if token_count > 0:
+                logger.info(f"Streamed {token_count} tokens in {elapsed:.1f}s ({tps:.1f} t/s)")
 
     def get_info(self) -> dict:
         info = {
