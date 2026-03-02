@@ -21,6 +21,26 @@ from app.config import llm_cfg, MODEL_REGISTRY, get_model_by_id, get_default_mod
 logger = logging.getLogger(__name__)
 
 
+def _trim_to_clean_end(text: str) -> str:
+    """Trim text cut by max_tokens to the last complete sentence or line break."""
+    if not text:
+        return text
+    # If already ends with sentence-ending punctuation, leave as-is
+    stripped = text.rstrip()
+    if stripped and stripped[-1] in '.!?:;\n':
+        return stripped
+    # Try to find the last sentence boundary
+    for sep in ['. ', '.\n', '! ', '!\n', '? ', '?\n', ':\n', '\n\n', '\n']:
+        idx = text.rfind(sep)
+        if idx > len(text) * 0.5:  # Only trim if we keep at least half
+            return text[:idx + len(sep)].rstrip()
+    # Fallback: trim to last complete word
+    idx = text.rfind(' ')
+    if idx > len(text) * 0.7:
+        return text[:idx].rstrip()
+    return text.rstrip()
+
+
 class LLMService:
     _instance = None
     _lock = threading.Lock()
@@ -120,16 +140,21 @@ class LLMService:
         except ImportError:
             pass
 
-    def generate(self, prompt: str, max_tokens: Optional[int] = None,
-                 temperature: Optional[float] = None, stream: bool = False) -> str:
+    def generate(self, prompt: str = None, max_tokens: Optional[int] = None,
+                 temperature: Optional[float] = None, stream: bool = False,
+                 messages: Optional[list] = None) -> str:
         if not self._loaded:
             raise RuntimeError("LLM not loaded. Load a model first via /api/models/load.")
         with self._gen_lock:
             self._update_telemetry(True)
             start = time.time()
+            # Hard cap to prevent runaway generation from bad models
+            effective_max = min(max_tokens or llm_cfg.max_tokens, 2048)
+            # Use structured messages if provided, else wrap prompt as user msg
+            chat_messages = messages if messages else [{"role": "user", "content": prompt}]
             response = self.model.create_chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens or llm_cfg.max_tokens,
+                messages=chat_messages,
+                max_tokens=effective_max,
                 temperature=temperature or llm_cfg.temperature,
                 top_p=llm_cfg.top_p,
                 repeat_penalty=llm_cfg.repeat_penalty,
@@ -137,24 +162,32 @@ class LLMService:
             )
             elapsed = time.time() - start
             text = response["choices"][0]["message"]["content"]
+            finish_reason = response["choices"][0].get("finish_reason", "")
             tokens_used = response.get("usage", {}).get("completion_tokens", 0)
             tps = tokens_used / elapsed if tokens_used and elapsed > 0 else 0
             self._update_telemetry(False, tokens_used, tps)
             if tokens_used and elapsed > 0:
                 logger.info(f"Generated {tokens_used} tokens in {elapsed:.1f}s ({tps:.1f} t/s)")
+            # If generation was cut by max_tokens, trim to last complete sentence
+            if finish_reason == "length" and text:
+                text = _trim_to_clean_end(text)
             return text
 
-    def generate_stream(self, prompt: str, max_tokens: Optional[int] = None,
-                        temperature: Optional[float] = None) -> Generator[str, None, None]:
+    def generate_stream(self, prompt: str = None, max_tokens: Optional[int] = None,
+                        temperature: Optional[float] = None,
+                        messages: Optional[list] = None) -> Generator[str, None, None]:
         if not self._loaded:
             raise RuntimeError("LLM not loaded.")
         with self._gen_lock:
             self._update_telemetry(True)
             start = time.time()
             token_count = 0
+            # Hard cap to prevent runaway generation from bad models
+            effective_max = min(max_tokens or llm_cfg.max_tokens, 2048)
+            chat_messages = messages if messages else [{"role": "user", "content": prompt}]
             stream = self.model.create_chat_completion(
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=max_tokens or llm_cfg.max_tokens,
+                messages=chat_messages,
+                max_tokens=effective_max,
                 temperature=temperature or llm_cfg.temperature,
                 top_p=llm_cfg.top_p,
                 repeat_penalty=llm_cfg.repeat_penalty,

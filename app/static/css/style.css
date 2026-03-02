@@ -1,5 +1,5 @@
 /* ============================================================
-   MIRROR — Dark Cyber-Violet Theme
+   MIRROR - Dark Cyber-Violet Theme
    Inspired by ChatGPT's dark mode with a subtle violet accent.
    ============================================================ */
 
@@ -846,6 +846,7 @@ a:hover {
 
 .article-card {
   cursor: pointer;
+  display: block;
 }
 
 .article-card .card-body {
@@ -860,26 +861,80 @@ a:hover {
   overflow: hidden;
 }
 
-.article-content {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+/* --- Article Detail Page --- */
+.article-detail-header {
+  margin-bottom: 2rem;
 }
 
-.article-content h1,
-.article-content h2,
-.article-content h3 {
-  color: var(--text-primary);
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.article-content p {
-  color: var(--text-secondary);
+.article-detail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-bottom: 1rem;
 }
 
-.article-content code {
+.article-detail-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.article-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.article-detail-body {
+  line-height: 1.75;
+}
+
+.article-detail-body h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent-light);
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(139, 92, 246, 0.25);
+}
+
+.article-detail-body h3 {
+  margin-top: 1.6rem;
+  margin-bottom: 0.7rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.article-detail-body h4 {
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.article-detail-body p {
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.article-detail-body ul,
+.article-detail-body ol {
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+}
+
+.article-detail-body li {
+  line-height: 1.7;
+  margin-bottom: 0.45rem;
+  color: var(--text-secondary);
+}
+
+.article-detail-body code {
   background: var(--bg-tertiary);
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
@@ -888,7 +943,7 @@ a:hover {
   color: var(--accent-light);
 }
 
-.article-content pre {
+.article-detail-body pre {
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -897,9 +952,46 @@ a:hover {
   margin-bottom: 1rem;
 }
 
-.article-content pre code {
+.article-detail-body pre code {
   background: none;
   padding: 0;
+}
+
+.article-detail-body blockquote {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+  margin: 1rem 0 1.2rem;
+  padding: 0.8rem 1rem;
+  border-left: 3px solid rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.04);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.article-detail-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+.article-detail-body a {
+  color: var(--accent-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.article-detail-body a:hover {
+  color: var(--accent);
+}
+
+.article-detail-body strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.article-detail-body em {
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 /* --- Tech Choices --- */

@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MIRROR{% endblock %} — Michail Berjaoui</title>
-    <meta name="description" content="Michail Berjaoui — Lead AI Engineer | LLM & MLOps. Based in Tokyo, Japan. Portfolio & AI-powered knowledge base.">
+    <title>{% block title %}MIRROR{% endblock %} - Michail Berjaoui</title>
+    <meta name="description" content="Michail Berjaoui - Lead AI Engineer | LLM & MLOps. Based in Tokyo, Japan. Portfolio & AI-powered knowledge base.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
 </head>
@@ -20,7 +21,7 @@
         <ul class="nav-links">
             <a href="/" class="{% if request.path == '/' %}active{% endif %}" data-i18n="nav.portfolio">Portfolio</a>
             <a href="/chat" class="{% if request.path == '/chat' %}active{% endif %}" data-i18n="nav.chat">AI Chat</a>
-            <a href="/articles" class="{% if request.path == '/articles' %}active{% endif %}" data-i18n="nav.articles">Articles</a>
+            <a href="/articles" class="{% if request.path.startswith('/articles') %}active{% endif %}" data-i18n="nav.articles">Articles</a>
             <a href="/courses" class="{% if request.path == '/courses' %}active{% endif %}" data-i18n="nav.courses">Courses</a>
             <a href="/tech" class="{% if request.path == '/tech' %}active{% endif %}" data-i18n="nav.tech">Tech Choices</a>
         </ul>

@@ -1,5 +1,5 @@
 """
-Adaptive Query Router — automatic complexity classification and pipeline routing.
+Adaptive Query Router - automatic complexity classification and pipeline routing.
 
 Architecture:
   - Classifies incoming queries into complexity tiers using lightweight heuristics
@@ -7,7 +7,7 @@ Architecture:
     * SIMPLE  → Direct chat (personal context only, no RAG overhead)
     * MEDIUM  → Standard RAG (embed → search → rerank → generate)
     * COMPLEX → Enhanced RAG (larger context window, more chunks, chain-of-thought prompt)
-  - Zero-latency classification (<1ms) — no LLM call needed for routing
+  - Zero-latency classification (<1ms) - no LLM call needed for routing
   - Logs routing decisions for observability
 
 Complexity signals:
@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# Personal topic keywords — route to direct chat
+# Personal topic keywords - route to direct chat
 PERSONAL_KEYWORDS = {
     "michail", "berjaoui", "your", "you", "portfolio", "cv", "resume",
     "experience", "education", "skills", "contact", "linkedin", "email",
@@ -35,7 +35,7 @@ PERSONAL_KEYWORDS = {
     "salut", "konnichiwa", "présente", "présentation", "parcours",
 }
 
-# Technical/document keywords — likely need RAG
+# Technical/document keywords - likely need RAG
 TECHNICAL_KEYWORDS = {
     "rag", "llm", "embedding", "vector", "qdrant", "reranker", "inference",
     "quantization", "fine-tuning", "lora", "qlora", "transformer", "attention",

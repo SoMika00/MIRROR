@@ -1,16 +1,16 @@
-# MIRROR — AI-Powered Portfolio
+# MIRROR - AI-Powered Portfolio
 
 Portfolio & knowledge base for **Michail Berjaoui**, Lead ML/LLM Engineer. Built with Flask, Qdrant, BGE-M3, and Phi-4.
 
 ## Features
 
-- **Portfolio Landing** — Dark cyber-violet showcase of CV, skills, experience
-- **AI Chat (RAG)** — Ask questions about uploaded documents with source citations
-- **Web Scraper** — Input a URL, scrape it, ask questions about the content
-- **Document Upload** — Drag & drop PDF, DOCX, TXT, MD files for indexing
-- **Articles** — Markdown-based technical blog
-- **Model Manager** — Load/unload/switch LLM models at runtime
-- **Technical Choices** — Full documentation of architecture decisions
+- **Portfolio Landing** - Dark cyber-violet showcase of CV, skills, experience
+- **AI Chat (RAG)** - Ask questions about uploaded documents with source citations
+- **Web Scraper** - Input a URL, scrape it, ask questions about the content
+- **Document Upload** - Drag & drop PDF, DOCX, TXT, MD files for indexing
+- **Articles** - Markdown-based technical blog
+- **Model Manager** - Load/unload/switch LLM models at runtime
+- **Technical Choices** - Full documentation of architecture decisions
 
 ## Tech Stack
 

@@ -11,6 +11,8 @@ summary: Standards architecturaux et meilleures pratiques pour le déploiement d
 
 Ce document documente les standards architecturaux et les meilleures pratiques pour le déploiement de Large Language Models (LLMs) en environnement de production. Il se concentre sur l'optimisation de l'inférence via la quantization, le dimensionnement de la VRAM sur GPU (NVIDIA H100, A100, RTX), et le choix des moteurs d'inférence (TRT-LLM, vLLM, llama.cpp).
 
+*Pour MIRROR, j'ai suivi le chemin "CPU Only / Edge" : llama.cpp avec GGUF Q6_K sur un serveur Hetzner 64 Go. L'arbre de décision ci-dessous est le cadre que j'ai utilisé pour arriver à ce choix.*
+
 ## 1. Fondations : Gestion de la Mémoire d'un LLM
 
 Pour maitriser la quantization, il est impératif de comprendre la répartition de l'empreinte mémoire d'un modèle lors de l'inférence. L'occupation de la VRAM se divise en trois piliers :
@@ -91,24 +93,24 @@ Implémentation minimaliste en C/C++ pour l'exécution locale.
 ## 5. Arbre de Décision : Quelle Stratégie Déployer ?
 
 1. **H100 End-to-End (Performance & Qualité Maximales)**
-   - Méthode : FP8 (W8A8) + KV-Cache FP8
-   - Outil : TensorRT-LLM ou vLLM (`--quantization fp8`)
-   - Bénéfice : permet de faire tenir un 70B sur un seul H100 avec une vitesse et une qualité > 99% préservée
+  - Méthode : FP8 (W8A8) + KV-Cache FP8
+  - Outil : TensorRT-LLM ou vLLM (`--quantization fp8`)
+  - Bénéfice : permet de faire tenir un 70B sur un seul H100 avec une vitesse et une qualité > 99% préservée
 
 2. **Le Choix Universel (A100 / GPU standards)**
-   - Méthode : INT8 SmoothQuant (W8A8) + KV-Cache FP8
-   - Outil : vLLM (`--quantization int8`)
-   - Bénéfice : idéal si le FP8 natif n'est pas supporté
+  - Méthode : INT8 SmoothQuant (W8A8) + KV-Cache FP8
+  - Outil : vLLM (`--quantization int8`)
+  - Bénéfice : idéal si le FP8 natif n'est pas supporté
 
 3. **Haute Densité / Budget Réduit**
-   - Méthode : INT4 AWQ (Poids uniquement) + KV-Cache FP8
-   - Outil : vLLM (`--quantization awq`)
-   - Bénéfice : divise les coûts de VRAM par 4. Parfait pour les chatbots internes
+  - Méthode : INT4 AWQ (Poids uniquement) + KV-Cache FP8
+  - Outil : vLLM (`--quantization awq`)
+  - Bénéfice : divise les coûts de VRAM par 4. Parfait pour les chatbots internes
 
 4. **CPU Only / Edge**
-   - Méthode : GGUF Q4_K_M ou Q3_K_M
-   - Outil : llama.cpp / llama-cpp-python
-   - Bénéfice : aucun GPU nécessaire, fonctionne sur laptop ou serveur CPU (utilisé dans MIRROR)
+  - Méthode : GGUF Q4_K_M ou Q3_K_M
+  - Outil : llama.cpp / llama-cpp-python
+  - Bénéfice : aucun GPU nécessaire, fonctionne sur laptop ou serveur CPU (utilisé dans MIRROR)
 
 ## 6. Monitoring et SLIs en Production
 
@@ -164,3 +166,5 @@ trtllm-build \
 - **LLM.int8()** : Dettmers et al. (2022). *LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale*. NeurIPS
 
 *Article complet disponible sur [GitHub](https://github.com/SoMika00/Quant_llm)*
+
+*Michail Berjaoui - Février 2025*

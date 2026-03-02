@@ -1,4 +1,4 @@
-"""Web scraping routes — scrape a URL and ask questions about it."""
+"""Web scraping routes - scrape a URL and ask questions about it."""
 
 import time
 from flask import Blueprint, request, jsonify
@@ -7,12 +7,20 @@ from app.services.scraper import scrape_url
 from app.services.pdf_parser import chunk_text
 from app.services.embedding import embedding_service
 from app.services.qdrant_store import qdrant_store
+from app.services.database import db
 from app.config import rag_cfg
 
 scraper_bp = Blueprint("scraper", __name__)
 
-# In-memory cache of scraped pages for follow-up questions
+# In-memory cache of scraped pages for follow-up questions (bounded to 20 entries)
+_MAX_CACHE = 20
 _scraped_cache = {}
+
+
+def _get_user_id() -> str:
+    """Get or create user from cookie."""
+    user_id = request.cookies.get("mirror_uid")
+    return db.get_or_create_user(user_id)
 
 
 @scraper_bp.route("/scrape", methods=["POST"])
@@ -24,11 +32,15 @@ def scrape():
 
     url = data["url"].strip()
     index = data.get("index", False)
+    user_id = _get_user_id()
 
     try:
         result = scrape_url(url)
 
-        # Cache for follow-up questions
+        # Cache for follow-up questions (evict oldest if over limit)
+        if len(_scraped_cache) >= _MAX_CACHE and url not in _scraped_cache:
+            oldest = next(iter(_scraped_cache))
+            del _scraped_cache[oldest]
         _scraped_cache[url] = result
 
         # Optionally index into vector store
@@ -44,6 +56,7 @@ def scrape():
                         "chunk_index": i,
                         "url": url,
                         "title": result.get("title", ""),
+                        "user_id": user_id,
                     }
                     for i in range(len(chunks))
                 ]

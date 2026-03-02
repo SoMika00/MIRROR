@@ -1,4 +1,4 @@
-"""Articles routes — serve markdown articles."""
+"""Articles routes - serve markdown articles."""
 
 import os
 import glob
@@ -9,6 +9,20 @@ articles_bp = Blueprint("articles", __name__)
 
 
 _SUPPORTED_LANGS = ("fr", "en", "ja")
+
+# Map numeric IDs to article slugs
+_ARTICLE_IDS = {
+    "1": "01-comparatif-llm-open-source-2025",
+    "2": "02-dimensionnement-deploiement-quantization-llm",
+    "3": "03-rag-production-architecture-patterns",
+    "4": "04-fine-tuning-lora-qlora-guide-pratique",
+    "5": "05-ocr-ner-documents-pipeline",
+    "6": "06-devops-pipeline-docker-kubernetes-ci-cd-production",
+    "7": "07-agentic-ai-landscape-masterclass-2025",
+}
+
+# Reverse mapping for display
+_SLUG_TO_ID = {v: k for k, v in _ARTICLE_IDS.items()}
 
 
 def _normalize_lang(lang: str | None) -> str | None:
@@ -72,7 +86,7 @@ def _load_article(filepath: str) -> dict:
             for line in frontmatter.split("\n"):
                 if ":" in line:
                     key, val = line.split(":", 1)
-                    meta[key.strip().lower()] = val.strip()
+                    meta[key.strip().lower()] = val.strip().strip('"').strip("'")
 
     html = markdown.markdown(body, extensions=["fenced_code", "tables", "toc"])
     slug = os.path.splitext(os.path.basename(filepath))[0]
@@ -118,7 +132,8 @@ def list_articles():
         try:
             article = _load_article(chosen_fp)
             articles.append({
-                "slug": base_slug,
+                "id": _SLUG_TO_ID.get(base_slug, base_slug),
+                "slug": base_slug,  # Keep for reference
                 "title": article["title"],
                 "date": article["date"],
                 "tags": article["tags"],
@@ -133,9 +148,12 @@ def list_articles():
     return jsonify({"articles": articles})
 
 
-@articles_bp.route("/<slug>", methods=["GET"])
-def get_article(slug: str):
-    """Get a single article by slug."""
+@articles_bp.route("/<article_id>", methods=["GET"])
+def get_article(article_id: str):
+    """Get a single article by ID."""
+    # Map ID to slug, fallback to treating ID as slug
+    slug = _ARTICLE_IDS.get(article_id, article_id)
+    
     articles_dir = current_app.config["ARTICLES_FOLDER"]
     lang = _normalize_lang(request.args.get("lang"))
     filepath = None
@@ -150,6 +168,7 @@ def get_article(slug: str):
     try:
         article = _load_article(filepath)
         article["slug"] = slug
+        article["id"] = article_id
         article["lang"] = _base_slug_and_lang_from_filename(filepath)[1]
         return jsonify(article)
     except Exception as e:

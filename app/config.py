@@ -111,7 +111,7 @@ class ScraperConfig:
 
 
 # ---------------------------------------------------------------------------
-# Model Registry — all supported LLM models with HuggingFace download info
+# Model Registry - all supported LLM models with HuggingFace download info
 # ---------------------------------------------------------------------------
 
 MODEL_REGISTRY: List[Dict] = [
@@ -129,7 +129,7 @@ MODEL_REGISTRY: List[Dict] = [
         "description": "Fast, compact. Great reasoning for its size. Ideal for CPU.",
         "n_ctx": 8192,
         "speed_estimate": "15-25 t/s",
-        "default": True,
+        "default": False,
     },
     # --- Phi-4 14B ---
     {
@@ -204,7 +204,7 @@ MODEL_REGISTRY: List[Dict] = [
         "filename": "Phi-3.5-MoE-instruct-Q8_0.gguf",
         "hf_repo": "bartowski/Phi-3.5-MoE-instruct-GGUF",
         "hf_file": "Phi-3.5-MoE-instruct-Q8_0.gguf",
-        "description": "MoE architecture — activates 6.6B of 42B per token. Complex reasoning.",
+        "description": "MoE architecture - activates 6.6B of 42B per token. Complex reasoning.",
         "n_ctx": 8192,
         "speed_estimate": "1-2 t/s",
         "default": False,
@@ -250,10 +250,10 @@ MODEL_REGISTRY: List[Dict] = [
         "filename": "Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
         "hf_repo": "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
         "hf_file": "Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
-        "description": "Balanced quantization. Minimal quality loss.",
+        "description": "Balanced quantization. Minimal quality loss. Best default for CPU.",
         "n_ctx": 8192,
         "speed_estimate": "8-14 t/s",
-        "default": False,
+        "default": True,
     },
     {
         "id": "llama3.2-8b-q4km",

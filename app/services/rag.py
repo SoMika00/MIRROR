@@ -29,68 +29,53 @@ logger = logging.getLogger(__name__)
 PERSONAL_CONTEXT = """ABOUT MICHAIL BERJAOUI (always available, no citation needed):
 - Lead AI/LLM Engineer, 5 years experience deploying AI models to production at scale
 - Enterprise RAG specialist, fine-tuning (LoRA/QLoRA), OCR/NER
-- Currently based in Tokyo, Japan — actively seeking opportunities in Japan
+- Currently based in Tokyo, Japan - actively seeking opportunities in Japan
 - Passionate about understanding the agents that compose our world, thrives in event modeling
-- Practices sport regularly, values discipline and physical well-being
+- Deeply curious, loves learning - especially in technology. Not afraid to stay up late to solve a hard problem.
+- Practices sport regularly, values discipline and physical well-being. Generally in a good mood.
+- Values collaboration: enjoys working with teammates, learning from them, and sharing knowledge. Believes the best ideas come from the team.
+- Outside work: appreciates quality time with friends, good sleep, and staying active
 - French (native), English (B2 professional), learning Japanese
-- Education: Master MIASHS (Applied Mathematics & CS) — Université Paul Valéry Montpellier (2019-2021), Licence Maths Appliquées — Université Nice Sophia Antipolis (2015-2018)
-- Certifications: Google Cloud — How Google does Machine Learning, Modernizing Data Lakes & Data Warehouses
+- Education: Master MIASHS (Applied Mathematics & CS) - Université Paul Valéry Montpellier (2019-2021), Licence Maths Appliquées - Université Nice Sophia Antipolis (2015-2018)
+- Certifications: Google Cloud - How Google does Machine Learning, Modernizing Data Lakes & Data Warehouses
 - Top skills: Python, LLM, RAG, MLOps, SQL
 - 500+ LinkedIn connections, 516 followers
 - Open to: Data Science, Data Engineer, Chief Data Architect, AI Engineer, ML Engineer roles
-- Interests: Anthropic, OpenAI, United World Inc, Noeon Research"""
+- Interests: Anthropic, OpenAI, United World Inc, Noeon Research
+NOTE: Present these traits naturally when relevant. Do not exaggerate or over-praise. Keep a professional, grounded tone."""
 
-SYSTEM_PROMPT = """You are MIRROR, an AI assistant powering Michail Berjaoui's portfolio website.
-You have access to retrieved document excerpts below AND personal context about Michail.
-
-""" + PERSONAL_CONTEXT + """
-
-INSTRUCTIONS:
-1. Read ALL the document excerpts carefully before answering.
-2. Synthesize information across multiple sources when relevant.
-3. Cite every claim from documents using [Source: name, p.X] format.
-4. For personal facts (ABOUT section), answer directly without citation.
-5. Answer in the SAME language as the question (French, English, or Japanese).
-6. If the documents contain relevant code, include it in your answer.
-7. Be precise, structured, and professional. Use bullet points or numbered lists when helpful.
-8. If the retrieved documents don't answer the question, say so explicitly — do NOT hallucinate.
-
-RETRIEVED DOCUMENTS (ordered by relevance):
-{context}
-
----
-USER QUESTION: {question}
-
-ANSWER:"""
-
-DIRECT_CHAT_PROMPT = """You are MIRROR, an AI assistant powering Michail Berjaoui's portfolio website.
+RAG_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
 
 """ + PERSONAL_CONTEXT + """
 
-INSTRUCTIONS:
+RULES:
+- Read ALL retrieved documents before answering.
+- Cite claims from documents: [Source: name, p.X].
+- For personal facts (ABOUT section), answer directly.
+- Answer in the SAME language as the question.
+- Be concise, structured, professional.
+- If documents don't answer the question, say so. Do NOT hallucinate."""
+
+DIRECT_CHAT_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
+
+""" + PERSONAL_CONTEXT + """
+
+RULES:
 - Answer in the SAME language as the question (French, English, or Japanese).
 - Be concise, helpful, and professional.
-- For personal facts, answer directly and confidently.
-- If asked about something you don't know, say so honestly.
-- You can have natural conversations — greetings, technical discussions, etc.
-- When discussing technical topics (AI, RAG, LLM, MLOps), provide detailed, expert-level answers.
+- For greetings, respond naturally and briefly.
+- For personal facts about Michail, answer directly and confidently.
+- For technical topics (AI, RAG, LLM, MLOps), give detailed answers.
+- If you don't know something, say so honestly. Never invent facts.
+- Keep responses focused. Do NOT repeat the user's message back."""
 
-CONVERSATION:
-{history}USER: {question}
+SCRAPER_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
 
-ASSISTANT:"""
-
-SCRAPER_PROMPT = """You are MIRROR, an AI assistant. Answer questions based ONLY on the following 
-web page content. Cite specific parts of the page.
-
-PAGE: {title}
-URL: {url}
-CONTENT:
-{context}
-
-QUESTION: {question}
-
-ANSWER (with citations from the page):"""
+RULES:
+- Answer questions based ONLY on the provided web page content.
+- Cite specific parts of the page.
+- Answer in the SAME language as the question.
+- Be concise and structured. Do NOT hallucinate beyond the page content."""
 
 
 def _estimate_tokens(text: str) -> int:
@@ -129,8 +114,32 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
     return "\n".join(context_parts)
 
 
+def _build_rag_messages(question: str, context: str) -> list:
+    """Build structured chat messages for RAG generation."""
+    return [
+        {"role": "system", "content": RAG_SYSTEM},
+        {"role": "user", "content": f"RETRIEVED DOCUMENTS:\n{context}\n\nQUESTION: {question}"},
+    ]
+
+
+def _build_chat_messages(question: str, history: Optional[List[Dict]] = None) -> list:
+    """Build structured chat messages for direct chat."""
+    messages = [{"role": "system", "content": DIRECT_CHAT_SYSTEM}]
+    if history:
+        for msg in history[-6:]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            # Truncate long history messages to avoid overwhelming small models
+            content = msg["content"]
+            if len(content) > 500:
+                content = content[:500] + "..."
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": question})
+    return messages
+
+
 def query_rag(question: str, source_type: Optional[str] = None,
-              stream: bool = False, enabled_sources: Optional[List[str]] = None) -> Dict[str, Any]:
+              stream: bool = False, enabled_sources: Optional[List[str]] = None,
+              user_id: Optional[str] = None) -> Dict[str, Any]:
     """Execute full RAG pipeline: embed → search → generate."""
     start = time.time()
 
@@ -147,6 +156,7 @@ def query_rag(question: str, source_type: Optional[str] = None,
         score_threshold=rag_cfg.score_threshold,
         source_type=source_type,
         source_names=enabled_sources,
+        user_id=user_id,
     )
     search_time = time.time() - t0
 
@@ -184,11 +194,11 @@ def query_rag(question: str, source_type: Optional[str] = None,
     # Step 4: Build context
     context = build_context(results)
 
-    # Step 5: Generate answer
-    prompt = SYSTEM_PROMPT.format(context=context, question=question)
+    # Step 5: Generate answer with structured messages
+    messages = _build_rag_messages(question, context)
 
     t0 = time.time()
-    answer = llm_service.generate(prompt)
+    answer = llm_service.generate(messages=messages)
     gen_time = time.time() - t0
 
     total_time = time.time() - start
@@ -225,7 +235,8 @@ def query_rag(question: str, source_type: Optional[str] = None,
 
 
 def query_rag_stream(question: str, source_type: Optional[str] = None,
-                     enabled_sources: Optional[List[str]] = None) -> Generator:
+                     enabled_sources: Optional[List[str]] = None,
+                     user_id: Optional[str] = None) -> Generator:
     """Streaming RAG: yields answer tokens (str) and a sources dict."""
     query_vector = embedding_service.encode_query(question).tolist()
     results = qdrant_store.search(
@@ -234,6 +245,7 @@ def query_rag_stream(question: str, source_type: Optional[str] = None,
         score_threshold=rag_cfg.score_threshold,
         source_type=source_type,
         source_names=enabled_sources,
+        user_id=user_id,
     )
 
     if not results:
@@ -265,26 +277,20 @@ def query_rag_stream(question: str, source_type: Optional[str] = None,
     yield {"sources": sources}
 
     context = build_context(results)
-    prompt = SYSTEM_PROMPT.format(context=context, question=question)
+    messages = _build_rag_messages(question, context)
 
-    for token in llm_service.generate_stream(prompt):
+    for token in llm_service.generate_stream(messages=messages):
         yield token
 
 
 def query_direct_chat(question: str, history: Optional[List[Dict]] = None) -> Dict[str, Any]:
-    """Direct chat without RAG — just the LLM + personal context."""
+    """Direct chat without RAG - just the LLM + personal context."""
     start = time.time()
 
-    history_text = ""
-    if history:
-        for msg in history[-6:]:
-            role = "USER" if msg["role"] == "user" else "ASSISTANT"
-            history_text += f"{role}: {msg['content']}\n"
-
-    prompt = DIRECT_CHAT_PROMPT.format(question=question, history=history_text)
+    messages = _build_chat_messages(question, history)
 
     t0 = time.time()
-    answer = llm_service.generate(prompt)
+    answer = llm_service.generate(messages=messages)
     gen_time = time.time() - t0
     total_time = time.time() - start
 
@@ -300,14 +306,8 @@ def query_direct_chat(question: str, history: Optional[List[Dict]] = None) -> Di
 
 def query_direct_chat_stream(question: str, history: Optional[List[Dict]] = None) -> Generator[str, None, None]:
     """Streaming direct chat."""
-    history_text = ""
-    if history:
-        for msg in history[-6:]:
-            role = "USER" if msg["role"] == "user" else "ASSISTANT"
-            history_text += f"{role}: {msg['content']}\n"
-
-    prompt = DIRECT_CHAT_PROMPT.format(question=question, history=history_text)
-    for token in llm_service.generate_stream(prompt):
+    messages = _build_chat_messages(question, history)
+    for token in llm_service.generate_stream(messages=messages):
         yield token
 
 
@@ -317,15 +317,15 @@ def query_scraped_content(question: str, url: str, title: str, content: str) -> 
 
     # Dynamic context limit based on current model's n_ctx
     n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
-    max_context_chars = max(1000, (n_ctx - llm_cfg.max_tokens - 400) * 3)
-    prompt = SCRAPER_PROMPT.format(
-        title=title,
-        url=url,
-        context=content[:max_context_chars],
-        question=question,
-    )
+    max_context_chars = max(1000, (n_ctx - llm_cfg.max_tokens - 500) * 3)
+    truncated = content[:max_context_chars]
 
-    answer = llm_service.generate(prompt)
+    messages = [
+        {"role": "system", "content": SCRAPER_SYSTEM},
+        {"role": "user", "content": f"PAGE: {title}\nURL: {url}\n\nCONTENT:\n{truncated}\n\nQUESTION: {question}"},
+    ]
+
+    answer = llm_service.generate(messages=messages)
     total_time = time.time() - start
 
     return {

@@ -1,5 +1,5 @@
 /* ============================================================
-   MIRROR — Global JavaScript
+   MIRROR - Global JavaScript
    Handles: model manager, status polling, toast notifications
    ============================================================ */
 
@@ -44,6 +44,7 @@ const I18N_DICT = {
         'chat.filter.documents': 'Documents only',
         'chat.filter.web': 'Web pages only',
         'chat.welcome': "Welcome! I'm <strong>MIRROR</strong>, Michail's AI assistant. Upload documents or scrape a URL, then ask me anything. I'll answer with source citations.",
+        'chat.infra_note': 'Note: MIRROR runs on a low-cost, CPU-only infrastructure. The models used are intentionally small and quantized for fast response times. As a result, answers may occasionally be imprecise or inconsistent - this is a deliberate trade-off for accessibility and cost efficiency, not a reflection of production-grade deployments.',
         'chat.tip': 'Tip: Load a model via the ⚙ button in the top-right corner to enable AI responses. No model downloaded yet - use the model manager to download one first.',
         'chat.ask_placeholder': 'Ask a question...',
         'articles.title': 'Articles',
@@ -56,25 +57,25 @@ const I18N_DICT = {
         'tech.subtitle': 'Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.',
         'courses.title': 'Courses',
         'courses.subtitle': 'A clear, structured overview of core ML topics, explained with lists, examples, and practical intuition.',
-        'courses.ml.title': '1) Machine Learning (classic)',
+        'courses.ml.title': 'Machine Learning (Classic)',
         'courses.ml.intro': 'Classical ML is often the fastest path to a strong production baseline: interpretable, cheap, and reliable when the data is right.',
         'courses.ml.supervised': 'Supervised learning',
         'courses.ml.unsupervised': 'Unsupervised & representation',
         'courses.ml.stats': 'Stats essentials',
         'courses.ml.production': 'Production mindset',
-        'courses.dl.title': '2) Deep Learning (neural networks)',
+        'courses.dl.title': 'Deep Learning (Neural Networks)',
         'courses.dl.intro': 'Deep learning is mostly about learning representations. I group networks by what structure they exploit: sequences, images, graphs, and multimodal signals.',
         'courses.dl.foundations': 'Foundations',
         'courses.dl.networks': 'Main network families',
         'courses.dl.training': 'Training & scaling',
         'courses.dl.failure': 'Typical failure modes',
-        'courses.cv.title': '3) Computer Vision (SOTA overview)',
+        'courses.cv.title': 'Computer Vision',
         'courses.cv.intro': 'Vision systems are about extracting structure from pixels. Modern SOTA is dominated by Transformers and strong pretraining.',
         'courses.cv.tasks': 'Core tasks',
         'courses.cv.models': 'Typical SOTA families',
         'courses.cv.metrics': 'Metrics',
         'courses.cv.production': 'Production notes',
-        'courses.nlp.title': '4) NLP & LLMs (SOTA overview)',
+        'courses.nlp.title': 'NLP & LLMs',
         'courses.nlp.intro': 'Modern NLP is Transformer-based. The practical skill is not just training, but controlling behavior: prompting, retrieval, evaluation, safety.',
         'courses.nlp.tasks': 'Core tasks',
         'courses.nlp.components': 'Key components',
@@ -84,7 +85,7 @@ const I18N_DICT = {
         'courses.visual.transformer': 'Transformer (high level)',
         'courses.visual.rag': 'RAG pipeline',
         'courses.footer': 'MIRROR · Courses · Michail Berjaoui',
-        'footer.tagline': 'MIRROR — AI-powered portfolio by Michail Berjaoui · Built with Flask, Qdrant, BGE-M3 & Phi-4',
+        'footer.tagline': 'MIRROR · AI-Powered Portfolio · Michail Berjaoui',
         'common.integrality': 'The entirety',
     },
     fr: {
@@ -122,7 +123,8 @@ const I18N_DICT = {
         'chat.filter.all': 'Toutes les sources',
         'chat.filter.documents': 'Documents uniquement',
         'chat.filter.web': 'Pages web uniquement',
-        'chat.welcome': "Bienvenue ! Je suis <strong>MIRROR</strong>, l'assistant IA de Michail. Téléverse des documents ou scrape une URL, puis pose-moi n’importe quelle question. Je répondrai avec des sources.",
+        'chat.welcome': "Bienvenue ! Je suis <strong>MIRROR</strong>, l'assistant IA de Michail. Téléverse des documents ou scrape une URL, puis pose-moi n'importe quelle question. Je répondrai avec des sources.",
+        'chat.infra_note': "Note : MIRROR tourne sur une infrastructure low-cost, exclusivement CPU. Les modèles utilisés sont volontairement petits et quantifiés pour garantir des temps de réponse rapides. Les réponses peuvent donc être parfois imprécises ou incohérentes - c'est un compromis assumé entre accessibilité et coût, et non le reflet d'un déploiement de production.",
         'chat.tip': 'Astuce : Chargez un modèle via le bouton ⚙ en haut à droite pour activer les réponses IA. Aucun modèle téléchargé - utilisez le gestionnaire de modèles pour en télécharger un.',
         'chat.ask_placeholder': 'Pose une question...',
         'articles.title': 'Articles',
@@ -135,19 +137,19 @@ const I18N_DICT = {
         'tech.subtitle': 'Décisions d’architecture, benchmarks et optimisation infra pour MIRROR.',
         'courses.title': 'Cours',
         'courses.subtitle': 'Une vue structurée et claire des sujets clés ML, expliqués avec listes, exemples et intuition.',
-        'courses.ml.title': '1) Machine Learning (classique)',
+        'courses.ml.title': 'Machine Learning (Classique)',
         'courses.ml.intro': 'Le ML classique est souvent la voie la plus rapide vers un baseline solide en production : interprétable, peu coûteux et fiable.',
-        'courses.dl.title': '2) Deep Learning (réseaux de neurones)',
+        'courses.dl.title': 'Deep Learning (Réseaux de neurones)',
         'courses.dl.intro': 'Le deep learning sert surtout à apprendre des représentations. Je regroupe les réseaux par structure : séquences, images, graphes, multimodal.',
-        'courses.cv.title': '3) Computer Vision (aperçu SOTA)',
+        'courses.cv.title': 'Computer Vision',
         'courses.cv.intro': 'Les systèmes vision extraient de la structure depuis des pixels. Le SOTA moderne est dominé par les Transformers et le pré-entraînement.',
-        'courses.nlp.title': '4) NLP & LLM (aperçu SOTA)',
+        'courses.nlp.title': 'NLP & LLM',
         'courses.nlp.intro': 'Le NLP moderne est basé sur Transformers. La compétence pratique: contrôler le comportement (prompting, retrieval, évaluation, sécurité).',
         'courses.visual.bias_variance': 'Biais / Variance',
         'courses.visual.transformer': 'Transformer (niveau haut)',
         'courses.visual.rag': 'Pipeline RAG',
         'courses.footer': 'MIRROR · Cours · Michail Berjaoui',
-        'footer.tagline': 'MIRROR — Portfolio boosté à l’IA par Michail Berjaoui · Construit avec Flask, Qdrant, BGE-M3 & Phi-4',
+        'footer.tagline': 'MIRROR · Portfolio IA · Michail Berjaoui',
         'common.integrality': "L'intégralité",
     },
     ja: {
@@ -186,6 +188,7 @@ const I18N_DICT = {
         'chat.filter.documents': 'ドキュメントのみ',
         'chat.filter.web': 'Webページのみ',
         'chat.welcome': "ようこそ！私は<strong>MIRROR</strong>、MichailのAIアシスタントです。ドキュメントをアップロードするかURLをスクレイプして、何でも質問してください。出典付きで回答します。",
+        'chat.infra_note': '注意：MIRRORは低コストのCPU専用インフラで動作しています。高速な応答のため、意図的に小型・量子化モデルを使用しています。そのため、回答が不正確・不安定になる場合がありますが、これはアクセス性とコスト効率を優先した設計上のトレードオフです。',
         'chat.tip': 'ヒント：右上の⚙ボタンからモデルを読み込んでAI応答を有効にしてください。まだモデルがダウンロードされていません - モデルマネージャーでダウンロードしてください。',
         'chat.ask_placeholder': '質問を入力...',
         'articles.title': '記事',
@@ -198,19 +201,19 @@ const I18N_DICT = {
         'tech.subtitle': 'MIRRORのアーキテクチャ判断、ベンチマーク、インフラ最適化。',
         'courses.title': 'コース',
         'courses.subtitle': 'MLの重要トピックを、リストと例で分かりやすく体系化した概要。',
-        'courses.ml.title': '1) 機械学習（クラシック）',
+        'courses.ml.title': '機械学習（クラシック）',
         'courses.ml.intro': '古典的MLは本番ベースラインに最適：解釈しやすく、安価で、データが揃えば強い。',
-        'courses.dl.title': '2) 深層学習（ニューラルネット）',
+        'courses.dl.title': '深層学習（ニューラルネット）',
         'courses.dl.intro': '深層学習は表現学習が本質。構造（系列/画像/グラフ/マルチモーダル）で整理します。',
-        'courses.cv.title': '3) Computer Vision（SOTA概要）',
+        'courses.cv.title': 'Computer Vision',
         'courses.cv.intro': 'Visionはピクセルから構造を抽出。SOTAはTransformerと強い事前学習が中心。',
-        'courses.nlp.title': '4) NLP & LLM（SOTA概要）',
+        'courses.nlp.title': 'NLP & LLM',
         'courses.nlp.intro': '現代NLPはTransformer。実務は挙動制御（プロンプト/RAG/評価/安全）。',
         'courses.visual.bias_variance': 'バイアス/バリアンス',
         'courses.visual.transformer': 'Transformer（概要）',
         'courses.visual.rag': 'RAGパイプライン',
         'courses.footer': 'MIRROR · コース · Michail Berjaoui',
-        'footer.tagline': 'MIRROR — Michail Berjaoui のAI搭載ポートフォリオ · Flask / Qdrant / BGE-M3 / Phi-4',
+        'footer.tagline': 'MIRROR · AIポートフォリオ · Michail Berjaoui',
         'common.integrality': '全体',
     }
 };
@@ -289,7 +292,7 @@ function applyTranslations(lang) {
 
 window.MIRROR_I18N = {
     applyTranslations,
-    getLang: () => getStoredLang() || detectPreferredLang(),
+    getLang: () => getStoredLang() || I18N_DEFAULT_LANG,
 };
 
 function initLanguageSwitcher() {
@@ -298,7 +301,7 @@ function initLanguageSwitcher() {
     const menu = document.getElementById('langMenu');
     if (!switchEl || !bubble || !menu) return;
 
-    const initial = getStoredLang() || detectPreferredLang();
+    const initial = getStoredLang() || I18N_DEFAULT_LANG;
     applyTranslations(initial);
 
     function closeMenu() {
@@ -324,6 +327,7 @@ function initLanguageSwitcher() {
         setStoredLang(lang);
         applyTranslations(lang);
         closeMenu();
+        window.dispatchEvent(new CustomEvent('mirror-lang-changed', { detail: { lang } }));
     });
 
     document.addEventListener('click', () => closeMenu());
@@ -812,7 +816,7 @@ async function testLLM() {
         if (data.error) {
             if (resultEl) resultEl.textContent = `Error: ${data.error}`;
         } else {
-            if (resultEl) resultEl.textContent = `${data.elapsed_seconds}s — ~${data.estimated_tokens} tokens — "${data.response.substring(0, 80)}..."`;
+            if (resultEl) resultEl.textContent = `${data.elapsed_seconds}s - ~${data.estimated_tokens} tokens - "${data.response.substring(0, 80)}..."`;
         }
     } catch (e) {
         if (resultEl) resultEl.textContent = `Failed: ${e.message}`;

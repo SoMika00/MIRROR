@@ -103,6 +103,11 @@ class QdrantStore:
                 field_name="source_name",
                 field_schema=PayloadSchemaType.KEYWORD,
             )
+            self.client.create_payload_index(
+                collection_name=qdrant_cfg.collection_name,
+                field_name="user_id",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
             logger.info("Collection created with HNSW + INT8 quantization + payload indexes")
         else:
             logger.info(f"Collection '{qdrant_cfg.collection_name}' already exists")
@@ -136,7 +141,8 @@ class QdrantStore:
     def search(self, query_vector: List[float], top_k: int = 5,
                score_threshold: float = 0.0,
                source_type: Optional[str] = None,
-               source_names: Optional[List[str]] = None) -> List[SearchResult]:
+               source_names: Optional[List[str]] = None,
+               user_id: Optional[str] = None) -> List[SearchResult]:
         if not self._connected:
             self.connect()
         from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchAny, SearchParams
@@ -146,6 +152,8 @@ class QdrantStore:
             conditions.append(FieldCondition(key="source_type", match=MatchValue(value=source_type)))
         if source_names:
             conditions.append(FieldCondition(key="source_name", match=MatchAny(any=source_names)))
+        if user_id:
+            conditions.append(FieldCondition(key="user_id", match=MatchValue(value=user_id)))
         query_filter = Filter(must=conditions) if conditions else None
 
         start = time.time()
@@ -176,15 +184,16 @@ class QdrantStore:
             for r in results
         ]
 
-    def delete_by_source(self, source_name: str):
+    def delete_by_source(self, source_name: str, user_id: Optional[str] = None):
         if not self._connected:
             self.connect()
         from qdrant_client.models import Filter, FieldCondition, MatchValue
+        conditions = [FieldCondition(key="source_name", match=MatchValue(value=source_name))]
+        if user_id:
+            conditions.append(FieldCondition(key="user_id", match=MatchValue(value=user_id)))
         self.client.delete(
             collection_name=qdrant_cfg.collection_name,
-            points_selector=Filter(
-                must=[FieldCondition(key="source_name", match=MatchValue(value=source_name))]
-            ),
+            points_selector=Filter(must=conditions),
         )
         logger.info(f"Deleted vectors for source: {source_name}")
 
@@ -200,14 +209,23 @@ class QdrantStore:
             "status": str(info.status),
         }
 
-    def list_sources(self) -> List[Dict[str, Any]]:
+    def list_sources(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
         if not self._connected:
             self.connect()
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+        scroll_filter = None
+        if user_id:
+            scroll_filter = Filter(
+                must=[FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+            )
+
         results = self.client.scroll(
             collection_name=qdrant_cfg.collection_name,
             limit=1000,
             with_payload=["source_name", "source_type"],
             with_vectors=False,
+            scroll_filter=scroll_filter,
         )
         sources = {}
         for point in results[0]:

@@ -35,7 +35,7 @@
         <div class="sidebar-section">
             <div class="sidebar-title" style="display:flex;align-items:center;gap:0.4rem;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                RAG — Indexed Sources
+                RAG - Indexed Sources
             </div>
             <div class="doc-list" id="docList">
                 <div class="text-muted" style="font-size:0.8rem;">No sources</div>
@@ -48,9 +48,9 @@
         <div class="chat-messages" id="chatMessages">
             <div class="message message-assistant">
                 <div class="message-bubble">
-                    <strong>MIRROR</strong> — Michail's AI assistant.<br>
-                    <span class="text-muted" style="font-size:0.85rem;">
-                        Ask me anything. Toggle sources in the sidebar to use RAG — I'll search your documents and cite relevant chunks.
+                    <strong>MIRROR</strong> - <span data-i18n-html="chat.welcome">Michail's AI assistant. Upload documents or scrape a URL, then ask me anything. I'll answer with source citations.</span><br>
+                    <span class="text-muted" style="font-size:0.82rem;display:block;margin-top:0.5rem;line-height:1.55;" data-i18n="chat.infra_note">
+                        Note: MIRROR runs on a low-cost, CPU-only infrastructure. The models used are intentionally small and quantized for fast response times. As a result, answers may occasionally be imprecise or inconsistent - this is a deliberate trade-off for accessibility and cost efficiency, not a reflection of production-grade deployments.
                     </span>
                 </div>
             </div>
@@ -120,7 +120,7 @@ function newConversation() {
     document.getElementById('chatMessages').innerHTML = `
         <div class="message message-assistant">
             <div class="message-bubble">
-                <strong>MIRROR</strong> — New conversation started.<br>
+                <strong>MIRROR</strong> - New conversation started.<br>
                 <span class="text-muted" style="font-size:0.85rem;">Toggle sources in the sidebar to use RAG.</span>
             </div>
         </div>`;

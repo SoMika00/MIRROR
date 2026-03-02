@@ -165,6 +165,12 @@ class Database:
             c.execute("DELETE FROM conversations WHERE id = ? AND user_id = ?", (conv_id, user_id))
             return c.rowcount > 0
 
+    def user_owns_conversation(self, conv_id: str, user_id: str) -> bool:
+        """Check if a conversation belongs to the given user."""
+        with self.get_cursor() as c:
+            c.execute("SELECT 1 FROM conversations WHERE id = ? AND user_id = ?", (conv_id, user_id))
+            return c.fetchone() is not None
+
     def update_conversation_title(self, conv_id: str, title: str):
         with self.get_cursor() as c:
             c.execute("UPDATE conversations SET title = ? WHERE id = ?", (title, conv_id))

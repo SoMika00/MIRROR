@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container" style="max-width:1080px;">
+        <a href="/articles" class="btn btn-ghost btn-sm mb-3" data-i18n="articles.back">&larr; Back to articles</a>
+
+        <div class="article-detail-header">
+            <h1 class="tech-section-heading" style="font-size:1.8rem;border-bottom:none;margin-bottom:0.5rem;">{{ article.title }}</h1>
+            <div class="article-detail-meta">
+                {% if article.date %}<span class="article-detail-date">{{ article.date }}</span>{% endif %}
+                {% if article.tags %}
+                <div class="article-detail-tags">
+                    {% for tag in article.tags %}
+                    <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% if article.summary %}
+            <p class="tech-intro">{{ article.summary }}</p>
+            {% endif %}
+        </div>
+
+        <div class="article-detail-body tech-section-block" style="border-bottom:none;">
+            {{ article.html | safe }}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Ensure article is displayed in the user's chosen language.
+// If the URL has no ?lang= param, redirect with the stored lang so the server
+// can pick the correct .fr.md / .en.md / .md file.
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('lang')) {
+        try {
+            const storedLang = localStorage.getItem('mirror_lang');
+            if (storedLang) {
+                params.set('lang', storedLang);
+                window.location.replace(window.location.pathname + '?' + params.toString());
+            }
+        } catch(e) {}
+    }
+})();
+window.addEventListener('mirror-lang-changed', (e) => {
+    const lang = e.detail?.lang;
+    if (lang) {
+        const url = new URL(window.location);
+        url.searchParams.set('lang', lang);
+        window.location.href = url.toString();
+    }
+});
+</script>
+{% endblock %}

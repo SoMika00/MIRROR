@@ -1,4 +1,4 @@
-"""Model management routes — load/unload/switch LLM and embedding models."""
+"""Model management routes - load/unload/switch LLM and embedding models."""
 
 import os
 import threading
@@ -49,7 +49,7 @@ _prev_cpu_times = None
 _prev_cpu_timestamp = 0.0
 _cpu_lock = threading.Lock()
 
-# Inference telemetry — updated live during generation
+# Inference telemetry - updated live during generation
 inference_telemetry = {
     "active": False,
     "tokens_generated": 0,
@@ -101,7 +101,7 @@ def metrics():
     import time as _time
     global _prev_cpu_times, _prev_cpu_timestamp, _prev_per_core, _prev_per_core_ts
 
-    # --- RAM (from /proc/meminfo — always real-time) ---
+    # --- RAM (from /proc/meminfo - always real-time) ---
     def _read_meminfo():
         total_kb = None
         avail_kb = None
@@ -233,13 +233,26 @@ def metrics():
                         break
         except Exception:
             pass
-        return {"rss_gb": round(rss_kb / 1024 / 1024, 2)}
+        return {"rss_gb": round(rss_kb / 1024 / 1024, 2), "rss_kb": rss_kb}
+
+    ram_info = _read_meminfo()
+    proc_info = _process_memory()
+
+    # Fix misleading RAM %: mmap'd model files are counted as "cache" by Linux,
+    # so MemAvailable stays high even when the process uses 40+ GB.
+    # Use max(system_used%, process_rss%) as the displayed percentage.
+    if ram_info and proc_info.get("rss_kb"):
+        total_kb = ram_info.get("total_gb", 0) * 1024 * 1024
+        if total_kb > 0:
+            rss_pct = (proc_info["rss_kb"] / total_kb) * 100.0
+            ram_info["percent"] = round(max(ram_info["percent"], rss_pct), 1)
+            ram_info["used_gb"] = round(max(ram_info["used_gb"], proc_info["rss_gb"]), 2)
 
     return jsonify({
         "cpu_percent": _cpu_percent_realtime(),
         "cpu_per_core": _per_core_percent(),
-        "ram": _read_meminfo(),
-        "process": _process_memory(),
+        "ram": ram_info,
+        "process": proc_info,
         "gpu": _gpu_metrics(),
         "inference": inference_telemetry,
     })
@@ -247,7 +260,7 @@ def metrics():
 
 @models_bp.route("/llm/load", methods=["POST"])
 def load_llm():
-    """Load or switch LLM model. Non-blocking — launches in background thread."""
+    """Load or switch LLM model. Non-blocking - launches in background thread."""
     global _load_status
     data = request.get_json() or {}
     model_path = data.get("model_path")

@@ -41,7 +41,7 @@ services:
       - FLASK_DEBUG=0
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
-      - MODEL_PATH=/app/models/Phi-4-mini-instruct-Q4_K_M.gguf
+      # MODEL_PATH resolved from MODEL_REGISTRY default (Llama 3.1 8B Q6_K)
     depends_on:
       - qdrant
     restart: unless-stopped

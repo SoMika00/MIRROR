@@ -1,4 +1,4 @@
-"""Chat API routes — supports multiple modes: chat, rag, scrap, fulldoc."""
+"""Chat API routes - supports multiple modes: chat, rag, scrap, fulldoc."""
 
 import json
 import time
@@ -60,8 +60,13 @@ def delete_conversation(conv_id):
 
 @chat_bp.route("/conversations/<conv_id>/messages", methods=["GET"])
 def get_messages(conv_id):
+    user_id = _get_user_id()
+    # Verify the user owns this conversation
+    if not db.user_owns_conversation(conv_id, user_id):
+        return jsonify({"error": "Not found"}), 404
     messages = db.get_messages(conv_id)
-    return jsonify({"messages": messages})
+    resp = make_response(jsonify({"messages": messages}))
+    return _set_user_cookie(resp, user_id)
 
 
 # --- Chat Query (all modes) ---
@@ -103,7 +108,7 @@ def chat_query():
         # Adaptive routing: classify query complexity
         has_sources = bool(enabled_sources) or mode in ("rag", "fulldoc")
         route = classify_query(question, has_sources=has_sources)
-        logger.info(f"Route: {route.tier}/{route.mode} — {route.reason}")
+        logger.info(f"Route: {route.tier}/{route.mode} - {route.reason}")
 
         # Auto-upgrade mode based on router if user didn't explicitly choose
         effective_mode = mode
@@ -113,7 +118,7 @@ def chat_query():
             effective_mode = "chat"
 
         if effective_mode == "rag":
-            result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources)
+            result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources, user_id=user_id)
         elif effective_mode == "scrap":
             content = data.get("content", "")
             url = data.get("url", "")
@@ -123,7 +128,7 @@ def chat_query():
             else:
                 result = query_scraped_content(question, url, title_page, content)
         elif effective_mode == "fulldoc":
-            result = query_rag(question, source_type="document", enabled_sources=enabled_sources)
+            result = query_rag(question, source_type="document", enabled_sources=enabled_sources, user_id=user_id)
         else:
             result = query_direct_chat(question, history=history)
 
@@ -176,7 +181,7 @@ def chat_stream():
         try:
             if mode in ("rag", "fulldoc"):
                 st = "document" if mode == "fulldoc" else source_type
-                stream = query_rag_stream(question, source_type=st, enabled_sources=enabled_sources)
+                stream = query_rag_stream(question, source_type=st, enabled_sources=enabled_sources, user_id=user_id)
                 # query_rag_stream yields either tokens (str) or a sources dict
                 for item in stream:
                     if isinstance(item, dict) and 'sources' in item:
@@ -248,7 +253,7 @@ def delete_source(source_id):
     if source_name:
         try:
             from app.services.qdrant_store import qdrant_store
-            qdrant_store.delete_by_source(source_name)
+            qdrant_store.delete_by_source(source_name, user_id=user_id)
         except Exception as e:
             logger.warning(f"Failed to delete from Qdrant: {e}")
         return jsonify({"deleted": True, "source_name": source_name})

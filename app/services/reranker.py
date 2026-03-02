@@ -4,7 +4,7 @@ Reranker service using cross-encoder/ms-marco-MiniLM-L-6-v2.
 Chosen for:
   - Only 22M parameters → extremely fast on CPU (~5-15ms per query-doc pair)
   - Trained on MS MARCO passage ranking dataset (500M+ pairs)
-  - NDCG@10 of 39.01 on TREC DL 2019 — best speed/quality for CPU
+  - NDCG@10 of 39.01 on TREC DL 2019 - best speed/quality for CPU
   - Compatible with sentence-transformers CrossEncoder API
   - MIT license
 

@@ -13,6 +13,7 @@
             <button class="cx-tab" data-tab="dl">Deep Learning</button>
             <button class="cx-tab" data-tab="cv">Computer Vision</button>
             <button class="cx-tab" data-tab="nlp">NLP &amp; LLMs</button>
+            <button class="cx-tab" data-tab="metrics">Metrics &amp; Evaluation</button>
             <button class="cx-tab" data-tab="mlops">MLOps &amp; Infra</button>
             <button class="cx-tab" data-tab="databases">Databases</button>
         </div>
@@ -1494,7 +1495,7 @@
                                 <li><strong>BPE (Byte-Pair Encoding)</strong>: the most common algorithm, used by GPT, Llama, Phi. Starts with individual characters and iteratively merges the most frequent pairs.</li>
                                 <li><strong>Vocabulary size</strong>: 32k-128k tokens typical. Larger vocab = fewer tokens per text but bigger embedding table.</li>
                                 <li><strong>Special tokens</strong>: [CLS], [SEP], &lt;|im_start|&gt;, padding tokens that mark structure in the input.</li>
-                                <li><strong>Context window</strong>: the maximum number of tokens the model can process at once. Ranges from 4k (Phi-4-mini) to 128k+ (GPT-4, Llama 3.1).</li>
+                                <li><strong>Context window</strong>: the maximum number of tokens the model can process at once. Ranges from 8k (Phi-4-mini, Llama 3.1) to 128k (GPT-4o) and 200k+ (Claude 3.5). Phi-4-mini supports 16k natively.</li>
                             </ul>
                         </div>
                     </div>
@@ -1539,6 +1540,396 @@
                                 <li><strong>Hallucination</strong>: the model invents facts. RAG + citations reduce this significantly but don't eliminate it. Always ground responses in retrieved context.</li>
                                 <li><strong>PII leakage</strong>: the model may reproduce personal data from training. Filter both input and output with regex + NER-based scanners.</li>
                                 <li><strong>Guardrails</strong>: NeMo Guardrails (NVIDIA) for dialog flow control, Llama Guard for content classification, custom classifiers for domain-specific safety.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ==================== METRICS & EVALUATION ==================== -->
+        <div class="cx-panel" id="panel-metrics">
+            <div class="cx-panel-header">
+                <h2>Metrics &amp; Evaluation</h2>
+                <p>Metrics are how you know if your model actually works. This section covers every major metric used in ML, Deep Learning, NLP, and production systems with formulas, intuition, examples, and guidance on when to use each one. If you can't measure it, you can't improve it.</p>
+            </div>
+
+            <h3 class="cx-subcategory">Classification Metrics</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="accuracy-precision-recall">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Accuracy, Precision, Recall, F1</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Fundamental</span>
+                    </div>
+                    <p class="cx-algo-short">The four pillars of classification evaluation. Accuracy tells you the overall % correct but can be misleading on imbalanced data. Precision and Recall measure different types of errors. F1 balances both. Understanding when to prioritize each is one of the most important skills in applied ML.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions &amp; formulas</h4>
+                            <ul>
+                                <li><strong>Accuracy</strong> = (TP + TN) / (TP + TN + FP + FN). The % of all predictions that are correct. <em>Example: 950 correct out of 1000 = 95% accuracy.</em> Misleading when classes are imbalanced: a model that always predicts "not fraud" gets 99.8% accuracy but catches zero fraud.</li>
+                                <li><strong>Precision</strong> = TP / (TP + FP). Of everything flagged as positive, how many were actually positive? High precision = few false alarms. <em>Example: spam filter flags 100 emails, 90 are actually spam &rarr; precision = 90%.</em></li>
+                                <li><strong>Recall (Sensitivity, TPR)</strong> = TP / (TP + FN). Of all actual positives, how many did the model catch? <em>Example: 200 spam emails total, model catches 180 &rarr; recall = 90%.</em></li>
+                                <li><strong>F1 Score</strong> = 2 &times; (Precision &times; Recall) / (Precision + Recall). Harmonic mean. Penalizes models that sacrifice one for the other. Range: 0 to 1.</li>
+                                <li><strong>F-beta</strong>: generalized F1. &beta; &lt; 1 favors precision, &beta; &gt; 1 favors recall. <em>F2 (&beta;=2) weights recall 2&times; more &mdash; use for cancer screening where missing a case is worse than a false alarm.</em></li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Confusion Matrix (always start here)</h4>
+                            <p>A 2&times;2 table: <strong>True Positives</strong> (correct positive), <strong>False Positives</strong> (false alarm &mdash; Type I error), <strong>True Negatives</strong> (correct negative), <strong>False Negatives</strong> (missed positive &mdash; Type II error). Every classification metric derives from this table. Always visualize it before choosing a single metric.</p>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to prioritize which</h4>
+                            <ul>
+                                <li><strong>Balanced classes</strong> &rarr; Accuracy is fine</li>
+                                <li><strong>Imbalanced data</strong> &rarr; F1 or AUC-ROC (never accuracy alone)</li>
+                                <li><strong>False positives costly</strong> (spam, content moderation) &rarr; Optimize <strong>Precision</strong></li>
+                                <li><strong>False negatives costly</strong> (cancer, fraud, security) &rarr; Optimize <strong>Recall</strong></li>
+                                <li><strong>Multi-class</strong> &rarr; Macro F1 (equal class weight) or Weighted F1 (by frequency)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="auc-roc-pr">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">AUC-ROC &amp; PR Curves</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Threshold-Independent</span>
+                    </div>
+                    <p class="cx-algo-short">Most classifiers output a probability (0 to 1), not just a label. AUC-ROC and PR curves evaluate how well the model separates classes across ALL possible thresholds, not just 0.5. This gives a much more complete picture of model quality.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>ROC Curve &amp; AUC-ROC</h4>
+                            <ul>
+                                <li><strong>ROC curve</strong>: plots True Positive Rate (Recall) vs False Positive Rate at every threshold.</li>
+                                <li><strong>AUC-ROC</strong>: area under ROC. 0.5 = random, 1.0 = perfect. <em>Interpretation: probability that a random positive ranks higher than a random negative.</em></li>
+                                <li>AUC &gt; 0.95: excellent (or data leakage). AUC = 0.8: good. AUC = 0.5: useless.</li>
+                                <li><strong>Limitation</strong>: overly optimistic on highly imbalanced datasets.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Precision-Recall Curve &amp; AUC-PR</h4>
+                            <ul>
+                                <li><strong>PR curve</strong>: Precision vs Recall at every threshold. More informative than ROC when positive class is rare (&lt;5%).</li>
+                                <li><strong>AUC-PR</strong>: random classifier gets AUC-PR &asymp; prevalence (e.g., 0.01 for 1% positive). Perfect = 1.0.</li>
+                                <li><em>Fraud detection: AUC-ROC = 0.98 looks great. AUC-PR = 0.35 reveals model still misses most fraud. Always check both on imbalanced data.</em></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="advanced-classification">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Log Loss, Cohen's Kappa, MCC</span>
+                        <span class="cx-algo-badge">Advanced</span>
+                    </div>
+                    <p class="cx-algo-short">Log Loss evaluates probability calibration, Cohen's Kappa measures agreement beyond chance, and MCC is the most balanced single metric for binary classification &mdash; uses all four confusion matrix values and works well on imbalanced datasets.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions</h4>
+                            <ul>
+                                <li><strong>Log Loss</strong> = -1/n &Sigma; [y&middot;log(p) + (1-y)&middot;log(1-p)]. Penalizes confident wrong predictions exponentially. Lower is better, 0 = perfect.</li>
+                                <li><strong>Cohen's Kappa</strong> = (accuracy - expected) / (1 - expected). How much better than random agreement. Kappa &gt; 0.8 = almost perfect. <em>Use for inter-annotator agreement and imbalanced baselines.</em></li>
+                                <li><strong>MCC</strong> = (TP&times;TN - FP&times;FN) / &radic;((TP+FP)(TP+FN)(TN+FP)(TN+FN)). Range -1 to +1. Most informative single binary metric.</li>
+                                <li><strong>Specificity</strong> = TN / (TN + FP). How well the model identifies negatives. Used in medical testing alongside Recall.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Calibration: is the model's confidence trustworthy?</h4>
+                            <ul>
+                                <li><strong>ECE (Expected Calibration Error)</strong>: when model says 80% confident, is it right 80% of the time? ECE = 0 is perfect calibration.</li>
+                                <li><strong>Reliability diagram</strong>: predicted probability vs actual frequency. Perfect model follows the diagonal.</li>
+                                <li><strong>Temperature scaling</strong>: divide logits by learned T before softmax. T &gt; 1 = less confident, T &lt; 1 = more confident. Simplest calibration fix.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Regression Metrics</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="regression-core">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">MSE, RMSE, MAE, MAPE</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Fundamental</span>
+                    </div>
+                    <p class="cx-algo-short">Four ways to measure prediction error. MSE/RMSE penalize large errors heavily. MAE treats all errors equally. MAPE gives a percentage. Each reacts differently to outliers.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions</h4>
+                            <ul>
+                                <li><strong>MSE</strong> = 1/n &Sigma;(y-&#375;)&sup2;. Large errors dominate. Units are squared. Default regression loss. <em>A $100k error contributes 10,000&times; more than a $1k error.</em></li>
+                                <li><strong>RMSE</strong> = &radic;MSE. In original units. <em>RMSE = $15k means predictions typically ~$15k off.</em> Most commonly reported.</li>
+                                <li><strong>MAE</strong> = 1/n &Sigma;|y-&#375;|. Robust to outliers. <em>MAE = $10k means average error is $10k.</em></li>
+                                <li><strong>MAPE</strong> = 1/n &Sigma;|y-&#375;|/|y| &times; 100%. Easy to interpret ("off by 5%"). Undefined when y=0.</li>
+                                <li><strong>Huber Loss</strong>: MSE for small errors, MAE for large. Best of both. &delta;=1.0 typical.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use which</h4>
+                            <ul>
+                                <li><strong>Default</strong> &rarr; RMSE (same units, penalizes large errors)</li>
+                                <li><strong>Outlier-heavy</strong> &rarr; MAE or Huber</li>
+                                <li><strong>Business reporting</strong> &rarr; MAPE (stakeholders understand %)</li>
+                                <li><strong>Training loss</strong> &rarr; MSE (smooth gradients) or Huber (robust)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="r-squared">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">R&sup2;, Adjusted R&sup2;</span>
+                        <span class="cx-algo-badge">Goodness of Fit</span>
+                    </div>
+                    <p class="cx-algo-short">R&sup2; tells you what fraction of variance your model explains. R&sup2;=1 is perfect, R&sup2;=0 means no better than predicting the mean. Can be negative (worse than mean). Adjusted R&sup2; penalizes useless features.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions &amp; pitfalls</h4>
+                            <ul>
+                                <li><strong>R&sup2;</strong> = 1 - SS_res/SS_tot. <em>R&sup2; = 0.85 means model explains 85% of variance.</em></li>
+                                <li><strong>Adjusted R&sup2;</strong>: penalizes adding features that don't help. Use when comparing models with different feature counts.</li>
+                                <li><strong>Negative R&sup2;</strong>: model worse than predicting the average. Badly tuned or wrong distribution.</li>
+                                <li>R&sup2; always increases with more features (even random) &mdash; always use Adjusted R&sup2; for comparison.</li>
+                                <li>High R&sup2; doesn't mean correct &mdash; check residual plots for systematic biases.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Ranking &amp; Information Retrieval</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="ranking-metrics">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">MRR, NDCG, MAP, Recall@K</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Search &amp; RAG</span>
+                    </div>
+                    <p class="cx-algo-short">When your system returns a ranked list (search results, RAG chunks, recommendations), you need metrics that care about ORDER. These evaluate how well the most relevant items rank at the top. Critical for RAG pipelines and search engines.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions</h4>
+                            <ul>
+                                <li><strong>Precision@K</strong>: of top K results, how many relevant? <em>Top 5 results, 3 relevant &rarr; P@5 = 0.6.</em></li>
+                                <li><strong>Recall@K</strong>: of all relevant items, how many in top K? Critical for RAG: if the chunk isn't retrieved, the LLM can't use it.</li>
+                                <li><strong>MRR</strong>: 1/rank of first correct result, averaged. <em>Correct at rank 1 = 1.0. At rank 3 = 0.33.</em> Use when you only need the first relevant result.</li>
+                                <li><strong>MAP</strong>: average of P@K at each relevant position. Rewards relevant items early AND finding all of them.</li>
+                                <li><strong>NDCG</strong>: handles graded relevance. Penalizes relevant items lower with log discount. <em>Use when some results are more relevant than others.</em></li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>RAG-specific (RAGAS framework)</h4>
+                            <ul>
+                                <li><strong>Context Precision</strong>: are retrieved chunks actually relevant?</li>
+                                <li><strong>Context Recall</strong>: did we retrieve all needed chunks?</li>
+                                <li><strong>Faithfulness</strong>: is the answer supported by context? (catches hallucinations)</li>
+                                <li><strong>Answer Relevancy</strong>: does the answer address the question?</li>
+                                <li><strong>Answer Correctness</strong>: is it factually correct vs ground truth?</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Practical RAG example</h4>
+                            <p><em>You ask "What is HNSW?" System retrieves 5 chunks. Chunks 1,3 are about HNSW, 2,4,5 are irrelevant. Context Precision = 2/5 = 0.4 (poor). The LLM generates from chunks 1,3. Faithfulness = 1.0 (supported). But Recall@5 = 2/3 if a third relevant chunk was missed. Better retrieval (embedding, reranking) boosts all metrics.</em></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">NLP &amp; LLM Metrics</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="nlp-gen-metrics">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Perplexity, BLEU, ROUGE, BERTScore</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Text Generation</span>
+                    </div>
+                    <p class="cx-algo-short">Evaluating generated text is one of the hardest problems in ML. Perplexity measures model surprise. BLEU/ROUGE measure n-gram overlap. BERTScore captures semantic similarity. No single metric captures "quality" &mdash; use multiple.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Definitions</h4>
+                            <ul>
+                                <li><strong>Perplexity (PPL)</strong>: how well the model predicts next tokens. Lower = better. <em>GPT-4 &asymp; 5-10. PPL=50 is much worse than PPL=10.</em> Used for comparing LLMs and measuring quantization quality loss.</li>
+                                <li><strong>BLEU</strong>: n-gram overlap with references. Standard for translation. BLEU &gt; 30 is acceptable. Limitation: penalizes valid paraphrases.</li>
+                                <li><strong>ROUGE</strong>: recall of n-grams from reference. ROUGE-1, ROUGE-2, ROUGE-L (longest common subsequence). Standard for summarization.</li>
+                                <li><strong>BERTScore</strong>: semantic similarity via BERT embeddings. <em>"The car is red" vs "The automobile is crimson" &rarr; BERTScore &asymp; 0.95, BLEU &asymp; 0.1.</em></li>
+                                <li><strong>METEOR</strong>: handles synonyms and stemming. More correlated with human judgment than BLEU.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>LLM benchmarks &amp; evaluation</h4>
+                            <ul>
+                                <li><strong>MMLU</strong>: 57-subject multiple choice. Standard for comparing LLMs.</li>
+                                <li><strong>HumanEval</strong>: code generation. Pass@1 = % solved first try.</li>
+                                <li><strong>MT-Bench</strong>: multi-turn chat quality scored by GPT-4.</li>
+                                <li><strong>Arena Elo (LMSYS)</strong>: crowdsourced pairwise comparison. Most trustworthy ranking.</li>
+                                <li><strong>LLM-as-Judge</strong>: GPT-4/Claude scores on rubrics. Cheap, scalable, correlates with human eval.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>When to use which</h4>
+                            <ul>
+                                <li><strong>Translation</strong> &rarr; BLEU + METEOR + human eval</li>
+                                <li><strong>Summarization</strong> &rarr; ROUGE-L + BERTScore</li>
+                                <li><strong>Open-ended generation</strong> &rarr; LLM-as-Judge + human eval</li>
+                                <li><strong>Model comparison</strong> &rarr; Perplexity + MMLU, HumanEval</li>
+                                <li><strong>RAG answers</strong> &rarr; RAGAS (faithfulness + relevancy) + BERTScore</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Loss Functions (Complete Guide)</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="loss-functions-guide">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Classification, Regression, Contrastive Losses</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Training</span>
+                    </div>
+                    <p class="cx-algo-short">The loss function defines "how wrong is this prediction?" Choosing the wrong one means optimizing for the wrong thing. Every task has losses that work and ones that don't.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Classification losses</h4>
+                            <ul>
+                                <li><strong>BCE (Binary Cross-Entropy)</strong>: standard for binary. Penalizes confident mistakes exponentially. <em>Predict 0.01 for correct class = loss 4.6 vs predict 0.4 = loss 0.92.</em></li>
+                                <li><strong>Categorical CE</strong>: multi-class, after softmax. Standard for image/text classification.</li>
+                                <li><strong>Focal Loss</strong>: down-weights easy examples. &gamma;=2 standard. Essential for imbalanced detection (RetinaNet).</li>
+                                <li><strong>Label Smoothing CE</strong>: soft targets (0.05, 0.95). Prevents overconfidence. Used in ViT.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Regression losses</h4>
+                            <ul>
+                                <li><strong>MSE (L2)</strong>: smooth gradients. Penalizes large errors quadratically. Default. Sensitive to outliers.</li>
+                                <li><strong>MAE (L1)</strong>: constant gradient. Robust to outliers.</li>
+                                <li><strong>Huber</strong>: MSE for small errors, MAE for large. Best of both worlds.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Segmentation, detection &amp; contrastive</h4>
+                            <ul>
+                                <li><strong>Dice Loss</strong>: optimizes overlap directly. Handles imbalance. Standard in medical imaging.</li>
+                                <li><strong>CIoU Loss</strong>: bounding box regression (overlap + center + aspect ratio). Default in YOLOv8+.</li>
+                                <li><strong>InfoNCE</strong> (CLIP, SimCLR): pull matching pairs close, push non-matching apart. Foundation of embedding models.</li>
+                                <li><strong>Triplet Loss</strong>: anchor closer to positive than negative by margin. Classic for face recognition.</li>
+                                <li><strong>CLM</strong>: next-token CE. Standard pretraining loss for GPT/Llama/Phi.</li>
+                                <li><strong>DPO</strong>: alignment loss for human preferences. Simpler than RLHF.</li>
+                                <li><strong>KL Divergence</strong>: distribution difference. Used in distillation and VAE.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="training-diagnostics">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Training Diagnostics &amp; Convergence</span>
+                        <span class="cx-algo-badge">Debugging</span>
+                    </div>
+                    <p class="cx-algo-short">Reading loss curves, detecting overfitting, and diagnosing gradient problems separates beginners from practitioners.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Loss curve patterns</h4>
+                            <ul>
+                                <li><strong>Train &darr; Val &darr;</strong>: healthy. Keep going.</li>
+                                <li><strong>Train &darr; Val &uarr;</strong>: overfitting. Fix: more data, dropout, weight decay, early stopping.</li>
+                                <li><strong>Both flat</strong>: underfitting. Fix: bigger model, higher LR, longer training.</li>
+                                <li><strong>Spikes</strong>: LR too high. Fix: reduce LR, warmup, gradient clipping.</li>
+                                <li><strong>NaN</strong>: gradient explosion. Fix: clip gradients, lower LR.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key training metrics</h4>
+                            <ul>
+                                <li><strong>Gradient norm</strong>: should be stable. Exploding = NaN, vanishing = no learning.</li>
+                                <li><strong>LR schedule</strong>: warmup + cosine is the modern default.</li>
+                                <li><strong>Early stopping</strong>: stop when val loss stalls for N epochs. Save best checkpoint.</li>
+                                <li><strong>Train/val gap</strong>: large = overfitting, zero = underfitting.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Statistical Validation</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="validation-methods">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Cross-Validation, Bootstrap, Statistical Tests</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Rigor</span>
+                    </div>
+                    <p class="cx-algo-short">A metric on one test set can be misleading. Cross-validation, bootstrapping, and hypothesis tests give confidence that results are real and reproducible.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Cross-validation</h4>
+                            <ul>
+                                <li><strong>K-Fold CV</strong>: split into K parts, train on K-1, test on 1. Repeat K times. Report mean &plusmn; std. Standard: K=5 or 10.</li>
+                                <li><strong>Stratified K-Fold</strong>: preserves class distribution. Essential for imbalanced data.</li>
+                                <li><strong>Time-series split</strong>: always train on past, test on future. Never shuffle time data.</li>
+                                <li><strong>GroupKFold</strong>: same group stays in same fold. Prevents data leakage.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Bootstrap &amp; statistical tests</h4>
+                            <ul>
+                                <li><strong>Bootstrap</strong>: resample 1000+ times with replacement. Get confidence interval. <em>accuracy = 0.87 &plusmn; 0.02 (95% CI: 0.83-0.91).</em></li>
+                                <li><strong>Paired t-test</strong>: compare models on same K-fold splits. p &lt; 0.05 = significant.</li>
+                                <li><strong>McNemar's test</strong>: compare classifiers on same test set. Uses disagreement table.</li>
+                                <li><strong>Bonferroni correction</strong>: comparing N models? Use p &lt; 0.05/N threshold.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <h3 class="cx-subcategory">Practical Decision Guide</h3>
+            <div class="cx-algo-grid">
+
+                <div class="cx-algo-card" data-algo="metric-cheatsheet">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Which Metric for Which Task?</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Cheat Sheet</span>
+                    </div>
+                    <p class="cx-algo-short">A practical reference mapping common ML tasks to the right metrics, losses, and validation strategies.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>Task &rarr; Metric &rarr; Loss</h4>
+                            <ul>
+                                <li><strong>Binary classification (balanced)</strong> &rarr; Accuracy, F1, AUC-ROC &rarr; Cross-Entropy</li>
+                                <li><strong>Binary classification (imbalanced)</strong> &rarr; F1, AUC-PR, MCC &rarr; Focal Loss</li>
+                                <li><strong>Multi-class</strong> &rarr; Macro F1, Weighted F1 &rarr; CE + Label Smoothing</li>
+                                <li><strong>Regression</strong> &rarr; RMSE, R&sup2;, MAE &rarr; MSE or Huber</li>
+                                <li><strong>Object detection</strong> &rarr; mAP@50:95 &rarr; CIoU + Focal + CE</li>
+                                <li><strong>Segmentation</strong> &rarr; mIoU, Dice &rarr; Dice + CE</li>
+                                <li><strong>Translation</strong> &rarr; BLEU, METEOR &rarr; Seq2Seq CE</li>
+                                <li><strong>Summarization</strong> &rarr; ROUGE-L, BERTScore &rarr; CLM CE</li>
+                                <li><strong>RAG pipeline</strong> &rarr; Recall@K, Faithfulness (RAGAS) &rarr; CLM CE</li>
+                                <li><strong>Search / ranking</strong> &rarr; MRR, NDCG@10 &rarr; Contrastive loss</li>
+                                <li><strong>Embeddings</strong> &rarr; Recall@1, MTEB &rarr; InfoNCE / Triplet</li>
+                                <li><strong>LLM comparison</strong> &rarr; MMLU, HumanEval, Arena Elo &rarr; N/A</li>
+                                <li><strong>Anomaly detection</strong> &rarr; AUC-PR, Recall@low FPR &rarr; Reconstruction</li>
+                                <li><strong>Time series</strong> &rarr; RMSE, MAPE &rarr; MSE or Huber</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Golden rules</h4>
+                            <ul>
+                                <li><strong>Never use accuracy alone on imbalanced data.</strong></li>
+                                <li><strong>Always look at the confusion matrix first.</strong></li>
+                                <li><strong>Report confidence intervals</strong>, not just point estimates.</li>
+                                <li><strong>Match metric to business objective.</strong> 2% recall on cancer screening saves lives.</li>
+                                <li><strong>Use multiple metrics.</strong> No single number captures quality.</li>
+                                <li><strong>Test on unseen data.</strong> Never tune hyperparameters on the test set.</li>
                             </ul>
                         </div>
                     </div>
@@ -1765,7 +2156,7 @@
                     <div class="cx-algo-detail">
                         <div class="cx-detail-section">
                             <h4>When and why to use it</h4>
-                            <p>Use Loki when you need to debug issues by reading logs across services. "The model returned an error at 14:32 — what happened?" Loki lets you jump from a Grafana alert to the exact logs in the same dashboard. Much cheaper than Elasticsearch for log storage because it only indexes labels (service, level, pod), not the full text.</p>
+                            <p>Use Loki when you need to debug issues by reading logs across services. "The model returned an error at 14:32 - what happened?" Loki lets you jump from a Grafana alert to the exact logs in the same dashboard. Much cheaper than Elasticsearch for log storage because it only indexes labels (service, level, pod), not the full text.</p>
                         </div>
                         <div class="cx-detail-section">
                             <h4>How it works</h4>
@@ -1792,7 +2183,7 @@
                         <div class="cx-detail-section">
                             <h4>What they track</h4>
                             <ul>
-                                <li><strong>Traces</strong>: full request lifecycle — prompt, retrieved chunks, reranking scores, LLM response, latency per step</li>
+                                <li><strong>Traces</strong>: full request lifecycle - prompt, retrieved chunks, reranking scores, LLM response, latency per step</li>
                                 <li><strong>Scores</strong>: user feedback (thumbs up/down), LLM-as-judge evaluation, custom metrics (hallucination, relevance)</li>
                                 <li><strong>Cost</strong>: token usage per request, cost breakdown by model and feature</li>
                                 <li><strong>Datasets</strong>: build evaluation sets from production traces for regression testing</li>
@@ -1811,7 +2202,7 @@
                         <span class="cx-algo-name">GitHub Actions</span>
                         <span class="cx-algo-badge cx-badge-highlight">CI/CD</span>
                     </div>
-                    <p class="cx-algo-short">CI/CD built directly into GitHub. Define workflows in YAML that trigger on push, PR, schedule, or manual dispatch. Free for open source. The most popular choice for teams already on GitHub — runs lint, tests, Docker builds, and deployments without any external infrastructure.</p>
+                    <p class="cx-algo-short">CI/CD built directly into GitHub. Define workflows in YAML that trigger on push, PR, schedule, or manual dispatch. Free for open source. The most popular choice for teams already on GitHub - runs lint, tests, Docker builds, and deployments without any external infrastructure.</p>
                     <div class="cx-algo-detail">
                         <div class="cx-detail-section">
                             <h4>When and why to use it</h4>
@@ -1951,7 +2342,7 @@
             </div>
         </div>
 
-        <!-- Data Engineering panel removed — content merged into MLOps & Databases -->
+        <!-- Data Engineering panel removed - content merged into MLOps & Databases -->
 
         <!-- ==================== DATABASES ==================== -->
         <div class="cx-panel" id="panel-databases">
@@ -1970,6 +2361,16 @@
                     </div>
                     <p class="cx-algo-short">The most advanced open-source relational database. Supports structured data with strong consistency (ACID transactions), complex queries (JOINs, CTEs, window functions), and extensions for nearly anything: full-text search, JSON, geospatial (PostGIS), and even vector search (pgvector). If you're unsure which database to pick, PostgreSQL is almost always a safe default.</p>
                     <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>User &amp; account management</strong>: users, roles, permissions with ACID guarantees. <em>Example: users table with unique email constraint, orders with foreign keys, all in transactions.</em></li>
+                                <li><strong>E-commerce / SaaS</strong>: products &rarr; orders &rarr; items &rarr; payments. Complex JOINs for reports. <em>Example: SELECT category, SUM(amount) FROM orders JOIN products USING(product_id) GROUP BY category.</em></li>
+                                <li><strong>ML metadata</strong>: experiments, hyperparameters, metrics, model versions, deployment history.</li>
+                                <li><strong>Geospatial (PostGIS)</strong>: GPS coordinates, polygons, routes. <em>"Find all restaurants within 2km" &rarr; ST_DWithin().</em></li>
+                                <li><strong>Vector search (pgvector)</strong>: embeddings alongside product descriptions. Works well up to ~1M vectors without a separate vector DB.</li>
+                            </ul>
+                        </div>
                         <div class="cx-detail-columns">
                             <div class="cx-detail-col cx-strengths">
                                 <h4>&#10003; Strengths</h4>
@@ -1978,20 +2379,18 @@
                                     <li>Rich SQL: JOINs, subqueries, CTEs, window functions, full-text search</li>
                                     <li>Extensions: pgvector (ML embeddings), PostGIS (geospatial), TimescaleDB (time series)</li>
                                     <li>Mature ecosystem, battle-tested at every scale</li>
+                                    <li>JSONB: semi-structured data within a relational model</li>
                                 </ul>
                             </div>
                             <div class="cx-detail-col cx-weaknesses">
                                 <h4>&#10007; Weaknesses</h4>
                                 <ul>
                                     <li>Vertical scaling limits (single-node write bottleneck)</li>
-                                    <li>Horizontal sharding is complex (use Citus or CockroachDB for distributed)</li>
-                                    <li>Not optimized for high-write throughput on append-only workloads</li>
+                                    <li>Horizontal sharding is complex (use Citus or CockroachDB)</li>
+                                    <li>Not optimized for high-write append-only workloads</li>
+                                    <li>Connection management needs PgBouncer at scale</li>
                                 </ul>
                             </div>
-                        </div>
-                        <div class="cx-detail-section">
-                            <h4>When to use</h4>
-                            <p>User accounts, application state, metadata, configuration, anything with relationships. For ML: store experiment metadata, model registry entries, user feedback, evaluation results. With pgvector: can even serve as a simple vector database for small-scale RAG.</p>
                         </div>
                     </div>
                 </div>
@@ -2027,7 +2426,7 @@
 
             </div>
 
-            <h3 class="cx-subcategory">NoSQL / Document</h3>
+            <h3 class="cx-subcategory">NoSQL &amp; Distributed Databases</h3>
             <div class="cx-algo-grid">
 
                 <div class="cx-algo-card" data-algo="mongodb">
@@ -2037,6 +2436,15 @@
                     </div>
                     <p class="cx-algo-short">Stores data as flexible JSON-like documents (BSON) instead of rigid tables with fixed columns. Each document can have a different structure, making it great for evolving schemas, nested data, and rapid prototyping. Very popular for web applications where the data model changes frequently.</p>
                     <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>Content management</strong>: articles, catalogs where items have different fields. <em>Example: shoes have "size"/"color", electronics have "voltage"/"warranty" &mdash; no rigid schema needed.</em></li>
+                                <li><strong>User profiles</strong>: nested preferences and settings. <em>Example: { name: "Alice", preferences: { theme: "dark", notifications: { email: true } } }</em></li>
+                                <li><strong>Real-time analytics</strong>: event logging where schema evolves fast.</li>
+                                <li><strong>Prototyping</strong>: start fast without designing schema upfront.</li>
+                            </ul>
+                        </div>
                         <div class="cx-detail-columns">
                             <div class="cx-detail-col cx-strengths">
                                 <h4>&#10003; Strengths</h4>
@@ -2044,18 +2452,22 @@
                                     <li>Flexible schema: add fields without migrations</li>
                                     <li>Nested documents: store complex objects naturally</li>
                                     <li>Horizontal scaling with sharding built-in</li>
-                                    <li>Atlas (managed) makes operations easy</li>
+                                    <li>Atlas (managed) + Atlas Vector Search for AI</li>
                                 </ul>
                             </div>
                             <div class="cx-detail-col cx-weaknesses">
                                 <h4>&#10007; Weaknesses</h4>
                                 <ul>
                                     <li>No JOINs: denormalization leads to data duplication</li>
-                                    <li>Weaker consistency guarantees than PostgreSQL</li>
+                                    <li>Weaker consistency than PostgreSQL</li>
                                     <li>Aggregation pipeline is powerful but complex</li>
-                                    <li>Schema flexibility can become schema chaos without discipline</li>
+                                    <li>Schema flexibility can become chaos without discipline</li>
                                 </ul>
                             </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>MongoDB vs PostgreSQL</h4>
+                            <p><strong>Pick PostgreSQL</strong> if you need JOINs, ACID transactions, complex queries, or relational integrity. <strong>Pick MongoDB</strong> if data is deeply nested, schema changes often, you need horizontal scaling, or access is "fetch one document by ID."</p>
                         </div>
                     </div>
                 </div>
@@ -2083,6 +2495,196 @@
                                     <li>Data must fit in RAM (expensive at scale)</li>
                                     <li>Persistence is optional and adds latency (RDB/AOF)</li>
                                     <li>Not a primary database: use for caching, not as source of truth</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="cx-algo-card" data-algo="cassandra">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Apache Cassandra</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Wide-Column, Distributed</span>
+                    </div>
+                    <p class="cx-algo-short">A massively scalable, distributed database designed for high write throughput with no single point of failure. Used by Netflix (trillions of rows), Apple (400k+ nodes), Discord, and Instagram. The go-to when you need millions of writes/sec and reads by known keys with guaranteed uptime.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>Time-series / IoT</strong>: millions of sensors writing every second. <em>Example: 100k IoT devices writing every 5s &rarr; 20k writes/sec, partitioned by device_id.</em></li>
+                                <li><strong>Event logging</strong>: activity streams, click tracking. <em>Netflix stores every play/pause/skip for 230M+ users.</em></li>
+                                <li><strong>Messaging</strong>: Discord stores billions of messages, partitioned by channel_id and bucketed by time.</li>
+                                <li><strong>Recommendations</strong>: precomputed per-user recommendations for fast serving-time lookup.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key architecture concepts</h4>
+                            <ul>
+                                <li><strong>Partition key</strong>: determines which node stores data. All queries must include it. <em>Partition by user_id = fast "all events for user X" but NOT "all events from today."</em></li>
+                                <li><strong>Clustering key</strong>: sort order within partition. <em>partition=user_id, clustering=timestamp &rarr; chronological per user.</em></li>
+                                <li><strong>Replication factor</strong>: RF=3 means 3 copies. Tunable consistency: ONE (fast, eventual) or QUORUM (strong).</li>
+                                <li><strong>No master node</strong>: peer-to-peer ring. No single point of failure. Add nodes = linear scaling.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Linear horizontal scaling</li>
+                                    <li>No single point of failure, masterless</li>
+                                    <li>Extreme write throughput (millions/sec)</li>
+                                    <li>Tunable consistency per query</li>
+                                    <li>Multi-datacenter replication built-in</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Very restrictive queries: must use partition key, no JOINs</li>
+                                    <li>Data modeling is query-driven, not entity-driven</li>
+                                    <li>No cross-partition transactions</li>
+                                    <li>Operational complexity: compaction, repair, tombstones</li>
+                                    <li>Reads slower than writes (log-structured)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Cassandra vs PostgreSQL</h4>
+                            <p><strong>PostgreSQL</strong>: complex queries, JOINs, transactions, &lt;1TB. <strong>Cassandra</strong>: millions of writes/sec, multi-DC, &gt;10TB, simple key lookups. <em>If all queries are "get X by key Y", Cassandra excels. Ad-hoc analytics? Use PostgreSQL or a warehouse.</em></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="dynamodb">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Amazon DynamoDB</span>
+                        <span class="cx-algo-badge">Managed Key-Value</span>
+                    </div>
+                    <p class="cx-algo-short">Fully managed, serverless key-value database by AWS. Zero ops: no servers, auto-scaling, built-in encryption/backups. Default choice for serverless on AWS. Used by Amazon.com for shopping cart, sessions, and orders.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>Serverless backends</strong>: Lambda + API Gateway + DynamoDB. <em>Mobile app handling 0 to 100k req/sec automatically.</em></li>
+                                <li><strong>Session storage</strong>: fast key-value lookups for sessions, carts, game state.</li>
+                                <li><strong>Leaderboards</strong>: atomic increments + Global Secondary Index for sorting.</li>
+                                <li><strong>Event-driven</strong>: DynamoDB Streams triggers Lambda on every change.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Zero ops, auto-scaling, automatic backups</li>
+                                    <li>Single-digit ms latency at any scale</li>
+                                    <li>On-demand pricing (pay per request)</li>
+                                    <li>DynamoDB Streams for event-driven</li>
+                                    <li>Global tables for multi-region</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>AWS vendor lock-in</li>
+                                    <li>Must query by partition key (like Cassandra)</li>
+                                    <li>Expensive for read-heavy workloads at scale</li>
+                                    <li>25 GSIs max, 400KB item limit</li>
+                                    <li>No JOINs, no SQL</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>DynamoDB vs Cassandra</h4>
+                            <p><strong>DynamoDB</strong>: on AWS, want zero ops, no DB expertise needed. <strong>Cassandra</strong>: multi-cloud/on-prem, more control, cheaper at very large scale. Both have similar query restrictions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="elasticsearch">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Elasticsearch / OpenSearch</span>
+                        <span class="cx-algo-badge cx-badge-highlight">Search Engine</span>
+                    </div>
+                    <p class="cx-algo-short">Distributed search and analytics engine on Apache Lucene. Industry standard for full-text search, log analytics, and real-time aggregations. Powers search at Wikipedia, GitHub, Stack Overflow, and most e-commerce sites.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>Full-text search</strong>: keywords with relevance, typo tolerance, facets, autocomplete. <em>User types "blue running shoe" &rarr; ranked results with size/price/brand filters.</em></li>
+                                <li><strong>Log analytics (ELK)</strong>: Elasticsearch + Logstash + Kibana. Millions of log lines, real-time search.</li>
+                                <li><strong>APM</strong>: distributed traces, metrics, error data.</li>
+                                <li><strong>Geospatial</strong>: find nearby items with built-in geo types.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-section">
+                            <h4>Key concepts</h4>
+                            <ul>
+                                <li><strong>Inverted index</strong>: maps every word to documents containing it. Why keyword search is fast.</li>
+                                <li><strong>Analyzers</strong>: tokenize &rarr; lowercase &rarr; stopwords &rarr; stem. Per-language.</li>
+                                <li><strong>Shards &amp; replicas</strong>: horizontal scaling + fault tolerance.</li>
+                                <li><strong>BM25</strong>: default relevance scoring (term frequency, doc length, IDF).</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Best-in-class full-text search with relevance</li>
+                                    <li>Real-time aggregations on massive data</li>
+                                    <li>Rich query DSL: bool, fuzzy, geo, nested</li>
+                                    <li>Kibana for visualization</li>
+                                    <li>kNN vector search for hybrid semantic+keyword</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Not a primary DB: no ACID, eventual consistency</li>
+                                    <li>Resource hungry (RAM + disk for indexing)</li>
+                                    <li>Schema changes hard after indexing</li>
+                                    <li>Operational complexity at scale</li>
+                                    <li>License change &rarr; OpenSearch fork as alternative</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cx-algo-card" data-algo="kafka">
+                    <div class="cx-algo-header">
+                        <span class="cx-algo-name">Apache Kafka</span>
+                        <span class="cx-algo-badge">Streaming / Event Bus</span>
+                    </div>
+                    <p class="cx-algo-short">Distributed event streaming platform. Backbone of event-driven architectures: every action becomes an event that services consume in real time or replay later. Not a traditional database, but increasingly used as a persistent, ordered, replayable log.</p>
+                    <div class="cx-algo-detail">
+                        <div class="cx-detail-section">
+                            <h4>When to use (with examples)</h4>
+                            <ul>
+                                <li><strong>Event-driven microservices</strong>: <em>OrderService publishes "order.created" &rarr; Payment, Inventory, Email services consume independently.</em></li>
+                                <li><strong>Real-time pipelines</strong>: CDC with Debezium &rarr; Kafka &rarr; Elasticsearch/Snowflake.</li>
+                                <li><strong>ML feature stores</strong>: stream real-time features to model serving.</li>
+                                <li><strong>Log aggregation</strong>: collect from all services, route to storage.</li>
+                            </ul>
+                        </div>
+                        <div class="cx-detail-columns">
+                            <div class="cx-detail-col cx-strengths">
+                                <h4>&#10003; Strengths</h4>
+                                <ul>
+                                    <li>Millions of events/sec throughput</li>
+                                    <li>Persistent, replayable log</li>
+                                    <li>Decouples producers and consumers</li>
+                                    <li>Exactly-once semantics available</li>
+                                    <li>200+ Kafka Connect connectors</li>
+                                </ul>
+                            </div>
+                            <div class="cx-detail-col cx-weaknesses">
+                                <h4>&#10007; Weaknesses</h4>
+                                <ul>
+                                    <li>Operational complexity (ZooKeeper/KRaft)</li>
+                                    <li>Not a database: no queries or indexes</li>
+                                    <li>Ordering only within partition</li>
+                                    <li>Learning curve for consumer groups</li>
                                 </ul>
                             </div>
                         </div>

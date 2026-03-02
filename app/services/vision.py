@@ -1,7 +1,7 @@
 """
 Vision model service for PDF image understanding.
 
-Uses MiniCPM-V 2.6 INT4 quantized — a compact 8B VLM that can:
+Uses MiniCPM-V 2.6 INT4 quantized - a compact 8B VLM that can:
   - Understand PDF page layouts, charts, tables, diagrams
   - Extract text from images with OCR-like accuracy
   - Answer questions about visual content

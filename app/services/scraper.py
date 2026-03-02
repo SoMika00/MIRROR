@@ -41,24 +41,20 @@ def scrape_url(url: str) -> Dict[str, Any]:
 
     html = response.text[:scraper_cfg.max_content_length]
 
-    # Primary extraction via trafilatura
+    # Primary extraction via trafilatura (reuse already-fetched HTML, no double request)
     text = None
     title = None
     try:
         import trafilatura
-        downloaded = trafilatura.fetch_url(url)
-        if downloaded:
-            text = trafilatura.extract(
-                downloaded,
-                include_comments=False,
-                include_tables=True,
-                favor_precision=True,
-            )
-            metadata = trafilatura.extract(
-                downloaded,
-                output_format="json",
-                include_comments=False,
-            )
+        text = trafilatura.extract(
+            html,
+            include_comments=False,
+            include_tables=True,
+            favor_precision=True,
+        )
+        metadata = trafilatura.bare_extraction(html, include_comments=False)
+        if metadata and isinstance(metadata, dict):
+            title = metadata.get("title")
     except Exception as e:
         logger.warning(f"Trafilatura extraction failed: {e}")
 

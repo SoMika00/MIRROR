@@ -9,9 +9,11 @@ summary: "Analyse approfondie des LLM open source les plus pertinents pour 2025 
 
 ## Introduction : L'Ère de l'IA Souveraine Open Source
 
-L'année 2024 et le début 2025 ont marqué un tournant décisif pour les modèles de langage (LLM) open source. Désormais, les organisations désireuses d'une IA souveraine — c'est-à-dire maîtrisée localement, sans dépendance à des services cloud tiers et avec un contrôle total des données — disposent d'options performantes rivalisant avec les géants propriétaires. Exploiter ces modèles en production devient une stratégie clé, et une infrastructure adaptée est essentielle. Une configuration s'appuyant sur deux GPU NVIDIA H100, offrant 160 Go de VRAM totale, constitue une fondation solide et performante pour des déploiements exigeants.
+L'année 2024 et le début 2025 ont marqué un tournant décisif pour les modèles de langage (LLM) open source. Désormais, les organisations désireuses d'une IA souveraine - c'est-à-dire maîtrisée localement, sans dépendance à des services cloud tiers et avec un contrôle total des données - disposent d'options performantes rivalisant avec les géants propriétaires. Exploiter ces modèles en production devient une stratégie clé, et une infrastructure adaptée est essentielle. Une configuration s'appuyant sur deux GPU NVIDIA H100, offrant 160 Go de VRAM totale, constitue une fondation solide et performante pour des déploiements exigeants.
 
-Ce comparatif technique approfondi vise à analyser en profondeur les modèles les plus pertinents pour 2025, en examinant leurs architectures (Dense vs. Mixture-of-Experts) et les techniques d'optimisation critiques (distillation fine, quantification avancée). Nous définirons les critères de sélection essentiels pour un déploiement réussi, incluant les performances sur benchmarks clés (MMLU, GPQA, MATH, HumanEval, etc.), l'efficacité mémoire, la stabilité, les capacités multilingues, et la vitalité de l'écosystème.
+Ce comparatif analyse les modèles les plus pertinents pour 2025, en examinant leurs architectures (Dense vs. Mixture-of-Experts) et les techniques d'optimisation critiques (distillation, quantification avancée). Les critères de sélection couvrent les performances sur benchmarks clés (MMLU, GPQA, MATH, HumanEval), l'efficacité mémoire, la stabilité, les capacités multilingues, et la vitalité de l'écosystème.
+
+*Note : MIRROR tourne lui-même sur un Llama 3.1 8B Q6_K en infrastructure CPU-only - un choix délibéré à l'opposé du spectre des dual H100. Ces comparaisons m'ont aidé à comprendre le paysage avant de choisir ce qui est réaliste pour un portfolio auto-hébergé.*
 
 ## 1. Les Nouveaux Titans Open Source
 
@@ -96,9 +98,9 @@ Le RAG (Retrieval Augmented Generation) est une architecture prédominante pour 
 
 ### Stratégie de Déploiement sur 2× H100 (160 Go)
 
-**GPU 1 — Le LLM Générateur** : Modèle 70B en FP8 (~70 Go). Si les contextes longs ou le batching nécessitent plus d'espace pour le cache KV, passer à GGUF Q6_K (~52.5 Go) ou AWQ/GPTQ 4-bit (~35 Go).
+**GPU 1 - Le LLM Générateur** : Modèle 70B en FP8 (~70 Go). Si les contextes longs ou le batching nécessitent plus d'espace pour le cache KV, passer à GGUF Q6_K (~52.5 Go) ou AWQ/GPTQ 4-bit (~35 Go).
 
-**GPU 2 — Stack RAG + Évolutivité** : Embedding + reranking (~7-10 Go). Il reste **plus de 60-70 Go** pour la scalabilité (batchs importants, base vectorielle GPU, modération de contenu, agents, fine-tuning).
+**GPU 2 - Stack RAG + Évolutivité** : Embedding + reranking (~7-10 Go). Il reste **plus de 60-70 Go** pour la scalabilité (batchs importants, base vectorielle GPU, modération de contenu, agents, fine-tuning).
 
 **Total estimé** : 70 Go (LLM) + 10 Go (RAG) + 25 Go (Cache KV) = **~105 Go**. Ce total dépasse une seule H100 et impose la répartition sur deux GPU.
 
@@ -118,7 +120,7 @@ Même avec FP8 et H100, un modèle 70B génère des tokens de manière séquenti
 
 Latence attendue : quelques centaines de millisecondes à 1-2 secondes. Consommation VRAM (LLaMA 3.3 8B) : FP8 ~8 Go, Q4_K_M ~4-5 Go.
 
-**Stack RAG complète avec LLM 8B** : 8 Go (LLM FP8) + 10 Go (RAG) + 7 Go (Cache) = **~25 Go** — tient sur une seule H100 avec **~55 Go de marge** pour la scalabilité horizontale.
+**Stack RAG complète avec LLM 8B** : 8 Go (LLM FP8) + 10 Go (RAG) + 7 Go (Cache) = **~25 Go** - tient sur une seule H100 avec **~55 Go de marge** pour la scalabilité horizontale.
 
 ## 6. Recommandations pour 2025
 
@@ -126,7 +128,7 @@ Latence attendue : quelques centaines de millisecondes à 1-2 secondes. Consomma
 
 - **Faible Latence** : LLaMA 3.3 8B en FP8/4-bit, stack RAG sur une seule H100, second GPU pour la scalabilité horizontale.
 
-- **Perspective Moyen Terme** : Llama 4 Maverick Instruct — 17B paramètres actifs en FP8 (~17 Go VRAM poids seuls), capacités supérieures à un dense 70B pour une empreinte comparable ou mieux optimisée.
+- **Perspective Moyen Terme** : Llama 4 Maverick Instruct - 17B paramètres actifs en FP8 (~17 Go VRAM poids seuls), capacités supérieures à un dense 70B pour une empreinte comparable ou mieux optimisée.
 
 - **Compromis Équilibré** : DeepSeek-R1-Distill-Qwen2-32B en FP8 (~32 Go), stack RAG complète sur une seule H100.
 

@@ -1,7 +1,7 @@
 """
 PDF and document parsing service.
 
-Uses PyMuPDF (fitz) for PDF extraction — fast, accurate, handles complex layouts.
+Uses PyMuPDF (fitz) for PDF extraction - fast, accurate, handles complex layouts.
 Supports: PDF, DOCX, TXT, MD
 """
 

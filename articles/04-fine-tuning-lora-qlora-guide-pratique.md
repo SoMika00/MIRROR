@@ -187,3 +187,7 @@ Un avantage majeur de LoRA : on peut maintenir plusieurs adaptateurs pour le mem
 ## Conclusion
 
 Le fine-tuning avec LoRA/QLoRA démocratise l'adaptation des LLM. Les clés du succes : un dataset de qualité (500+ exemples minimum), une évaluation rigoureuse (jamais juste la loss), et une approche itérative. Commencez avec un petit dataset et un rank faible, mesurez avec des métriques concrètes, puis augmentez progressivement. Pour le RAG, le fine-tuning améliore significativement la capacité du modèle à utiliser le contexte et à citer ses sources.
+
+*Dans MIRROR, le Llama 3.1 8B de base gère les citations RAG raisonnablement bien grâce au prompt engineering (voir l'article RAG). Le fine-tuning serait la prochaine étape si la qualité des citations devait être améliorée - le format de dataset RAG décrit ci-dessus est exactement l'approche que j'utiliserais.*
+
+*Michail Berjaoui - Décembre 2024*

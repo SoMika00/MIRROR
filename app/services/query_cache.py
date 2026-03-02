@@ -1,5 +1,5 @@
 """
-Semantic Query Cache — near-instant responses for similar questions.
+Semantic Query Cache - near-instant responses for similar questions.
 
 Architecture:
   - Caches (query_embedding, answer, sources, timings) tuples
