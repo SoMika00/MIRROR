@@ -1,44 +1,61 @@
 """
-LLM service using llama-cpp-python for CPU inference.
+LLM service using xAI Grok API (OpenAI-compatible).
 
-Phi-4 14B Q4_K_M chosen for:
-  - Best quality/size ratio for 14B-class models on CPU
-  - Q4_K_M quantization: ~9 GB RAM, good quality retention (perplexity < +0.5 vs FP16)
-  - 12 threads → ~5-10 t/s generation on modern x86_64
-  - 64 GB RAM leaves ~50 GB headroom after model + KV cache
-  - Microsoft MIT license
+Budget: $0.50/day
+Pricing (grok-2):
+  - Input:  $2  / 1M tokens
+  - Output: $10 / 1M tokens
+
+Daily limits (for $0.50/day):
+  - Max input tokens:  100,000  ($0.20)
+  - Max output tokens:  30,000  ($0.30)
+  - Total budget:                $0.50
 """
 
-import gc
+import json
 import time
 import logging
 import threading
 import os
+from datetime import date
 from typing import Optional, Generator
+from pathlib import Path
 
-from app.config import llm_cfg, MODEL_REGISTRY, get_model_by_id, get_default_model
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 
+# --- Token budget tracking ---
+DAILY_BUDGET_FILE = Path("./data/token_budget.json")
+# Pricing per token
+INPUT_COST_PER_TOKEN = 2.0 / 1_000_000    # $2/1M
+OUTPUT_COST_PER_TOKEN = 10.0 / 1_000_000   # $10/1M
+DAILY_BUDGET_USD = float(os.environ.get("GROK_DAILY_BUDGET", "0.50"))
+# Hard limits (safety net)
+MAX_INPUT_TOKENS_DAY = int(DAILY_BUDGET_USD / INPUT_COST_PER_TOKEN * 0.4)   # ~100K
+MAX_OUTPUT_TOKENS_DAY = int(DAILY_BUDGET_USD / OUTPUT_COST_PER_TOKEN * 0.6)  # ~30K
 
-def _trim_to_clean_end(text: str) -> str:
-    """Trim text cut by max_tokens to the last complete sentence or line break."""
-    if not text:
-        return text
-    # If already ends with sentence-ending punctuation, leave as-is
-    stripped = text.rstrip()
-    if stripped and stripped[-1] in '.!?:;\n':
-        return stripped
-    # Try to find the last sentence boundary
-    for sep in ['. ', '.\n', '! ', '!\n', '? ', '?\n', ':\n', '\n\n', '\n']:
-        idx = text.rfind(sep)
-        if idx > len(text) * 0.5:  # Only trim if we keep at least half
-            return text[:idx + len(sep)].rstrip()
-    # Fallback: trim to last complete word
-    idx = text.rfind(' ')
-    if idx > len(text) * 0.7:
-        return text[:idx].rstrip()
-    return text.rstrip()
+
+def _load_budget() -> dict:
+    """Load today's token usage from disk."""
+    today = date.today().isoformat()
+    try:
+        if DAILY_BUDGET_FILE.exists():
+            data = json.loads(DAILY_BUDGET_FILE.read_text())
+            if data.get("date") == today:
+                return data
+    except Exception:
+        pass
+    return {"date": today, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "requests": 0}
+
+
+def _save_budget(budget: dict):
+    """Persist token usage to disk."""
+    try:
+        DAILY_BUDGET_FILE.parent.mkdir(parents=True, exist_ok=True)
+        DAILY_BUDGET_FILE.write_text(json.dumps(budget, indent=2))
+    except Exception as e:
+        logger.warning(f"Failed to save budget: {e}")
 
 
 class LLMService:
@@ -57,196 +74,175 @@ class LLMService:
         if self._initialized:
             return
         self._initialized = True
-        self.model = None
-        self.model_path = llm_cfg.model_path
-        self._loaded = False
+        self._client = None
+        self._model = os.environ.get("GROK_MODEL", "grok-2")
+        self._api_key = os.environ.get("GROK_API_KEY", "")
+        self._base_url = os.environ.get("GROK_BASE_URL", "https://api.x.ai/v1")
         self._gen_lock = threading.Lock()
-        self._current_model_id = None
-        self._current_n_ctx = llm_cfg.n_ctx
+        self._budget_lock = threading.Lock()
+        self._current_n_ctx = 131072  # Grok-2 supports 131K context
+        self._loaded = False
+        if self._api_key:
+            self._init_client()
 
-    def load(self, model_path: Optional[str] = None, model_id: Optional[str] = None):
-        # Resolve model from registry if model_id is given
-        if model_id:
-            entry = get_model_by_id(model_id)
-            if entry:
-                model_path = f"./models/{entry['filename']}"
-                self._current_model_id = model_id
-                self._current_n_ctx = entry.get("n_ctx", llm_cfg.n_ctx)
-            else:
-                raise ValueError(f"Unknown model_id: {model_id}")
-        elif model_path:
-            self.model_path = model_path
-        else:
-            # No model_path and no model_id: use current model_path
-            pass
-
-        if model_path:
-            self.model_path = model_path
-
-        # Always try to match registry entry by filename
-        fname = os.path.basename(self.model_path)
-        matched = False
-        for m in MODEL_REGISTRY:
-            if m["filename"] == fname:
-                self._current_model_id = m["id"]
-                self._current_n_ctx = m.get("n_ctx", llm_cfg.n_ctx)
-                matched = True
-                break
-        if not matched and not model_id:
-            self._current_model_id = None
-            self._current_n_ctx = llm_cfg.n_ctx
-
-        if not os.path.exists(self.model_path):
-            logger.warning(f"Model file not found: {self.model_path}")
-            raise FileNotFoundError(f"Model not found at {self.model_path}. Download a GGUF model first.")
-        logger.info(f"Loading LLM: {self.model_path}")
-        start = time.time()
-        from llama_cpp import Llama
-        self.model = Llama(
-            model_path=self.model_path,
-            n_ctx=self._current_n_ctx,
-            n_threads=llm_cfg.n_threads,
-            n_batch=llm_cfg.n_batch,
-            use_mlock=llm_cfg.use_mlock,
-            use_mmap=llm_cfg.use_mmap,
-            verbose=False,
+    def _init_client(self):
+        """Initialize the OpenAI-compatible client for xAI."""
+        self._client = OpenAI(
+            api_key=self._api_key,
+            base_url=self._base_url,
         )
-        elapsed = time.time() - start
-        logger.info(f"LLM loaded in {elapsed:.1f}s")
         self._loaded = True
+        logger.info(f"Grok API client initialized (model: {self._model})")
+
+    def _check_budget(self, estimated_input: int = 0) -> bool:
+        """Check if we're within daily budget. Raises if over limit."""
+        with self._budget_lock:
+            budget = _load_budget()
+            if budget["input_tokens"] + estimated_input > MAX_INPUT_TOKENS_DAY:
+                raise RuntimeError(
+                    f"Daily input token limit reached ({budget['input_tokens']}/{MAX_INPUT_TOKENS_DAY}). "
+                    f"Budget: ${budget['cost_usd']:.3f}/${DAILY_BUDGET_USD}. Resets tomorrow."
+                )
+            if budget["output_tokens"] > MAX_OUTPUT_TOKENS_DAY:
+                raise RuntimeError(
+                    f"Daily output token limit reached ({budget['output_tokens']}/{MAX_OUTPUT_TOKENS_DAY}). "
+                    f"Budget: ${budget['cost_usd']:.3f}/${DAILY_BUDGET_USD}. Resets tomorrow."
+                )
+            if budget["cost_usd"] >= DAILY_BUDGET_USD:
+                raise RuntimeError(
+                    f"Daily budget exhausted: ${budget['cost_usd']:.3f}/${DAILY_BUDGET_USD}. Resets tomorrow."
+                )
+        return True
+
+    def _record_usage(self, input_tokens: int, output_tokens: int):
+        """Record token usage and cost."""
+        with self._budget_lock:
+            budget = _load_budget()
+            budget["input_tokens"] += input_tokens
+            budget["output_tokens"] += output_tokens
+            cost = (input_tokens * INPUT_COST_PER_TOKEN) + (output_tokens * OUTPUT_COST_PER_TOKEN)
+            budget["cost_usd"] = round(budget["cost_usd"] + cost, 6)
+            budget["requests"] += 1
+            _save_budget(budget)
+            logger.info(
+                f"Tokens: +{input_tokens}in/+{output_tokens}out | "
+                f"Day total: {budget['input_tokens']}in/{budget['output_tokens']}out | "
+                f"Cost: ${budget['cost_usd']:.4f}/${DAILY_BUDGET_USD}"
+            )
+
+    def load(self, **kwargs):
+        """No-op for API mode. Kept for interface compatibility."""
+        if not self._api_key:
+            self._api_key = os.environ.get("GROK_API_KEY", "")
+        if self._api_key and not self._client:
+            self._init_client()
+        if not self._api_key:
+            raise RuntimeError("GROK_API_KEY not set. Add it to .env file.")
 
     def is_loaded(self) -> bool:
-        return self._loaded
+        return self._loaded and bool(self._api_key)
 
     def unload(self):
-        if self.model:
-            del self.model
-            self.model = None
-            self._loaded = False
-            self._current_model_id = None
-            gc.collect()
-            logger.info("LLM unloaded, memory freed")
-
-    def _update_telemetry(self, active, tokens=0, tps=0.0):
-        """Update inference telemetry for the live metrics dashboard."""
-        try:
-            from app.routes.models_route import inference_telemetry
-            inference_telemetry["active"] = active
-            inference_telemetry["tokens_generated"] = tokens
-            inference_telemetry["tokens_per_sec"] = round(tps, 1)
-            if active:
-                inference_telemetry["start_time"] = time.time()
-                inference_telemetry["model_name"] = getattr(self, '_current_model_id', '') or ''
-        except ImportError:
-            pass
+        """No-op for API mode."""
+        pass
 
     def generate(self, prompt: str = None, max_tokens: Optional[int] = None,
                  temperature: Optional[float] = None, stream: bool = False,
                  messages: Optional[list] = None) -> str:
-        if not self._loaded:
-            raise RuntimeError("LLM not loaded. Load a model first via /api/models/load.")
+        if not self.is_loaded():
+            raise RuntimeError("Grok API not configured. Set GROK_API_KEY in .env.")
+
+        chat_messages = messages if messages else [{"role": "user", "content": prompt}]
+
+        # Estimate input tokens (~3 chars per token)
+        input_chars = sum(len(m.get("content", "")) for m in chat_messages)
+        estimated_input = input_chars // 3
+        self._check_budget(estimated_input)
+
+        effective_max = min(max_tokens or 1024, 2048)
+
         with self._gen_lock:
-            self._update_telemetry(True)
             start = time.time()
-            # Hard cap to prevent runaway generation from bad models
-            effective_max = min(max_tokens or llm_cfg.max_tokens, 2048)
-            # Use structured messages if provided, else wrap prompt as user msg
-            chat_messages = messages if messages else [{"role": "user", "content": prompt}]
-            response = self.model.create_chat_completion(
+            response = self._client.chat.completions.create(
+                model=self._model,
                 messages=chat_messages,
                 max_tokens=effective_max,
-                temperature=temperature or llm_cfg.temperature,
-                top_p=llm_cfg.top_p,
-                repeat_penalty=llm_cfg.repeat_penalty,
+                temperature=temperature or 0.7,
                 stream=False,
             )
             elapsed = time.time() - start
-            text = response["choices"][0]["message"]["content"]
-            finish_reason = response["choices"][0].get("finish_reason", "")
-            tokens_used = response.get("usage", {}).get("completion_tokens", 0)
-            tps = tokens_used / elapsed if tokens_used and elapsed > 0 else 0
-            self._update_telemetry(False, tokens_used, tps)
-            if tokens_used and elapsed > 0:
-                logger.info(f"Generated {tokens_used} tokens in {elapsed:.1f}s ({tps:.1f} t/s)")
-            # If generation was cut by max_tokens, trim to last complete sentence
-            if finish_reason == "length" and text:
-                text = _trim_to_clean_end(text)
+
+            text = response.choices[0].message.content or ""
+            usage = response.usage
+            input_tokens = usage.prompt_tokens if usage else estimated_input
+            output_tokens = usage.completion_tokens if usage else len(text) // 4
+
+            self._record_usage(input_tokens, output_tokens)
+            logger.info(f"Generated {output_tokens} tokens in {elapsed:.1f}s")
+
             return text
 
     def generate_stream(self, prompt: str = None, max_tokens: Optional[int] = None,
                         temperature: Optional[float] = None,
                         messages: Optional[list] = None) -> Generator[str, None, None]:
-        if not self._loaded:
-            raise RuntimeError("LLM not loaded.")
+        if not self.is_loaded():
+            raise RuntimeError("Grok API not configured. Set GROK_API_KEY in .env.")
+
+        chat_messages = messages if messages else [{"role": "user", "content": prompt}]
+
+        input_chars = sum(len(m.get("content", "")) for m in chat_messages)
+        estimated_input = input_chars // 3
+        self._check_budget(estimated_input)
+
+        effective_max = min(max_tokens or 1024, 2048)
+
         with self._gen_lock:
-            self._update_telemetry(True)
             start = time.time()
             token_count = 0
-            # Hard cap to prevent runaway generation from bad models
-            effective_max = min(max_tokens or llm_cfg.max_tokens, 2048)
-            chat_messages = messages if messages else [{"role": "user", "content": prompt}]
-            stream = self.model.create_chat_completion(
+
+            stream = self._client.chat.completions.create(
+                model=self._model,
                 messages=chat_messages,
                 max_tokens=effective_max,
-                temperature=temperature or llm_cfg.temperature,
-                top_p=llm_cfg.top_p,
-                repeat_penalty=llm_cfg.repeat_penalty,
+                temperature=temperature or 0.7,
                 stream=True,
             )
+
             for chunk in stream:
-                delta = chunk["choices"][0].get("delta", {})
-                content = delta.get("content", "")
+                delta = chunk.choices[0].delta
+                content = delta.content if delta else None
                 if content:
                     token_count += 1
-                    elapsed = time.time() - start
-                    tps = token_count / elapsed if elapsed > 0 else 0
-                    self._update_telemetry(True, token_count, tps)
                     yield content
+
             elapsed = time.time() - start
-            tps = token_count / elapsed if elapsed > 0 else 0
-            self._update_telemetry(False, token_count, tps)
+            # Record usage (estimate input since streaming doesn't return usage)
+            self._record_usage(estimated_input, token_count)
             if token_count > 0:
-                logger.info(f"Streamed {token_count} tokens in {elapsed:.1f}s ({tps:.1f} t/s)")
+                logger.info(f"Streamed {token_count} tokens in {elapsed:.1f}s")
 
     def get_info(self) -> dict:
-        info = {
-            "model_path": self.model_path,
-            "loaded": self._loaded,
-            "n_ctx": self._current_n_ctx if hasattr(self, '_current_n_ctx') else llm_cfg.n_ctx,
-            "n_threads": llm_cfg.n_threads,
-            "model_id": getattr(self, '_current_model_id', None),
+        budget = _load_budget()
+        return {
+            "provider": "xAI Grok API",
+            "model": self._model,
+            "loaded": self.is_loaded(),
+            "n_ctx": self._current_n_ctx,
+            "daily_budget": {
+                "limit_usd": DAILY_BUDGET_USD,
+                "spent_usd": budget["cost_usd"],
+                "remaining_usd": round(DAILY_BUDGET_USD - budget["cost_usd"], 4),
+                "input_tokens": budget["input_tokens"],
+                "output_tokens": budget["output_tokens"],
+                "requests_today": budget["requests"],
+                "max_input_tokens": MAX_INPUT_TOKENS_DAY,
+                "max_output_tokens": MAX_OUTPUT_TOKENS_DAY,
+            },
         }
-        if self._loaded and self.model:
-            info["n_vocab"] = self.model.n_vocab()
-        # Enrich with registry info
-        mid = info.get("model_id")
-        if mid:
-            entry = get_model_by_id(mid)
-            if entry:
-                info["model_name"] = entry["name"]
-                info["ram_gb"] = entry["ram_gb"]
-                info["speed_estimate"] = entry["speed_estimate"]
-        return info
 
-    def list_available_models(self) -> list:
-        models_dir = "./models"
-        if not os.path.exists(models_dir):
-            return []
-        return [f for f in os.listdir(models_dir) if f.endswith(".gguf")]
-
-    def list_registry_models(self) -> list:
-        """Return full registry with download status for each model."""
-        local_files = set(self.list_available_models())
-        result = []
-        for m in MODEL_REGISTRY:
-            entry = dict(m)
-            entry["downloaded"] = m["filename"] in local_files
-            entry["active"] = (
-                self._loaded
-                and getattr(self, '_current_model_id', None) == m["id"]
-            )
-            result.append(entry)
-        return result
+    def get_budget(self) -> dict:
+        """Public method to get current budget status."""
+        return _load_budget()
 
 
 llm_service = LLMService()

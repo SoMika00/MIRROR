@@ -22,7 +22,7 @@ from app.services.embedding import embedding_service
 from app.services.llm import llm_service
 from app.services.reranker import reranker_service
 from app.services.qdrant_store import qdrant_store, SearchResult
-from app.config import rag_cfg, reranker_cfg, llm_cfg
+from app.config import rag_cfg, reranker_cfg
 
 logger = logging.getLogger(__name__)
 
@@ -88,8 +88,8 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
     Truncates to fit within max_tokens budget (0 = no limit)."""
     if max_tokens <= 0:
         # Reserve tokens for system prompt (~800) + generation (max_tokens config)
-        n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
-        max_tokens = max(1024, n_ctx - llm_cfg.max_tokens - 1000)
+        n_ctx = getattr(llm_service, '_current_n_ctx', 131072)
+        max_tokens = max(1024, n_ctx - 1024 - 1000)
 
     context_parts = []
     total_tokens = 0
@@ -316,8 +316,8 @@ def query_scraped_content(question: str, url: str, title: str, content: str) -> 
     start = time.time()
 
     # Dynamic context limit based on current model's n_ctx
-    n_ctx = getattr(llm_service, '_current_n_ctx', llm_cfg.n_ctx)
-    max_context_chars = max(1000, (n_ctx - llm_cfg.max_tokens - 500) * 3)
+    n_ctx = getattr(llm_service, '_current_n_ctx', 131072)
+    max_context_chars = max(1000, (n_ctx - 1024 - 500) * 3)
     truncated = content[:max_context_chars]
 
     messages = [
