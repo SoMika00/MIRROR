@@ -7,8 +7,7 @@ from flask import Blueprint, request, jsonify, current_app, make_response
 from werkzeug.utils import secure_filename
 
 from app.services.pdf_parser import parse_document, chunk_text
-from app.services.embedding import embedding_service
-from app.services.qdrant_store import qdrant_store
+from app.services.retrieval import retrieval_store
 from app.services.database import db
 from app.config import rag_cfg
 
@@ -22,13 +21,11 @@ def allowed_file(filename: str) -> bool:
 
 
 def _get_user_id() -> str:
-    """Get or create user from cookie."""
     user_id = request.cookies.get("mirror_uid")
     return db.get_or_create_user(user_id)
 
 
 def _set_user_cookie(response, user_id: str):
-    """Set persistent user cookie (1 year)."""
     response.set_cookie("mirror_uid", user_id, max_age=365 * 24 * 3600,
                          httponly=True, samesite="Lax")
     return response
@@ -36,7 +33,7 @@ def _set_user_cookie(response, user_id: str):
 
 @documents_bp.route("/upload", methods=["POST"])
 def upload_document():
-    """Upload and index a document into the vector store."""
+    """Upload and index a document into the retrieval store."""
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
@@ -56,10 +53,8 @@ def upload_document():
     try:
         start = time.time()
 
-        # Parse document
         pages = parse_document(filepath)
 
-        # Chunk all pages
         all_chunks = []
         for page_data in pages:
             chunks = chunk_text(page_data["text"], rag_cfg.chunk_size, rag_cfg.chunk_overlap)
@@ -73,32 +68,28 @@ def upload_document():
         if not all_chunks:
             return jsonify({"error": "No text extracted from document"}), 400
 
-        # Embed all chunks
-        texts = [c["text"] for c in all_chunks]
-        vectors = embedding_service.encode(texts).tolist()
+        # Replace any previous version of the same file for this user
+        retrieval_store.delete_by_source(filename, user_id=user_id)
 
-        # Build payloads - include user_id for per-user scoping
-        payloads = []
-        for c in all_chunks:
-            payloads.append({
+        texts = [c["text"] for c in all_chunks]
+        payloads = [
+            {
                 "source_name": filename,
                 "source_type": "document",
                 "page": c["page"],
                 "chunk_index": c["chunk_index"],
                 "user_id": user_id,
-            })
-
-        # Upsert to Qdrant
-        qdrant_store.upsert(texts=texts, vectors=vectors, payloads=payloads)
-
-        elapsed = time.time() - start
+            }
+            for c in all_chunks
+        ]
+        retrieval_store.upsert(texts=texts, payloads=payloads)
 
         resp = make_response(jsonify({
             "success": True,
             "filename": filename,
             "pages": len(pages),
             "chunks": len(all_chunks),
-            "elapsed_seconds": round(elapsed, 2),
+            "elapsed_seconds": round(time.time() - start, 2),
         }))
         return _set_user_cookie(resp, user_id)
 
@@ -108,10 +99,10 @@ def upload_document():
 
 @documents_bp.route("/list", methods=["GET"])
 def list_documents():
-    """List indexed documents for the current user."""
+    """List indexed sources for the current user."""
     user_id = _get_user_id()
     try:
-        sources = qdrant_store.list_sources(user_id=user_id)
+        sources = retrieval_store.list_sources(user_id=user_id)
         resp = make_response(jsonify({"sources": sources}))
         return _set_user_cookie(resp, user_id)
     except Exception as e:
@@ -120,11 +111,10 @@ def list_documents():
 
 @documents_bp.route("/delete/<source_name>", methods=["DELETE"])
 def delete_document(source_name):
-    """Delete a document from the vector store (scoped to current user)."""
+    """Delete a document from the retrieval store (scoped to current user)."""
     user_id = _get_user_id()
     try:
-        qdrant_store.delete_by_source(source_name, user_id=user_id)
-        # Also delete file if exists
+        retrieval_store.delete_by_source(source_name, user_id=user_id)
         filepath = os.path.join(current_app.config["UPLOAD_FOLDER"], source_name)
         if os.path.exists(filepath):
             os.remove(filepath)
@@ -135,9 +125,8 @@ def delete_document(source_name):
 
 @documents_bp.route("/info", methods=["GET"])
 def collection_info():
-    """Get vector store collection info."""
+    """Get retrieval store info."""
     try:
-        info = qdrant_store.get_collection_info()
-        return jsonify(info)
+        return jsonify(retrieval_store.get_info())
     except Exception as e:
         return jsonify({"error": str(e), "connected": False}), 500

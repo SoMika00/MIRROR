@@ -254,7 +254,7 @@ class Database:
             return rows
 
     def delete_user_source(self, source_id: str, user_id: str) -> Optional[str]:
-        """Delete a user source, returns source_name for Qdrant cleanup."""
+        """Delete a user source, returns source_name for retrieval-store cleanup."""
         with self.get_cursor() as c:
             c.execute("SELECT source_name FROM user_sources WHERE id = ? AND user_id = ?",
                        (source_id, user_id))

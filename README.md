@@ -1,121 +1,72 @@
-# MIRROR - AI-Powered Portfolio
+# MIRROR — AI-Powered Portfolio
 
-Portfolio & knowledge base for **Michail Berjaoui**, Lead ML/LLM Engineer. Built with Flask, Qdrant, BGE-M3, and Phi-4.
+Portfolio & live RAG application for **Michail Berjaoui**, Lead AI/LLM Engineer.
+Fully **API-first**: no model weights run on the server.
+
+**Live:** https://mymirror.fr
 
 ## Features
 
-- **Portfolio Landing** - Dark cyber-violet showcase of CV, skills, experience
-- **AI Chat (RAG)** - Ask questions about uploaded documents with source citations
-- **Web Scraper** - Input a URL, scrape it, ask questions about the content
-- **Document Upload** - Drag & drop PDF, DOCX, TXT, MD files for indexing
-- **Articles** - Markdown-based technical blog
-- **Model Manager** - Load/unload/switch LLM models at runtime
-- **Technical Choices** - Full documentation of architecture decisions
+- **Portfolio landing** — CV, selected work, skills, experience
+- **AI Chat (RAG)** — the assistant answers questions about Michail with
+  citations; the site indexes its own content (profile, articles, architecture
+  docs) at startup
+- **Bring your own data** — visitors can upload PDF/DOCX/TXT/MD or scrape a
+  URL and query it (per-user isolation via anonymous cookie sessions)
+- **Articles** — markdown-based technical blog (FR/EN)
+- **Architecture page** — every technical decision documented like a client
+  deliverable, including the V1 (self-hosted) → V2 (API-first) migration story
+- **Cost guardrail** — hard daily LLM budget (default $0.50/day) enforced
+  before every API call
 
 ## Tech Stack
 
 | Component | Technology |
 |-----------|-----------|
-| Backend | Flask 3.1, Python 3.11+ |
-| LLM | Phi-4 14B Q4_K_M via llama-cpp-python |
-| Embedding | BGE-M3 via sentence-transformers |
-| Vector DB | Qdrant (Docker, HNSW + INT8 quantization) |
-| PDF Parser | PyMuPDF |
+| Backend | Flask 3.1, Python 3.11, gunicorn |
+| LLM | xAI Grok API (OpenAI-compatible SDK) |
+| Retrieval | SQLite FTS5 (BM25), hybrid-ready with optional API embeddings |
+| App state | SQLite (WAL) |
+| Documents | PyMuPDF, python-docx |
 | Scraper | trafilatura + BeautifulSoup |
+| Edge | Caddy 2 (automatic HTTPS) |
+| Deploy | Docker Compose |
 
 ## Quick Start
 
-### 1. Start Qdrant
-
 ```bash
-docker run -d -p 6333:6333 -p 6334:6334 \
-  -v qdrant_data:/qdrant/storage \
-  qdrant/qdrant:v1.12.4
+cp .env.example .env   # add your GROK_API_KEY
+docker compose up -d --build
 ```
 
-### 2. Download a GGUF model
+Open http://localhost — that's it. No models to download, no vector DB to run.
 
-Place a `.gguf` model in the `./models/` directory:
-
-```bash
-mkdir -p models
-# Example: download Phi-4 Q4_K_M
-# huggingface-cli download microsoft/phi-4-gguf phi-4-Q4_K_M.gguf --local-dir ./models/
-```
-
-### 3. Install dependencies
+### Local development (without Docker)
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 4. Run
-
-```bash
 python run.py
 ```
 
-Open [http://localhost:5000](http://localhost:5000)
+## Configuration (.env)
 
-### 5. Load models
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `GROK_API_KEY` | — | xAI API key (required) |
+| `GROK_MODEL` | `grok-4.20-non-reasoning` | Chat model |
+| `GROK_DAILY_BUDGET` | `0.50` | Hard daily spend cap (USD) |
+| `GROK_INPUT_PRICE` / `GROK_OUTPUT_PRICE` | `1.25` / `2.50` | USD per 1M tokens, for budget accounting |
+| `EMBEDDINGS_API_KEY` | empty | Set to enable hybrid dense+BM25 retrieval via any OpenAI-compatible embeddings API |
 
-Click the ⚙ button in the top-right corner to:
-1. Connect to Qdrant
-2. Load the embedding model (BGE-M3)
-3. Load the LLM (select a .gguf file)
+## Deployment notes
 
-## Docker Compose
+- DNS: point the `A` record of your domain at the server's public IP.
+  Caddy then obtains the TLS certificate automatically (no action needed).
+- Publishing an article = drop a markdown file in `articles/`
+  (`slug.md`, `slug.en.md`, `slug.ja.md`); it is indexed at next boot.
 
-```bash
-docker compose up -d
-```
+## Architecture decisions
 
-This starts both Qdrant and the Flask app.
-
-## Infrastructure
-
-Optimized for **64 GB RAM, 12 CPU cores, no GPU**:
-- LLM: 10 threads, ~9 GB RAM
-- Embedding: 2 threads, ~2 GB RAM
-- Qdrant: 2 CPUs, ~4 GB RAM
-- Remaining: OS + headroom
-
-See [docs/choix_techniques.md](docs/choix_techniques.md) for full technical documentation.
-
-## Project Structure
-
-```
-MIRROR/
-├── app/
-│   ├── __init__.py          # Flask app factory
-│   ├── config.py            # All configuration dataclasses
-│   ├── routes/              # Flask blueprints
-│   │   ├── main.py          # Landing page
-│   │   ├── chat.py          # RAG chat API
-│   │   ├── documents.py     # Document upload/management
-│   │   ├── scraper.py       # Web scraping API
-│   │   ├── articles.py      # Articles API
-│   │   └── models_route.py  # Model management API
-│   ├── services/            # Business logic
-│   │   ├── embedding.py     # BGE-M3 embedding service
-│   │   ├── llm.py           # Phi-4 LLM service
-│   │   ├── qdrant_store.py  # Qdrant vector store
-│   │   ├── rag.py           # RAG pipeline with citations
-│   │   ├── scraper.py       # Web scraping
-│   │   └── pdf_parser.py    # Document parsing + chunking
-│   ├── static/css/style.css # Dark cyber-violet theme
-│   ├── static/js/app.js     # Global JS (model manager, toasts)
-│   └── templates/           # Jinja2 templates
-├── articles/                # Markdown articles
-├── docs/choix_techniques.md # Technical choices document
-├── models/                  # GGUF model files
-├── uploads/                 # Uploaded documents
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
-└── run.py
-```
-
-## License
-
-Private portfolio project by Michail Berjaoui.
+See [docs/choix_techniques.md](docs/choix_techniques.md) (FR) or the
+[/tech](https://mymirror.fr/tech) page (EN). Both are indexed into the
+assistant's knowledge base — you can ask the AI chat why any decision was made.

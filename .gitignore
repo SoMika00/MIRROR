@@ -24,3 +24,6 @@ models/*.gguf
 .DS_Store
 .idea/
 .vscode/
+
+# Runtime databases
+data/

@@ -7,42 +7,18 @@ from flask_cors import CORS
 logger = logging.getLogger(__name__)
 
 
-def _auto_init_services(app):
-    """Background thread: connect Qdrant, load embedding, reranker, init Grok API."""
+def _init_knowledge(app):
+    """Background thread: index the portfolio's own content for the AI chat."""
     with app.app_context():
-        # 1. Connect Qdrant
         try:
-            from app.services.qdrant_store import qdrant_store
-            qdrant_store.connect()
-            app.logger.info("Auto-init: Qdrant connected")
+            from app.services.knowledge import index_portfolio_content
+            n = index_portfolio_content(
+                articles_dir=app.config["ARTICLES_FOLDER"],
+                docs_dir="./docs",
+            )
+            app.logger.info(f"Auto-init: portfolio knowledge indexed ({n} chunks)")
         except Exception as e:
-            app.logger.error(f"Auto-init: Qdrant failed: {e}")
-
-        # 2. Load embedding model
-        try:
-            from app.services.embedding import embedding_service
-            embedding_service.load()
-            app.logger.info("Auto-init: Embedding model loaded")
-        except Exception as e:
-            app.logger.error(f"Auto-init: Embedding failed: {e}")
-
-        # 3. Load reranker
-        try:
-            from app.services.reranker import reranker_service
-            reranker_service.load()
-            app.logger.info("Auto-init: Reranker loaded")
-        except Exception as e:
-            app.logger.error(f"Auto-init: Reranker failed: {e}")
-
-        # 4. Init Grok API client
-        try:
-            from app.services.llm import llm_service
-            llm_service.load()
-            app.logger.info("Auto-init: Grok API client ready")
-        except Exception as e:
-            app.logger.error(f"Auto-init: Grok API failed: {e}")
-
-        app.logger.info("Auto-init: All services initialization complete")
+            app.logger.error(f"Auto-init: knowledge indexing failed: {e}")
 
 
 def create_app():
@@ -58,9 +34,19 @@ def create_app():
     os.makedirs(app.config["ARTICLES_FOLDER"], exist_ok=True)
     os.makedirs("./data", exist_ok=True)
 
-    # Initialize SQLite database
+    # SQLite: app data + retrieval store (FTS5)
     from app.services.database import db
     db.init_db()
+    from app.services.retrieval import retrieval_store
+    retrieval_store.init_db()
+
+    # Grok API client (fails loudly in logs if the key is missing)
+    try:
+        from app.services.llm import llm_service
+        llm_service.load()
+        app.logger.info("Grok API client ready")
+    except Exception as e:
+        app.logger.error(f"Grok API init failed: {e}")
 
     from app.routes.main import main_bp
     from app.routes.chat import chat_bp
@@ -76,8 +62,7 @@ def create_app():
     app.register_blueprint(articles_bp, url_prefix="/api/articles")
     app.register_blueprint(models_bp, url_prefix="/api/models")
 
-    # Auto-init all services in background so the app starts immediately
-    thread = threading.Thread(target=_auto_init_services, args=(app,), daemon=True)
-    thread.start()
+    # Index portfolio content in the background so startup stays instant
+    threading.Thread(target=_init_knowledge, args=(app,), daemon=True).start()
 
     return app

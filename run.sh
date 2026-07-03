@@ -13,13 +13,12 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/4] Building images..."
+echo "[1/3] Building images..."
 docker compose build
 
-echo "[2/4] Starting stack..."
+echo "[2/3] Starting stack..."
 docker compose up -d
 
-# Resolve app container ID (robust even if container_name is not honored)
 APP_CID="$(docker compose ps -q mirror | tail -n 1)"
 if [ -z "${APP_CID}" ]; then
   echo "ERROR: could not resolve app container id for service 'mirror'"
@@ -27,39 +26,25 @@ if [ -z "${APP_CID}" ]; then
   exit 1
 fi
 
-# Wait until app is responding
-echo "[3/4] Waiting for mirror-app to be ready..."
-for i in $(seq 1 60); do
+echo "[3/3] Waiting for mirror-app to be ready..."
+for i in $(seq 1 30); do
   if docker exec "${APP_CID}" python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/models/status', timeout=2).read(); print('OK')" >/dev/null 2>&1; then
     echo "mirror-app is ready"
     break
   fi
   sleep 2
-  if [ "$i" -eq 60 ]; then
+  if [ "$i" -eq 30 ]; then
     echo "ERROR: mirror-app did not become ready in time"
     docker compose logs mirror --tail 80 || true
     exit 1
   fi
 done
 
-echo "[4/4] Ensuring models are present (download missing only)..."
-
-docker exec "${APP_CID}" python3 scripts/download_models.py --all --missing-only --models-dir /app/models
-
-echo "All set. Stack is up and models are downloaded in ./models"
-
 echo ""
 echo "========================================"
 echo "Open the site"
 echo "========================================"
-
-echo "Local (direct to app container):"
-echo "  http://localhost:5000"
-echo ""
-echo "Local (via Caddy):"
-echo "  http://localhost"
-echo "  https://localhost"
-echo ""
+echo "Local (via Caddy):  http://localhost"
 
 if [ -f "${PROJECT_DIR}/Caddyfile" ]; then
   echo "Configured public hostnames (from Caddyfile):"
@@ -74,7 +59,5 @@ if [ -f "${PROJECT_DIR}/Caddyfile" ]; then
     }
   ' "${PROJECT_DIR}/Caddyfile" | sort -u
   echo ""
-  echo "If your DNS isn't pointing yet, use the IP/localhost URLs above."
-else
-  echo "Caddyfile not found. (No public domain URL to display.)"
+  echo "If DNS is not pointing at this server yet, use the IP URL above."
 fi

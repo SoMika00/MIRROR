@@ -48,17 +48,22 @@
         <div class="chat-messages" id="chatMessages">
             <div class="message message-assistant">
                 <div class="message-bubble">
-                    <strong>MIRROR</strong> - <span data-i18n-html="chat.welcome">Michail's AI assistant. Upload documents or scrape a URL, then ask me anything. I'll answer with source citations.</span><br>
+                    <span data-i18n-html="chat.welcome">Hi — I'm <strong>MIRROR</strong>, Michail's AI assistant. Ask me anything about his experience, projects, or how this site is built. I answer with citations from his CV, articles and architecture docs. You can also drop in your own documents or scrape a URL and query them.</span><br>
                     <span class="text-muted" style="font-size:0.82rem;display:block;margin-top:0.5rem;line-height:1.55;" data-i18n="chat.infra_note">
-                        Note: MIRROR runs on a low-cost, CPU-only infrastructure. The models used are intentionally small and quantized for fast response times. As a result, answers may occasionally be imprecise or inconsistent - this is a deliberate trade-off for accessibility and cost efficiency, not a reflection of production-grade deployments.
+                        Powered by the xAI Grok API with hybrid retrieval (BM25 · SQLite FTS5). A daily cost cap protects the budget - if I stop responding, I will be back tomorrow.
                     </span>
+                    <div class="chat-suggestions">
+                        <button class="suggestion-chip" onclick="askSuggestion(this)" data-i18n="chat.suggestion.experience">What did Michail build at SOMA?</button>
+                        <button class="suggestion-chip" onclick="askSuggestion(this)" data-i18n="chat.suggestion.rag">How does the RAG on this site work?</button>
+                        <button class="suggestion-chip" onclick="askSuggestion(this)" data-i18n="chat.suggestion.lead">What is his experience leading teams?</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="chat-input-area">
             <div class="chat-input-wrapper">
-                <textarea class="chat-input" id="chatInput" placeholder="Ask a question..." rows="1"
+                <textarea class="chat-input" id="chatInput" placeholder="Ask about Michail, RAG, this architecture..." data-i18n-placeholder="chat.ask_placeholder" rows="1"
                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"></textarea>
                 <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()" title="Send (Enter)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -89,9 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDropZone();
 });
 
-// --- Auto-mode: if any sources are enabled, use RAG; otherwise direct chat ---
+// --- Mode: always RAG - the portfolio knowledge base is indexed server-side,
+// and any sources the visitor enables are added on top ---
 function getEffectiveMode() {
-    return enabledSources.size > 0 ? 'rag' : 'chat';
+    return 'rag';
+}
+
+function askSuggestion(btn) {
+    const input = document.getElementById('chatInput');
+    input.value = btn.textContent.trim();
+    sendMessage();
 }
 
 // --- Conversations ---

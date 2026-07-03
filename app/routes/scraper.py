@@ -1,12 +1,10 @@
 """Web scraping routes - scrape a URL and ask questions about it."""
 
-import time
 from flask import Blueprint, request, jsonify
 
 from app.services.scraper import scrape_url
 from app.services.pdf_parser import chunk_text
-from app.services.embedding import embedding_service
-from app.services.qdrant_store import qdrant_store
+from app.services.retrieval import retrieval_store
 from app.services.database import db
 from app.config import rag_cfg
 
@@ -18,7 +16,6 @@ _scraped_cache = {}
 
 
 def _get_user_id() -> str:
-    """Get or create user from cookie."""
     user_id = request.cookies.get("mirror_uid")
     return db.get_or_create_user(user_id)
 
@@ -37,30 +34,26 @@ def scrape():
     try:
         result = scrape_url(url)
 
-        # Cache for follow-up questions (evict oldest if over limit)
         if len(_scraped_cache) >= _MAX_CACHE and url not in _scraped_cache:
             oldest = next(iter(_scraped_cache))
             del _scraped_cache[oldest]
         _scraped_cache[url] = result
 
-        # Optionally index into vector store
         if index:
             chunks = chunk_text(result["text"], rag_cfg.chunk_size, rag_cfg.chunk_overlap)
             if chunks:
-                vectors = embedding_service.encode(chunks).tolist()
+                retrieval_store.delete_by_source(url, user_id=user_id)
                 payloads = [
                     {
                         "source_name": url,
                         "source_type": "web",
                         "page": 1,
                         "chunk_index": i,
-                        "url": url,
-                        "title": result.get("title", ""),
                         "user_id": user_id,
                     }
                     for i in range(len(chunks))
                 ]
-                qdrant_store.upsert(texts=chunks, vectors=vectors, payloads=payloads)
+                retrieval_store.upsert(texts=chunks, payloads=payloads)
                 result["indexed"] = True
                 result["chunks_indexed"] = len(chunks)
 
@@ -90,7 +83,7 @@ def ask_about_page():
     from app.services.llm import llm_service
 
     if not llm_service.is_loaded():
-        return jsonify({"error": "No LLM loaded."}), 503
+        return jsonify({"error": "AI service unavailable."}), 503
 
     try:
         result = query_scraped_content(

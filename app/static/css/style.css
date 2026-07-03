@@ -1984,3 +1984,43 @@ a:hover {
   font-family: var(--font-mono);
   font-size: 0.72rem;
 }
+
+/* --- Selected Work / Project Cards --- */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid var(--accent);
+}
+.project-meta {
+  margin-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.site-note {
+  border-left: 3px solid var(--accent);
+  background: linear-gradient(90deg, var(--accent-glow), transparent 60%);
+}
+
+/* --- Chat suggestion chips --- */
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.suggestion-chip {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-xl);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.suggestion-chip:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-glow);
+}

@@ -1288,7 +1288,7 @@
                         <div class="cx-detail-section">
                             <h4>Key embedding models</h4>
                             <ul>
-                                <li><strong>BGE-M3</strong> (BAAI): multilingual, produces both dense AND sparse vectors, 1024-dim. Used in MIRROR.</li>
+                                <li><strong>BGE-M3</strong> (BAAI): multilingual, produces both dense AND sparse vectors, 1024-dim. Used in MIRROR v1 (self-hosted era).</li>
                                 <li><strong>E5 / GTE</strong> (Microsoft/Alibaba): instruction-tuned embeddings, top scores on MTEB benchmark.</li>
                                 <li><strong>Nomic Embed</strong>: open-source, long-context (8192 tokens), strong performance.</li>
                                 <li><strong>Cohere Embed v3</strong>: commercial, int8 quantized embeddings for cost-effective production.</li>
@@ -1296,7 +1296,7 @@
                         </div>
                         <div class="cx-detail-section">
                             <h4>Vector databases</h4>
-                            <p><strong>Qdrant</strong> (Rust, HNSW+quantization, hybrid search, used in MIRROR). <strong>Pinecone</strong> (fully managed, serverless). <strong>Weaviate</strong> (modular, GraphQL). <strong>ChromaDB</strong> (simple, great for prototyping). <strong>pgvector</strong> (PostgreSQL extension, use your existing DB).</p>
+                            <p><strong>Qdrant</strong> (Rust, HNSW+quantization, hybrid search, used in MIRROR v1). <strong>Pinecone</strong> (fully managed, serverless). <strong>Weaviate</strong> (modular, GraphQL). <strong>ChromaDB</strong> (simple, great for prototyping). <strong>pgvector</strong> (PostgreSQL extension, use your existing DB).</p>
                         </div>
                     </div>
                 </div>
@@ -1371,7 +1371,7 @@
                                 <li><strong>GPT-4 / GPT-4o</strong> (OpenAI): proprietary, best general reasoning, multimodal</li>
                                 <li><strong>Claude 3.5 Sonnet</strong> (Anthropic): strong on long context (200k tokens), safety-focused</li>
                                 <li><strong>Llama 3.x</strong> (Meta): open-weight, 8B/70B/405B, massive community</li>
-                                <li><strong>Phi-4</strong> (Microsoft): 14B, exceptional quality/size ratio, used in MIRROR</li>
+                                <li><strong>Phi-4</strong> (Microsoft): 14B, exceptional quality/size ratio, used in MIRROR v1</li>
                                 <li><strong>Qwen 2.5</strong> (Alibaba): top multilingual, 0.5B to 72B, open-weight</li>
                                 <li><strong>Mistral / Mixtral</strong> (Mistral AI): MoE architecture, efficient inference, European</li>
                                 <li><strong>DeepSeek-V3/R1</strong>: MoE, top reasoning and code generation, MIT license</li>
@@ -2076,7 +2076,7 @@
                         <div class="cx-detail-section">
                             <h4>Serving stack options</h4>
                             <ul>
-                                <li><strong>FastAPI + llama-cpp-python</strong>: simple, direct, great for single-model CPU/GPU serving (used in MIRROR)</li>
+                                <li><strong>FastAPI + llama-cpp-python</strong>: simple, direct, great for single-model CPU/GPU serving (used in MIRROR v1)</li>
                                 <li><strong>vLLM</strong>: high-throughput LLM serving with PagedAttention, continuous batching, OpenAI-compatible API</li>
                                 <li><strong>TGI (HuggingFace)</strong>: production-ready, supports quantization, speculative decoding, token streaming</li>
                                 <li><strong>TensorRT-LLM (NVIDIA)</strong>: maximum performance on NVIDIA GPUs, compiled inference engine</li>
@@ -2706,7 +2706,7 @@
                         <div class="cx-detail-section">
                             <h4>Options compared</h4>
                             <ul>
-                                <li><strong>Qdrant</strong> (Rust): fast, HNSW + product quantization, hybrid dense+sparse search, filtering, gRPC/REST. Used in MIRROR. Self-hosted or cloud.</li>
+                                <li><strong>Qdrant</strong> (Rust): fast, HNSW + product quantization, hybrid dense+sparse search, filtering, gRPC/REST. Used in MIRROR v1 (self-hosted era). Self-hosted or cloud.</li>
                                 <li><strong>Pinecone</strong>: fully managed, serverless, auto-scaling. No self-hosting option. Best for teams that don't want to manage infrastructure.</li>
                                 <li><strong>Weaviate</strong>: modular (plug in different vectorizers), GraphQL API, hybrid search. Good for complex schemas.</li>
                                 <li><strong>ChromaDB</strong>: simple, Python-native, great for prototyping and small projects. Not production-grade at scale.</li>

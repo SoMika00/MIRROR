@@ -88,7 +88,7 @@ def chat_query():
         return jsonify({"error": "Empty question"}), 400
 
     if not llm_service.is_loaded():
-        return jsonify({"error": "No LLM loaded. Please load a model first via the model manager."}), 503
+        return jsonify({"error": "AI service unavailable. Please try again later."}), 503
 
     user_id = _get_user_id()
 
@@ -105,20 +105,20 @@ def chat_query():
     try:
         history = db.get_recent_context(conv_id, n=6)
 
-        # Adaptive routing: classify query complexity
-        has_sources = bool(enabled_sources) or mode in ("rag", "fulldoc")
-        route = classify_query(question, has_sources=has_sources)
+        # Adaptive routing: the portfolio knowledge base is always indexed,
+        # so the router only decides between RAG and greeting-level chat.
+        route = classify_query(question, has_sources=True)
         logger.info(f"Route: {route.tier}/{route.mode} - {route.reason}")
 
-        # Auto-upgrade mode based on router if user didn't explicitly choose
         effective_mode = mode
-        if mode == "chat" and route.mode == "rag" and has_sources:
+        if mode == "chat" and route.mode == "rag":
             effective_mode = "rag"
-        elif mode == "rag" and route.mode == "chat" and not enabled_sources:
+        elif mode == "rag" and route.mode == "chat":
             effective_mode = "chat"
 
         if effective_mode == "rag":
-            result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources, user_id=user_id)
+            result = query_rag(question, source_type=source_type, enabled_sources=enabled_sources,
+                               user_id=user_id, history=history)
         elif effective_mode == "scrap":
             content = data.get("content", "")
             url = data.get("url", "")
@@ -128,7 +128,8 @@ def chat_query():
             else:
                 result = query_scraped_content(question, url, title_page, content)
         elif effective_mode == "fulldoc":
-            result = query_rag(question, source_type="document", enabled_sources=enabled_sources, user_id=user_id)
+            result = query_rag(question, source_type="document", enabled_sources=enabled_sources,
+                               user_id=user_id, history=history)
         else:
             result = query_direct_chat(question, history=history)
 
@@ -165,7 +166,7 @@ def chat_stream():
     enabled_sources = data.get("enabled_sources")
 
     if not llm_service.is_loaded():
-        return jsonify({"error": "No LLM loaded."}), 503
+        return jsonify({"error": "AI service unavailable."}), 503
 
     user_id = _get_user_id()
 
@@ -175,13 +176,22 @@ def chat_stream():
     db.add_message(conv_id, "user", question, mode=mode)
     history = db.get_recent_context(conv_id, n=6)
 
+    # Same adaptive routing as the blocking endpoint
+    route = classify_query(question, has_sources=True)
+    effective_mode = mode
+    if mode == "chat" and route.mode == "rag":
+        effective_mode = "rag"
+    elif mode == "rag" and route.mode == "chat":
+        effective_mode = "chat"
+
     def generate():
         full_answer = []
         sources_data = []
         try:
-            if mode in ("rag", "fulldoc"):
+            if effective_mode in ("rag", "fulldoc"):
                 st = "document" if mode == "fulldoc" else source_type
-                stream = query_rag_stream(question, source_type=st, enabled_sources=enabled_sources, user_id=user_id)
+                stream = query_rag_stream(question, source_type=st, enabled_sources=enabled_sources,
+                                          user_id=user_id, history=history)
                 # query_rag_stream yields either tokens (str) or a sources dict
                 for item in stream:
                     if isinstance(item, dict) and 'sources' in item:
@@ -222,7 +232,7 @@ def scraper_query():
         return jsonify({"error": "Missing 'question' or 'content'"}), 400
 
     if not llm_service.is_loaded():
-        return jsonify({"error": "No LLM loaded."}), 503
+        return jsonify({"error": "AI service unavailable."}), 503
 
     try:
         result = query_scraped_content(
@@ -252,10 +262,10 @@ def delete_source(source_id):
     source_name = db.delete_user_source(source_id, user_id)
     if source_name:
         try:
-            from app.services.qdrant_store import qdrant_store
-            qdrant_store.delete_by_source(source_name, user_id=user_id)
+            from app.services.retrieval import retrieval_store
+            retrieval_store.delete_by_source(source_name, user_id=user_id)
         except Exception as e:
-            logger.warning(f"Failed to delete from Qdrant: {e}")
+            logger.warning(f"Failed to delete from retrieval store: {e}")
         return jsonify({"deleted": True, "source_name": source_name})
     return jsonify({"deleted": False}), 404
 
@@ -265,15 +275,12 @@ def delete_source(source_id):
 @chat_bp.route("/status", methods=["GET"])
 def chat_status():
     """Check if chat services are ready."""
-    from app.services.embedding import embedding_service
-    from app.services.qdrant_store import qdrant_store
+    from app.services.retrieval import retrieval_store
 
     return jsonify({
         "llm_loaded": llm_service.is_loaded(),
         "llm_info": llm_service.get_info(),
-        "embedding_loaded": embedding_service.is_loaded(),
-        "embedding_info": embedding_service.get_info(),
-        "qdrant_connected": qdrant_store.is_connected(),
+        "retrieval": retrieval_store.get_info(),
     })
 
 

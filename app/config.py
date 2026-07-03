@@ -1,55 +1,46 @@
 import os
 from dataclasses import dataclass
-from typing import Dict, List
 
 
 @dataclass
 class GrokConfig:
-    """xAI Grok API configuration."""
+    """xAI Grok API configuration (chat completions)."""
     api_key: str = os.environ.get("GROK_API_KEY", "")
-    model: str = os.environ.get("GROK_MODEL", "grok-2")
+    model: str = os.environ.get("GROK_MODEL", "grok-4.20-non-reasoning")
     base_url: str = os.environ.get("GROK_BASE_URL", "https://api.x.ai/v1")
     daily_budget_usd: float = float(os.environ.get("GROK_DAILY_BUDGET", "0.50"))
+    # Pricing in USD per 1M tokens (grok-4.x family)
+    input_price_per_m: float = float(os.environ.get("GROK_INPUT_PRICE", "1.25"))
+    output_price_per_m: float = float(os.environ.get("GROK_OUTPUT_PRICE", "2.50"))
     max_tokens: int = 1024
     temperature: float = 0.7
 
 
 @dataclass
-class EmbeddingConfig:
-    model_name: str = os.environ.get("EMBEDDING_MODEL", "BAAI/bge-m3")
-    device: str = os.environ.get("EMBEDDING_DEVICE", "cpu")
-    max_seq_length: int = 512
-    batch_size: int = 8
-    normalize: bool = True
+class EmbeddingsAPIConfig:
+    """Optional OpenAI-compatible embeddings API (hybrid retrieval).
 
+    Disabled unless EMBEDDINGS_API_KEY is set. xAI does not expose an
+    embeddings endpoint yet; when it does (or with any other provider),
+    set base_url/model/key and hybrid search activates automatically.
+    """
+    api_key: str = os.environ.get("EMBEDDINGS_API_KEY", "")
+    base_url: str = os.environ.get("EMBEDDINGS_API_BASE", "https://api.x.ai/v1")
+    model: str = os.environ.get("EMBEDDINGS_MODEL", "grok-embedding")
+    batch_size: int = 64
 
-@dataclass
-class QdrantConfig:
-    host: str = os.environ.get("QDRANT_HOST", "localhost")
-    port: int = int(os.environ.get("QDRANT_PORT", "6333"))
-    collection_name: str = os.environ.get("QDRANT_COLLECTION", "mirror_docs")
-    vector_size: int = 1024
-    hnsw_m: int = 16
-    hnsw_ef_construct: int = 200
-    hnsw_ef_search: int = 128
-    quantization: str = "int8"
-    always_ram: bool = True
-
-
-@dataclass
-class RerankerConfig:
-    model_name: str = os.environ.get("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-    device: str = "cpu"
-    top_k: int = 5
+    @property
+    def enabled(self) -> bool:
+        return bool(self.api_key)
 
 
 @dataclass
 class RAGConfig:
     chunk_size: int = 768
     chunk_overlap: int = 128
-    top_k: int = 12
-    score_threshold: float = 0.35
-    rerank: bool = True
+    top_k: int = 8
+    # Weight of vector score vs BM25 when hybrid search is active
+    hybrid_vector_weight: float = 0.6
 
 
 @dataclass
@@ -61,8 +52,6 @@ class ScraperConfig:
 
 # Singleton configs
 grok_cfg = GrokConfig()
-embedding_cfg = EmbeddingConfig()
-qdrant_cfg = QdrantConfig()
+embeddings_api_cfg = EmbeddingsAPIConfig()
 rag_cfg = RAGConfig()
 scraper_cfg = ScraperConfig()
-reranker_cfg = RerankerConfig()

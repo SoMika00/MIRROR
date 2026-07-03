@@ -1,62 +1,51 @@
 """
-RAG (Retrieval-Augmented Generation) pipeline with source citations.
+RAG pipeline with source citations - fully API-first.
 
 Architecture:
-  1. Query → BGE-M3 embedding
-  2. Qdrant vector search (top-k with score threshold)
-  3. Context assembly with source tracking
-  4. Phi-4 generation with citation-aware prompt
-  5. Response with inline [source] citations
+  1. Query -> hybrid retrieval (SQLite FTS5 BM25, + API embeddings if enabled)
+  2. Context assembly with source tracking
+  3. Grok generation with a citation-aware prompt
+  4. Response with [Source: ...] citations
 
-Based on:
-  - Lewis et al. (2020) "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks"
-  - Qdrant hybrid search best practices
-  - Microsoft Phi-4 technical report
+The visitor-facing chat always searches the portfolio's own knowledge
+(profile, articles, architecture docs) in addition to anything the visitor
+uploaded or scraped.
 """
 
 import logging
 import time
-from typing import List, Dict, Any, Optional, Generator, Tuple
+from typing import Any, Dict, Generator, List, Optional
 
-from app.services.embedding import embedding_service
 from app.services.llm import llm_service
-from app.services.reranker import reranker_service
-from app.services.qdrant_store import qdrant_store, SearchResult
-from app.config import rag_cfg, reranker_cfg
+from app.services.retrieval import retrieval_store, SearchResult
+from app.config import rag_cfg
 
 logger = logging.getLogger(__name__)
 
 PERSONAL_CONTEXT = """ABOUT MICHAIL BERJAOUI (always available, no citation needed):
-- Lead AI/LLM Engineer, 5 years experience deploying AI models to production at scale
-- Enterprise RAG specialist, fine-tuning (LoRA/QLoRA), OCR/NER
-- Currently based in Tokyo, Japan - actively seeking opportunities in Japan
-- Passionate about understanding the agents that compose our world, thrives in event modeling
-- Deeply curious, loves learning - especially in technology. Not afraid to stay up late to solve a hard problem.
-- Practices sport regularly, values discipline and physical well-being. Generally in a good mood.
-- Values collaboration: enjoys working with teammates, learning from them, and sharing knowledge. Believes the best ideas come from the team.
-- Outside work: appreciates quality time with friends, good sleep, and staying active
+- Lead AI/LLM Engineer, 5+ years shipping AI systems to production at scale
+- Enterprise RAG specialist, fine-tuning (LoRA/QLoRA), OCR/NER, MLOps
+- Led teams of 4-8 engineers as Lead Data Scientist & AI Architect at SOMA
+- Currently based in Tokyo, Japan - open to international teams (Japan) and French companies
 - French (native), English (B2 professional), learning Japanese
-- Education: Master MIASHS (Applied Mathematics & CS) - Université Paul Valéry Montpellier (2019-2021), Licence Maths Appliquées - Université Nice Sophia Antipolis (2015-2018)
-- Certifications: Google Cloud - How Google does Machine Learning, Modernizing Data Lakes & Data Warehouses
-- Top skills: Python, LLM, RAG, MLOps, SQL
-- 500+ LinkedIn connections, 516 followers
-- Open to: Data Science, Data Engineer, Chief Data Architect, AI Engineer, ML Engineer roles
-- Interests: Anthropic, OpenAI, United World Inc, Noeon Research
-NOTE: Present these traits naturally when relevant. Do not exaggerate or over-praise. Keep a professional, grounded tone."""
+- Education: Master MIASHS (Applied Mathematics & CS) - Université Paul Valéry Montpellier; Licence Maths Appliquées - Université Nice Sophia Antipolis
+- Contact: michail.berjaoui@gmail.com · linkedin.com/in/mickail-berjaoui-02776b193
+- This website (MIRROR) is itself his work: an API-first RAG chatbot (Grok API + SQLite FTS5 hybrid retrieval) - visitors can upload documents or scrape a URL and query them
+NOTE: Present these facts naturally when relevant. Professional, grounded tone - no over-praise."""
 
-RAG_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
+RAG_SYSTEM = """You are MIRROR, the AI assistant on Michail Berjaoui's portfolio website. Your audience includes recruiters, product managers and AI experts evaluating Michail.
 
 """ + PERSONAL_CONTEXT + """
 
 RULES:
 - Read ALL retrieved documents before answering.
-- Cite claims from documents: [Source: name, p.X].
-- For personal facts (ABOUT section), answer directly.
+- Cite claims taken from documents: [Source: name].
+- For personal facts (ABOUT section), answer directly without citation.
 - Answer in the SAME language as the question.
 - Be concise, structured, professional.
-- If documents don't answer the question, say so. Do NOT hallucinate."""
+- If the documents don't answer the question, say so plainly. Never invent facts."""
 
-DIRECT_CHAT_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
+DIRECT_CHAT_SYSTEM = """You are MIRROR, the AI assistant on Michail Berjaoui's portfolio website. Your audience includes recruiters, product managers and AI experts evaluating Michail.
 
 """ + PERSONAL_CONTEXT + """
 
@@ -65,11 +54,11 @@ RULES:
 - Be concise, helpful, and professional.
 - For greetings, respond naturally and briefly.
 - For personal facts about Michail, answer directly and confidently.
-- For technical topics (AI, RAG, LLM, MLOps), give detailed answers.
+- For technical topics (AI, RAG, LLM, MLOps), give precise, expert-level answers.
 - If you don't know something, say so honestly. Never invent facts.
 - Keep responses focused. Do NOT repeat the user's message back."""
 
-SCRAPER_SYSTEM = """You are MIRROR, Michail Berjaoui's AI assistant on his portfolio website.
+SCRAPER_SYSTEM = """You are MIRROR, the AI assistant on Michail Berjaoui's portfolio website.
 
 RULES:
 - Answer questions based ONLY on the provided web page content.
@@ -77,31 +66,25 @@ RULES:
 - Answer in the SAME language as the question.
 - Be concise and structured. Do NOT hallucinate beyond the page content."""
 
+# Keep prompt+context well under the model's context and the daily budget.
+MAX_CONTEXT_TOKENS = 6000
+
 
 def _estimate_tokens(text: str) -> int:
-    """Rough token estimate: ~4 chars per token for English, ~2 for CJK."""
     return len(text) // 3
 
 
-def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
-    """Build context string from search results with source attribution.
-    Truncates to fit within max_tokens budget (0 = no limit)."""
-    if max_tokens <= 0:
-        # Reserve tokens for system prompt (~800) + generation (max_tokens config)
-        n_ctx = getattr(llm_service, '_current_n_ctx', 131072)
-        max_tokens = max(1024, n_ctx - 1024 - 1000)
-
+def build_context(results: List[SearchResult], max_tokens: int = MAX_CONTEXT_TOKENS) -> str:
+    """Build context string from search results with source attribution."""
     context_parts = []
     total_tokens = 0
     for i, r in enumerate(results):
         source_label = f"{r.source}"
         if r.page:
             source_label += f", p.{r.page}"
-        relevance = "HIGH" if r.score > 0.7 else "MEDIUM" if r.score > 0.5 else "LOW"
-        chunk = f"[Document {i+1}] Source: {source_label} | Relevance: {relevance} ({r.score:.2f})\n{r.text}\n"
+        chunk = f"[Document {i+1}] Source: {source_label} (score {r.score:.2f})\n{r.text}\n"
         chunk_tokens = _estimate_tokens(chunk)
         if total_tokens + chunk_tokens > max_tokens:
-            # Truncate this chunk to fill remaining budget
             remaining_chars = (max_tokens - total_tokens) * 3
             if remaining_chars > 100:
                 context_parts.append(chunk[:remaining_chars] + "...")
@@ -114,21 +97,24 @@ def build_context(results: List[SearchResult], max_tokens: int = 0) -> str:
     return "\n".join(context_parts)
 
 
-def _build_rag_messages(question: str, context: str) -> list:
-    """Build structured chat messages for RAG generation."""
-    return [
-        {"role": "system", "content": RAG_SYSTEM},
-        {"role": "user", "content": f"RETRIEVED DOCUMENTS:\n{context}\n\nQUESTION: {question}"},
-    ]
+def _build_rag_messages(question: str, context: str, history: Optional[List[Dict]] = None) -> list:
+    messages = [{"role": "system", "content": RAG_SYSTEM}]
+    if history:
+        for msg in history[-4:]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            content = msg["content"]
+            if len(content) > 500:
+                content = content[:500] + "..."
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": f"RETRIEVED DOCUMENTS:\n{context}\n\nQUESTION: {question}"})
+    return messages
 
 
 def _build_chat_messages(question: str, history: Optional[List[Dict]] = None) -> list:
-    """Build structured chat messages for direct chat."""
     messages = [{"role": "system", "content": DIRECT_CHAT_SYSTEM}]
     if history:
         for msg in history[-6:]:
             role = "user" if msg["role"] == "user" else "assistant"
-            # Truncate long history messages to avoid overwhelming small models
             content = msg["content"]
             if len(content) > 500:
                 content = content[:500] + "..."
@@ -137,75 +123,20 @@ def _build_chat_messages(question: str, history: Optional[List[Dict]] = None) ->
     return messages
 
 
-def query_rag(question: str, source_type: Optional[str] = None,
-              stream: bool = False, enabled_sources: Optional[List[str]] = None,
-              user_id: Optional[str] = None) -> Dict[str, Any]:
-    """Execute full RAG pipeline: embed → search → generate."""
-    start = time.time()
-
-    # Step 1: Embed the question
-    t0 = time.time()
-    query_vector = embedding_service.encode_query(question).tolist()
-    embed_time = time.time() - t0
-
-    # Step 2: Vector search
-    t0 = time.time()
-    results = qdrant_store.search(
-        query_vector=query_vector,
+def _search(question: str, source_type: Optional[str], enabled_sources: Optional[List[str]],
+            user_id: Optional[str]) -> List[SearchResult]:
+    return retrieval_store.search(
+        question=question,
         top_k=rag_cfg.top_k,
-        score_threshold=rag_cfg.score_threshold,
         source_type=source_type,
         source_names=enabled_sources,
         user_id=user_id,
+        include_global=True,
     )
-    search_time = time.time() - t0
 
-    if not results:
-        return {
-            "answer": "I don't have enough context to answer this question. Please upload relevant documents or try a different query.",
-            "sources": [],
-            "timings": {"total": time.time() - start},
-        }
 
-    # Step 3: Rerank + score-based filtering
-    rerank_time = 0
-    if rag_cfg.rerank and reranker_service.is_loaded():
-        t0 = time.time()
-        texts = [r.text for r in results]
-        reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        # Filter out clearly irrelevant results (cross-encoder score < -3)
-        reranked = [(idx, score) for idx, score in reranked if score > -3.0]
-        if reranked:
-            results = [results[idx] for idx, _ in reranked]
-            # Update scores with reranker scores for better context ordering
-            for i, (_, rerank_score) in enumerate(reranked[:len(results)]):
-                results[i] = SearchResult(
-                    text=results[i].text,
-                    score=max(results[i].score, (rerank_score + 10) / 20),  # normalize to ~0-1
-                    source=results[i].source,
-                    source_type=results[i].source_type,
-                    page=results[i].page,
-                    chunk_index=results[i].chunk_index,
-                    metadata=results[i].metadata,
-                )
-        rerank_time = time.time() - t0
-        logger.info(f"Reranked to {len(results)} results in {rerank_time*1000:.0f}ms")
-
-    # Step 4: Build context
-    context = build_context(results)
-
-    # Step 5: Generate answer with structured messages
-    messages = _build_rag_messages(question, context)
-
-    t0 = time.time()
-    answer = llm_service.generate(messages=messages)
-    gen_time = time.time() - t0
-
-    total_time = time.time() - start
-
-    # Step 5: Build source citations
-    sources = []
-    seen = set()
+def _dedupe_sources(results: List[SearchResult]) -> List[Dict[str, Any]]:
+    sources, seen = [], set()
     for r in results:
         key = (r.source, r.page, r.chunk_index)
         if key not in seen:
@@ -218,118 +149,92 @@ def query_rag(question: str, source_type: Optional[str] = None,
                 "score": round(r.score, 3),
                 "excerpt": r.text[:200] + "..." if len(r.text) > 200 else r.text,
             })
+    return sources
 
-    result = {
+
+def query_rag(question: str, source_type: Optional[str] = None,
+              enabled_sources: Optional[List[str]] = None,
+              user_id: Optional[str] = None,
+              history: Optional[List[Dict]] = None) -> Dict[str, Any]:
+    """Full RAG pipeline: search -> context -> generate."""
+    start = time.time()
+
+    t0 = time.time()
+    results = _search(question, source_type, enabled_sources, user_id)
+    search_time = time.time() - t0
+
+    if not results:
+        # Fall back to direct chat instead of a dead-end answer
+        fallback = query_direct_chat(question, history=history)
+        fallback["route_note"] = "no_retrieval_hits"
+        return fallback
+
+    context = build_context(results)
+    messages = _build_rag_messages(question, context, history=history)
+
+    t0 = time.time()
+    answer = llm_service.generate(messages=messages)
+    gen_time = time.time() - t0
+
+    return {
         "answer": answer,
-        "sources": sources,
+        "sources": _dedupe_sources(results),
         "timings": {
-            "embedding_ms": round(embed_time * 1000, 1),
             "search_ms": round(search_time * 1000, 1),
-            "rerank_ms": round(rerank_time * 1000, 1),
             "generation_ms": round(gen_time * 1000, 1),
-            "total_ms": round(total_time * 1000, 1),
+            "total_ms": round((time.time() - start) * 1000, 1),
         },
     }
-
-    return result
 
 
 def query_rag_stream(question: str, source_type: Optional[str] = None,
                      enabled_sources: Optional[List[str]] = None,
-                     user_id: Optional[str] = None) -> Generator:
-    """Streaming RAG: yields answer tokens (str) and a sources dict."""
-    query_vector = embedding_service.encode_query(question).tolist()
-    results = qdrant_store.search(
-        query_vector=query_vector,
-        top_k=rag_cfg.top_k,
-        score_threshold=rag_cfg.score_threshold,
-        source_type=source_type,
-        source_names=enabled_sources,
-        user_id=user_id,
-    )
+                     user_id: Optional[str] = None,
+                     history: Optional[List[Dict]] = None) -> Generator:
+    """Streaming RAG: yields a sources dict first, then answer tokens (str)."""
+    results = _search(question, source_type, enabled_sources, user_id)
 
     if not results:
-        yield "I don't have enough context to answer this question."
+        for token in query_direct_chat_stream(question, history=history):
+            yield token
         return
 
-    # Rerank + score filter
-    if rag_cfg.rerank and reranker_service.is_loaded():
-        texts = [r.text for r in results]
-        reranked = reranker_service.rerank(question, texts, top_k=reranker_cfg.top_k)
-        reranked = [(idx, score) for idx, score in reranked if score > -3.0]
-        if reranked:
-            results = [results[idx] for idx, _ in reranked]
-
-    # Emit sources before tokens so the frontend knows what was retrieved
-    sources = []
-    seen = set()
-    for r in results:
-        key = (r.source, r.page, r.chunk_index)
-        if key not in seen:
-            seen.add(key)
-            sources.append({
-                "source": r.source,
-                "source_type": r.source_type,
-                "page": r.page,
-                "chunk_index": r.chunk_index,
-                "score": round(r.score, 3),
-            })
-    yield {"sources": sources}
+    yield {"sources": _dedupe_sources(results)}
 
     context = build_context(results)
-    messages = _build_rag_messages(question, context)
-
+    messages = _build_rag_messages(question, context, history=history)
     for token in llm_service.generate_stream(messages=messages):
         yield token
 
 
 def query_direct_chat(question: str, history: Optional[List[Dict]] = None) -> Dict[str, Any]:
-    """Direct chat without RAG - just the LLM + personal context."""
     start = time.time()
-
     messages = _build_chat_messages(question, history)
-
-    t0 = time.time()
     answer = llm_service.generate(messages=messages)
-    gen_time = time.time() - t0
-    total_time = time.time() - start
-
     return {
         "answer": answer,
         "sources": [],
-        "timings": {
-            "generation_ms": round(gen_time * 1000, 1),
-            "total_ms": round(total_time * 1000, 1),
-        },
+        "timings": {"total_ms": round((time.time() - start) * 1000, 1)},
     }
 
 
 def query_direct_chat_stream(question: str, history: Optional[List[Dict]] = None) -> Generator[str, None, None]:
-    """Streaming direct chat."""
     messages = _build_chat_messages(question, history)
     for token in llm_service.generate_stream(messages=messages):
         yield token
 
 
 def query_scraped_content(question: str, url: str, title: str, content: str) -> Dict[str, Any]:
-    """RAG over scraped web page content (no vector store needed)."""
+    """Q&A over scraped web page content (page fits in context, no retrieval)."""
     start = time.time()
-
-    # Dynamic context limit based on current model's n_ctx
-    n_ctx = getattr(llm_service, '_current_n_ctx', 131072)
-    max_context_chars = max(1000, (n_ctx - 1024 - 500) * 3)
-    truncated = content[:max_context_chars]
-
+    truncated = content[:MAX_CONTEXT_TOKENS * 3]
     messages = [
         {"role": "system", "content": SCRAPER_SYSTEM},
         {"role": "user", "content": f"PAGE: {title}\nURL: {url}\n\nCONTENT:\n{truncated}\n\nQUESTION: {question}"},
     ]
-
     answer = llm_service.generate(messages=messages)
-    total_time = time.time() - start
-
     return {
         "answer": answer,
         "sources": [{"source": url, "source_type": "web", "title": title}],
-        "timings": {"total_ms": round(total_time * 1000, 1)},
+        "timings": {"total_ms": round((time.time() - start) * 1000, 1)},
     }

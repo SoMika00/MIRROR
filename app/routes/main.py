@@ -1,9 +1,11 @@
-"""Main routes - landing page, CV showcase, articles page."""
+"""Main routes - landing page, CV showcase, articles page, SEO."""
 
 import re
-from flask import Blueprint, render_template, redirect, request, abort, current_app
+from flask import Blueprint, render_template, redirect, request, abort, current_app, Response
 
 main_bp = Blueprint("main", __name__)
+
+SITE_URL = "https://mymirror.fr"
 
 
 @main_bp.route("/")
@@ -69,3 +71,23 @@ def playbook():
 @main_bp.route("/courses")
 def courses():
     return render_template("courses.html")
+
+
+@main_bp.route("/robots.txt")
+def robots():
+    return Response(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n",
+                    mimetype="text/plain")
+
+
+@main_bp.route("/sitemap.xml")
+def sitemap():
+    from app.routes.articles import _ARTICLE_IDS
+    pages = ["/", "/chat", "/articles", "/courses", "/tech"]
+    pages += [f"/articles/{aid}" for aid in _ARTICLE_IDS]
+    urls = "".join(
+        f"<url><loc>{SITE_URL}{p}</loc></url>" for p in pages
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+           f"{urls}</urlset>")
+    return Response(xml, mimetype="application/xml")

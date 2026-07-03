@@ -3,13 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MIRROR{% endblock %} - Michail Berjaoui</title>
-    <meta name="description" content="Michail Berjaoui - Lead AI Engineer | LLM & MLOps. Based in Tokyo, Japan. Portfolio & AI-powered knowledge base.">
+    <title>{% block title %}MIRROR{% endblock %} · Michail Berjaoui</title>
+    <meta name="description" content="{% block meta_description %}Michail Berjaoui — Lead AI/LLM Engineer. Enterprise RAG, LLM fine-tuning, MLOps. Portfolio with a live AI assistant.{% endblock %}">
+    <link rel="canonical" href="https://mymirror.fr{{ request.path }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="MIRROR — Michail Berjaoui">
+    <meta property="og:title" content="{{ self.title() }} · Michail Berjaoui">
+    <meta property="og:description" content="{{ self.meta_description() }}">
+    <meta property="og:url" content="https://mymirror.fr{{ request.path }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ self.title() }} · Michail Berjaoui">
+    <meta name="twitter:description" content="{{ self.meta_description() }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Michail Berjaoui",
+      "jobTitle": "Lead AI/LLM Engineer",
+      "email": "mailto:michail.berjaoui@gmail.com",
+      "url": "https://mymirror.fr",
+      "sameAs": ["https://www.linkedin.com/in/mickail-berjaoui-02776b193"],
+      "address": {"@type": "PostalAddress", "addressLocality": "Tokyo", "addressCountry": "JP"},
+      "knowsAbout": ["Retrieval-Augmented Generation", "LLM fine-tuning", "MLOps", "Machine Learning", "Kubernetes"],
+      "knowsLanguage": ["fr", "en", "ja"]
+    }
+    </script>
     {% block head %}{% endblock %}
 </head>
 <body>
@@ -23,7 +50,7 @@
             <a href="/chat" class="{% if request.path == '/chat' %}active{% endif %}" data-i18n="nav.chat">AI Chat</a>
             <a href="/articles" class="{% if request.path.startswith('/articles') %}active{% endif %}" data-i18n="nav.articles">Articles</a>
             <a href="/courses" class="{% if request.path == '/courses' %}active{% endif %}" data-i18n="nav.courses">Courses</a>
-            <a href="/tech" class="{% if request.path == '/tech' %}active{% endif %}" data-i18n="nav.tech">Tech Choices</a>
+            <a href="/tech" class="{% if request.path == '/tech' %}active{% endif %}" data-i18n="nav.tech">Architecture</a>
         </ul>
         <div class="nav-status">
             <div class="lang-switch" id="langSwitch">
@@ -37,98 +64,11 @@
                 </div>
             </div>
             <span class="status-dot offline" id="statusDot" title="Services status"></span>
-            <button class="btn btn-ghost btn-sm" id="modelManagerBtn" title="Model Manager">&#9881;</button>
         </div>
     </nav>
 
     <div class="page-container">
         {% block content %}{% endblock %}
-    </div>
-
-    <!-- Model Manager Modal -->
-    <div class="modal-overlay" id="modelModal">
-        <div class="modal" style="max-width:720px;max-height:85vh;overflow-y:auto;">
-            <div class="modal-title">
-                <span>Model Manager</span>
-                <button class="modal-close" onclick="closeModelModal()">&times;</button>
-            </div>
-            <div id="modelModalContent">
-                <!-- LLM Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-title" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>LLM Models</span>
-                        <div style="display:flex;gap:0.4rem;align-items:center;">
-                            <span id="llmStatus" style="font-size:0.8rem;">Checking...</span>
-                            <div id="llmActions" style="display:none;gap:0.4rem;align-items:center;">
-                                <button class="btn btn-ghost btn-sm" onclick="unloadLLM()" title="Unload current model" style="font-size:0.7rem;">Unload</button>
-                                <button class="btn btn-ghost btn-sm" onclick="testLLM()" title="Test speed" style="font-size:0.7rem;">Test</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="testResult" class="text-muted" style="font-size:0.75rem;margin-bottom:0.5rem;"></div>
-                    <div id="modelRegistry" style="display:flex;flex-direction:column;gap:0.5rem;">Loading registry...</div>
-                </div>
-                <!-- Services Section -->
-                <div class="sidebar-section">
-                    <div class="sidebar-title">Services</div>
-                    <div style="display:flex;flex-direction:column;gap:0.35rem;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
-                            <span style="font-weight:600;font-size:0.8rem;">Qdrant</span>
-                            <span id="qdrantStatus" style="font-size:0.75rem;">Checking...</span>
-                        </div>
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
-                            <span style="font-weight:600;font-size:0.8rem;">Embedding</span>
-                            <span id="embeddingStatus" style="font-size:0.75rem;">Checking...</span>
-                        </div>
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
-                            <span style="font-weight:600;font-size:0.8rem;">Reranker</span>
-                            <span id="rerankerStatus" style="font-size:0.75rem;">Checking...</span>
-                        </div>
-                        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.35rem 0.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;">
-                            <span style="font-weight:600;font-size:0.8rem;">Vision</span>
-                            <span id="visionStatus" style="font-size:0.75rem;">Checking...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Model Operation Bottom Bar -->
-    <div class="model-op-bar" id="modelOpBar">
-        <div class="model-op-bar-inner">
-            <div class="model-op-spinner"></div>
-            <span class="model-op-text" id="modelOpText">Loading model...</span>
-            <div class="model-op-progress-track">
-                <div class="model-op-progress-fill" id="modelOpFill"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="live-metrics" id="liveMetrics" aria-label="Live system metrics">
-        <div class="live-metrics-row">
-            <span class="live-metrics-label">RAM</span>
-            <span class="live-metrics-value" id="metricRam">--%</span>
-        </div>
-        <div class="live-metrics-row">
-            <span class="live-metrics-label">APP</span>
-            <span class="live-metrics-value" id="metricProcess">--</span>
-        </div>
-        <div class="live-metrics-row">
-            <span class="live-metrics-label">CPU</span>
-            <span class="live-metrics-value" id="metricCpu">--%</span>
-        </div>
-        <div id="metricCoresRow" style="display:none;">
-            <div class="live-metrics-cores" id="metricCores"></div>
-        </div>
-        <div class="live-metrics-row" id="metricInferenceRow" style="display:none;">
-            <span class="live-metrics-label" style="color:var(--accent-light);">INF</span>
-            <span class="live-metrics-value" id="metricInference" style="color:var(--accent-light);">--</span>
-        </div>
-        <div class="live-metrics-row" id="metricGpuRow" style="display:none;">
-            <span class="live-metrics-label">GPU</span>
-            <span class="live-metrics-value" id="metricGpu">--%</span>
-        </div>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>

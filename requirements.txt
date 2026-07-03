@@ -3,14 +3,8 @@ flask-cors==5.0.1
 python-dotenv==1.1.0
 gunicorn==23.0.0
 
-# LLM via xAI Grok API (OpenAI-compatible)
+# LLM + embeddings via API (OpenAI-compatible client, pointed at api.x.ai)
 openai>=1.30.0
-
-# Embedding + Reranker (CrossEncoder)
-sentence-transformers==3.3.1
-
-# Vector Store
-qdrant-client==1.12.1
 
 # PDF Processing
 pymupdf==1.25.1
@@ -22,9 +16,5 @@ requests==2.32.3
 trafilatura==2.0.0
 html2text==2024.2.26
 
-# Model Downloads (for embedding model)
-huggingface-hub>=0.25.0
-
 # Utilities
 markdown==3.7
-numpy==1.26.4

@@ -4,9 +4,8 @@ __pycache__/
 .git/
 .gitignore
 README.md
-models/
 uploads/
-qdrant_data/
+data/
 .env
 .vscode/
 .idea/

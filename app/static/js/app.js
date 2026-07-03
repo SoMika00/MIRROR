@@ -1,6 +1,6 @@
 /* ============================================================
    MIRROR - Global JavaScript
-   Handles: model manager, status polling, toast notifications
+   Handles: i18n, status polling, toast notifications
    ============================================================ */
 
 // --- i18n ---
@@ -13,15 +13,16 @@ const I18N_DICT = {
         'nav.chat': 'AI Chat',
         'nav.articles': 'Articles',
         'nav.courses': 'Courses',
-        'nav.tech': 'Tech Choices',
-        'home.subtitle': 'Lead AI Engineer | LLM & MLOps',
-        'home.summary': '5 years deploying AI models to production at scale. Enterprise RAG specialist, fine-tuning (LoRA/QLoRA), OCR/NER. Based in Tokyo, actively seeking opportunities in Japan.',
+        'nav.tech': 'Architecture',
+        'home.subtitle': 'Lead AI/LLM Engineer',
+        'home.summary': '5+ years shipping AI systems to production: enterprise RAG, LLM fine-tuning (LoRA/QLoRA), OCR/NER, and the MLOps to keep them reliable. Team lead (4-8 engineers). Based in Tokyo — open to international teams and French companies.',
         'home.ask_ai': 'Ask the AI about me',
-        'home.tech_choices': 'Technical Choices',
+        'home.tech_choices': 'How this site works',
+        'home.projects': 'Selected Work',
         'home.skills': 'Technical Skills',
         'home.skill_cat.genai': 'Generative AI',
         'home.skill_cat.inference': 'Inference & Scaling',
-        'home.skill_cat.vectorstores': 'Vector Stores',
+        'home.skill_cat.vectorstores': 'Retrieval & Vector Search',
         'home.skill_cat.mlops': 'MLOps & GPU',
         'home.skill_cat.backend': 'Backend & Data',
         'home.skill_cat.cloud': 'Cloud',
@@ -29,6 +30,9 @@ const I18N_DICT = {
         'home.education': 'Education',
         'home.languages': 'Languages',
         'home.certifications': 'Certifications',
+        'home.site_note.title': 'This site is part of the portfolio',
+        'home.site_note.body': 'MIRROR is not a template. It is a live, cost-engineered AI product: a RAG chatbot over my own knowledge base (Grok API + hybrid BM25 retrieval), document upload, web scraping, multi-user sessions — running on a small VPS for under $1/day. The architecture decisions are documented like I would for any client.',
+        'home.site_note.cta': 'Read the architecture decisions →',
         'chat.upload_docs': 'Upload Documents',
         'chat.drop_here': 'Drop files here',
         'chat.supported_files': 'PDF, DOCX, TXT, MD',
@@ -37,24 +41,21 @@ const I18N_DICT = {
         'chat.go': 'Go',
         'chat.indexed_docs': 'Indexed Documents',
         'chat.no_docs': 'No documents indexed',
-        'chat.scraped_pages': 'Scraped Pages',
-        'chat.no_pages': 'No pages scraped',
         'chat.filter_source': 'Filter Source',
-        'chat.filter.all': 'All sources',
-        'chat.filter.documents': 'Documents only',
-        'chat.filter.web': 'Web pages only',
-        'chat.welcome': "Welcome! I'm <strong>MIRROR</strong>, Michail's AI assistant. Upload documents or scrape a URL, then ask me anything. I'll answer with source citations.",
-        'chat.infra_note': 'Note: MIRROR runs on a low-cost, CPU-only infrastructure. The models used are intentionally small and quantized for fast response times. As a result, answers may occasionally be imprecise or inconsistent - this is a deliberate trade-off for accessibility and cost efficiency, not a reflection of production-grade deployments.',
-        'chat.tip': 'Tip: Load a model via the ⚙ button in the top-right corner to enable AI responses. No model downloaded yet - use the model manager to download one first.',
-        'chat.ask_placeholder': 'Ask a question...',
+        'chat.welcome': "Hi — I'm <strong>MIRROR</strong>, Michail's AI assistant. Ask me anything about his experience, projects, or how this site is built. I answer with citations from his CV, articles and architecture docs. You can also drop in your own documents or scrape a URL and query them.",
+        'chat.infra_note': 'Powered by the xAI Grok API with hybrid retrieval (BM25 · SQLite FTS5). A daily cost cap protects the budget — if I stop responding, I will be back tomorrow.',
+        'chat.ask_placeholder': 'Ask about Michail, RAG, this architecture...',
+        'chat.suggestion.experience': 'What did Michail build at SOMA?',
+        'chat.suggestion.rag': 'How does the RAG on this site work?',
+        'chat.suggestion.lead': 'What is his experience leading teams?',
         'articles.title': 'Articles',
         'articles.subtitle': 'Technical writing on AI, RAG, MLOps and production systems.',
         'articles.loading': 'Loading articles...',
         'articles.empty_title': 'No articles yet',
         'articles.empty_hint': 'Add markdown files to the articles/ directory to get started.',
         'articles.back': '← Back to articles',
-        'tech.title': 'Technical Choices',
-        'tech.subtitle': 'Architecture decisions, benchmarks, and infrastructure optimization for MIRROR.',
+        'tech.title': 'Architecture & Technical Choices',
+        'tech.subtitle': 'How MIRROR is built, what it costs, and why — documented like a client deliverable.',
         'courses.title': 'Courses',
         'courses.subtitle': 'A clear, structured overview of core ML topics, explained with lists, examples, and practical intuition.',
         'courses.ml.title': 'Machine Learning (Classic)',
@@ -85,7 +86,7 @@ const I18N_DICT = {
         'courses.visual.transformer': 'Transformer (high level)',
         'courses.visual.rag': 'RAG pipeline',
         'courses.footer': 'MIRROR · Courses · Michail Berjaoui',
-        'footer.tagline': 'MIRROR · AI-Powered Portfolio · Michail Berjaoui',
+        'footer.tagline': 'MIRROR · AI-powered portfolio · Flask · xAI Grok API · SQLite FTS5 · Docker + Caddy',
         'common.integrality': 'The entirety',
     },
     fr: {
@@ -93,15 +94,16 @@ const I18N_DICT = {
         'nav.chat': 'Chat IA',
         'nav.articles': 'Articles',
         'nav.courses': 'Cours',
-        'nav.tech': 'Choix techniques',
-        'home.subtitle': 'Lead AI Engineer | LLM & MLOps',
-        'home.summary': "5 ans à déployer des modèles d'IA en production à grande échelle. Spécialiste RAG entreprise, fine-tuning (LoRA/QLoRA), OCR/NER. Basé à Tokyo, en recherche active d'opportunités au Japon.",
+        'nav.tech': 'Architecture',
+        'home.subtitle': 'Lead AI/LLM Engineer',
+        'home.summary': "5+ ans à mettre des systèmes d'IA en production : RAG entreprise, fine-tuning LLM (LoRA/QLoRA), OCR/NER, et le MLOps pour les fiabiliser. Lead d'équipe (4-8 ingénieurs). Basé à Tokyo — ouvert aux équipes internationales et aux entreprises françaises.",
         'home.ask_ai': "Demander à l'IA à mon sujet",
-        'home.tech_choices': 'Choix techniques',
+        'home.tech_choices': 'Comment ce site fonctionne',
+        'home.projects': 'Réalisations',
         'home.skills': 'Compétences techniques',
         'home.skill_cat.genai': 'IA générative',
-        'home.skill_cat.inference': 'Inférence & passage à l’échelle',
-        'home.skill_cat.vectorstores': 'Bases vectorielles',
+        'home.skill_cat.inference': 'Inférence & scaling',
+        'home.skill_cat.vectorstores': 'Retrieval & recherche vectorielle',
         'home.skill_cat.mlops': 'MLOps & GPU',
         'home.skill_cat.backend': 'Backend & data',
         'home.skill_cat.cloud': 'Cloud',
@@ -109,6 +111,9 @@ const I18N_DICT = {
         'home.education': 'Formation',
         'home.languages': 'Langues',
         'home.certifications': 'Certifications',
+        'home.site_note.title': 'Ce site fait partie du portfolio',
+        'home.site_note.body': "MIRROR n'est pas un template. C'est un produit IA vivant et optimisé en coût : un chatbot RAG sur ma propre base de connaissances (API Grok + retrieval hybride BM25), upload de documents, scraping web, sessions multi-utilisateurs — sur un petit VPS pour moins de 1 $/jour. Les décisions d'architecture sont documentées comme pour un client.",
+        'home.site_note.cta': "Lire les décisions d'architecture →",
         'chat.upload_docs': 'Téléverser des documents',
         'chat.drop_here': 'Dépose tes fichiers ici',
         'chat.supported_files': 'PDF, DOCX, TXT, MD',
@@ -117,24 +122,21 @@ const I18N_DICT = {
         'chat.go': 'Go',
         'chat.indexed_docs': 'Documents indexés',
         'chat.no_docs': 'Aucun document indexé',
-        'chat.scraped_pages': 'Pages scrapées',
-        'chat.no_pages': 'Aucune page scrapée',
         'chat.filter_source': 'Filtrer la source',
-        'chat.filter.all': 'Toutes les sources',
-        'chat.filter.documents': 'Documents uniquement',
-        'chat.filter.web': 'Pages web uniquement',
-        'chat.welcome': "Bienvenue ! Je suis <strong>MIRROR</strong>, l'assistant IA de Michail. Téléverse des documents ou scrape une URL, puis pose-moi n'importe quelle question. Je répondrai avec des sources.",
-        'chat.infra_note': "Note : MIRROR tourne sur une infrastructure low-cost, exclusivement CPU. Les modèles utilisés sont volontairement petits et quantifiés pour garantir des temps de réponse rapides. Les réponses peuvent donc être parfois imprécises ou incohérentes - c'est un compromis assumé entre accessibilité et coût, et non le reflet d'un déploiement de production.",
-        'chat.tip': 'Astuce : Chargez un modèle via le bouton ⚙ en haut à droite pour activer les réponses IA. Aucun modèle téléchargé - utilisez le gestionnaire de modèles pour en télécharger un.',
-        'chat.ask_placeholder': 'Pose une question...',
+        'chat.welcome': "Bonjour — je suis <strong>MIRROR</strong>, l'assistant IA de Michail. Posez-moi vos questions sur son expérience, ses projets, ou la construction de ce site. Je réponds avec des citations tirées de son CV, ses articles et ses docs d'architecture. Vous pouvez aussi téléverser vos propres documents ou scraper une URL, puis les interroger.",
+        'chat.infra_note': "Propulsé par l'API xAI Grok avec retrieval hybride (BM25 · SQLite FTS5). Un plafond de coût journalier protège le budget — si je ne réponds plus, je reviens demain.",
+        'chat.ask_placeholder': 'Une question sur Michail, le RAG, cette architecture...',
+        'chat.suggestion.experience': "Qu'a construit Michail chez SOMA ?",
+        'chat.suggestion.rag': 'Comment fonctionne le RAG de ce site ?',
+        'chat.suggestion.lead': "Quelle est son expérience de lead ?",
         'articles.title': 'Articles',
         'articles.subtitle': "Écriture technique sur l'IA, le RAG, le MLOps et les systèmes en production.",
         'articles.loading': 'Chargement des articles...',
-        'articles.empty_title': "Pas d’articles pour l’instant",
+        'articles.empty_title': "Pas d'articles pour l'instant",
         'articles.empty_hint': "Ajoute des fichiers markdown dans le dossier articles/ pour commencer.",
         'articles.back': '← Retour aux articles',
-        'tech.title': 'Choix techniques',
-        'tech.subtitle': 'Décisions d’architecture, benchmarks et optimisation infra pour MIRROR.',
+        'tech.title': 'Architecture & choix techniques',
+        'tech.subtitle': 'Comment MIRROR est construit, ce que ça coûte, et pourquoi — documenté comme un livrable client.',
         'courses.title': 'Cours',
         'courses.subtitle': 'Une vue structurée et claire des sujets clés ML, expliqués avec listes, exemples et intuition.',
         'courses.ml.title': 'Machine Learning (Classique)',
@@ -149,7 +151,7 @@ const I18N_DICT = {
         'courses.visual.transformer': 'Transformer (niveau haut)',
         'courses.visual.rag': 'Pipeline RAG',
         'courses.footer': 'MIRROR · Cours · Michail Berjaoui',
-        'footer.tagline': 'MIRROR · Portfolio IA · Michail Berjaoui',
+        'footer.tagline': 'MIRROR · Portfolio IA · Flask · API xAI Grok · SQLite FTS5 · Docker + Caddy',
         'common.integrality': "L'intégralité",
     },
     ja: {
@@ -157,15 +159,16 @@ const I18N_DICT = {
         'nav.chat': 'AIチャット',
         'nav.articles': '記事',
         'nav.courses': 'コース',
-        'nav.tech': '技術選定',
-        'home.subtitle': 'リードAIエンジニア | LLM & MLOps',
-        'home.summary': '5年間、AIモデルを大規模に本番導入。エンタープライズRAG、微調整（LoRA/QLoRA）、OCR/NER。東京在住。日本での機会を積極的に探しています。',
+        'nav.tech': 'アーキテクチャ',
+        'home.subtitle': 'リードAI/LLMエンジニア',
+        'home.summary': '5年以上、AIシステムを本番導入：エンタープライズRAG、LLM微調整（LoRA/QLoRA）、OCR/NER、MLOps。4〜8名のチームリード経験。東京在住 — 国際チームとフランス企業の両方にオープン。',
         'home.ask_ai': 'AIに私のことを聞く',
-        'home.tech_choices': '技術選定',
+        'home.tech_choices': 'このサイトの仕組み',
+        'home.projects': '主な実績',
         'home.skills': '技術スキル',
         'home.skill_cat.genai': '生成AI',
         'home.skill_cat.inference': '推論・スケーリング',
-        'home.skill_cat.vectorstores': 'ベクトルDB',
+        'home.skill_cat.vectorstores': '検索・ベクトル検索',
         'home.skill_cat.mlops': 'MLOps・GPU',
         'home.skill_cat.backend': 'バックエンド・データ',
         'home.skill_cat.cloud': 'クラウド',
@@ -173,6 +176,9 @@ const I18N_DICT = {
         'home.education': '学歴',
         'home.languages': '言語',
         'home.certifications': '資格',
+        'home.site_note.title': 'このサイト自体がポートフォリオです',
+        'home.site_note.body': 'MIRRORはテンプレートではありません。コスト最適化された本物のAIプロダクトです：Grok APIとハイブリッドBM25検索によるRAGチャットボット、ドキュメントアップロード、Webスクレイピング、マルチユーザーセッション — 小さなVPS上で1日1ドル未満で稼働。アーキテクチャの意思決定はクライアント向けと同じ品質で文書化しています。',
+        'home.site_note.cta': 'アーキテクチャの意思決定を読む →',
         'chat.upload_docs': 'ドキュメントをアップロード',
         'chat.drop_here': 'ここにファイルをドロップ',
         'chat.supported_files': 'PDF / DOCX / TXT / MD',
@@ -181,24 +187,21 @@ const I18N_DICT = {
         'chat.go': '実行',
         'chat.indexed_docs': 'インデックス済みドキュメント',
         'chat.no_docs': 'インデックス済みドキュメントはありません',
-        'chat.scraped_pages': '取得済みページ',
-        'chat.no_pages': '取得済みページはありません',
         'chat.filter_source': 'ソースで絞り込み',
-        'chat.filter.all': 'すべてのソース',
-        'chat.filter.documents': 'ドキュメントのみ',
-        'chat.filter.web': 'Webページのみ',
-        'chat.welcome': "ようこそ！私は<strong>MIRROR</strong>、MichailのAIアシスタントです。ドキュメントをアップロードするかURLをスクレイプして、何でも質問してください。出典付きで回答します。",
-        'chat.infra_note': '注意：MIRRORは低コストのCPU専用インフラで動作しています。高速な応答のため、意図的に小型・量子化モデルを使用しています。そのため、回答が不正確・不安定になる場合がありますが、これはアクセス性とコスト効率を優先した設計上のトレードオフです。',
-        'chat.tip': 'ヒント：右上の⚙ボタンからモデルを読み込んでAI応答を有効にしてください。まだモデルがダウンロードされていません - モデルマネージャーでダウンロードしてください。',
-        'chat.ask_placeholder': '質問を入力...',
+        'chat.welcome': 'こんにちは — 私は<strong>MIRROR</strong>、MichailのAIアシスタントです。彼の経験、プロジェクト、このサイトの構築について何でも質問してください。CV・記事・アーキテクチャ文書から引用付きで回答します。ご自身のドキュメントをアップロードしたり、URLをスクレイプして質問することもできます。',
+        'chat.infra_note': 'xAI Grok APIとハイブリッド検索（BM25 · SQLite FTS5）で動作。1日のコスト上限があります — 応答が止まった場合は明日戻ります。',
+        'chat.ask_placeholder': 'Michail、RAG、このアーキテクチャについて質問...',
+        'chat.suggestion.experience': 'MichailはSOMAで何を作りましたか？',
+        'chat.suggestion.rag': 'このサイトのRAGはどう動いていますか？',
+        'chat.suggestion.lead': 'チームリードとしての経験は？',
         'articles.title': '記事',
         'articles.subtitle': 'AI、RAG、MLOps、本番システムに関する技術記事。',
         'articles.loading': '記事を読み込み中...',
         'articles.empty_title': '記事はまだありません',
         'articles.empty_hint': 'articles/ ディレクトリにMarkdownファイルを追加してください。',
         'articles.back': '← 記事一覧へ戻る',
-        'tech.title': '技術選定',
-        'tech.subtitle': 'MIRRORのアーキテクチャ判断、ベンチマーク、インフラ最適化。',
+        'tech.title': 'アーキテクチャ・技術選定',
+        'tech.subtitle': 'MIRRORの構築方法、コスト、その理由 — クライアント向け成果物と同じ品質で文書化。',
         'courses.title': 'コース',
         'courses.subtitle': 'MLの重要トピックを、リストと例で分かりやすく体系化した概要。',
         'courses.ml.title': '機械学習（クラシック）',
@@ -213,7 +216,7 @@ const I18N_DICT = {
         'courses.visual.transformer': 'Transformer（概要）',
         'courses.visual.rag': 'RAGパイプライン',
         'courses.footer': 'MIRROR · コース · Michail Berjaoui',
-        'footer.tagline': 'MIRROR · AIポートフォリオ · Michail Berjaoui',
+        'footer.tagline': 'MIRROR · AIポートフォリオ · Flask · xAI Grok API · SQLite FTS5 · Docker + Caddy',
         'common.integrality': '全体',
     }
 };
@@ -231,17 +234,14 @@ function detectPreferredLang() {
     try {
         const langs = Array.isArray(navigator.languages) ? navigator.languages : [navigator.language];
         const normalized = langs.map((l) => normalizeLang(l)).filter(Boolean);
-        if (normalized.includes('fr')) return 'fr';
-        if (normalized.includes('en')) return 'en';
-        if (normalized.includes('ja')) return 'ja';
+        if (normalized.length > 0) return normalized[0];
     } catch (e) {}
     return I18N_DEFAULT_LANG;
 }
 
 function getStoredLang() {
     try {
-        const v = localStorage.getItem(I18N_STORAGE_KEY);
-        return normalizeLang(v);
+        return normalizeLang(localStorage.getItem(I18N_STORAGE_KEY));
     } catch (e) {
         return null;
     }
@@ -280,11 +280,9 @@ function applyTranslations(lang) {
         if (txt) el.setAttribute('placeholder', txt);
     });
 
-    // Keep bubble label aligned
     const bubbleLabel = document.getElementById('langBubbleLabel');
     if (bubbleLabel) bubbleLabel.textContent = l.toUpperCase();
 
-    // Mark active menu item
     document.querySelectorAll('.lang-menu-item[data-lang]').forEach((btn) => {
         btn.classList.toggle('active', normalizeLang(btn.getAttribute('data-lang')) === l);
     });
@@ -292,7 +290,7 @@ function applyTranslations(lang) {
 
 window.MIRROR_I18N = {
     applyTranslations,
-    getLang: () => getStoredLang() || I18N_DEFAULT_LANG,
+    getLang: () => getStoredLang() || detectPreferredLang(),
 };
 
 function initLanguageSwitcher() {
@@ -301,8 +299,7 @@ function initLanguageSwitcher() {
     const menu = document.getElementById('langMenu');
     if (!switchEl || !bubble || !menu) return;
 
-    const initial = getStoredLang() || I18N_DEFAULT_LANG;
-    applyTranslations(initial);
+    applyTranslations(getStoredLang() || detectPreferredLang());
 
     function closeMenu() {
         switchEl.classList.remove('open');
@@ -341,6 +338,7 @@ document.addEventListener('DOMContentLoaded', initLanguageSwitcher);
 // --- Toast Notifications ---
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
@@ -353,569 +351,34 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// --- Model Manager Modal ---
-function openModelModal() {
-    document.getElementById('modelModal').classList.add('active');
-    refreshModelStatus();
-}
-
-function closeModelModal() {
-    document.getElementById('modelModal').classList.remove('active');
-}
-
-document.getElementById('modelManagerBtn')?.addEventListener('click', openModelModal);
-
-document.getElementById('modelModal')?.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal-overlay')) closeModelModal();
-});
-
-// --- Status Polling ---
-async function refreshModelStatus() {
+// --- Service Status (nav dot) ---
+async function refreshServiceStatus() {
+    const dot = document.getElementById('statusDot');
+    if (!dot) return;
     try {
         const resp = await fetch('/api/models/status');
         const data = await resp.json();
+        const llmOk = data.llm?.loaded;
+        const retrievalOk = data.retrieval?.connected;
+        const budgetLeft = data.llm?.daily_budget?.remaining_usd ?? 1;
 
-        // LLM Status (compact header) + show/hide Unload & Test buttons
-        const llmEl = document.getElementById('llmStatus');
-        const llmActions = document.getElementById('llmActions');
-        if (llmEl) {
-            if (data.llm.loaded) {
-                const name = data.llm.model_name || data.llm.model_path.split('/').pop();
-                llmEl.innerHTML = `<span style="color:var(--success);">●</span> ${name}`;
-                if (llmActions) llmActions.style.display = 'flex';
-            } else {
-                llmEl.innerHTML = '<span style="color:var(--text-muted);">○ None</span>';
-                if (llmActions) llmActions.style.display = 'none';
-            }
+        if (llmOk && retrievalOk && budgetLeft > 0) {
+            dot.className = 'status-dot online';
+            dot.title = 'AI assistant online';
+        } else if (llmOk && budgetLeft <= 0) {
+            dot.className = 'status-dot loading';
+            dot.title = 'Daily budget reached — assistant back tomorrow';
+        } else {
+            dot.className = 'status-dot offline';
+            dot.title = 'AI assistant offline';
         }
-
-        // Model Registry Cards
-        await refreshRegistryCards();
-
-        // Embedding Status
-        const embEl = document.getElementById('embeddingStatus');
-        if (embEl) {
-            if (data.embedding.loaded) {
-                embEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
-            } else {
-                embEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
-            }
-        }
-
-        // Reranker Status
-        const rrEl = document.getElementById('rerankerStatus');
-        if (rrEl) {
-            if (data.reranker?.loaded) {
-                rrEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
-            } else {
-                rrEl.innerHTML = '<span style="color:var(--text-muted);">○ Not loaded</span>';
-            }
-        }
-
-        // Qdrant Status
-        const qdEl = document.getElementById('qdrantStatus');
-        if (qdEl) {
-            if (data.qdrant.connected) {
-                qdEl.innerHTML = `<span style="color:var(--success);">● ${data.qdrant.vectors_count || 0} vecs</span>`;
-            } else {
-                qdEl.innerHTML = '<span style="color:var(--text-muted);">○ Disconnected</span>';
-            }
-        }
-
-        // Vision Status
-        const visEl = document.getElementById('visionStatus');
-        if (visEl) {
-            if (data.vision?.loaded) {
-                visEl.innerHTML = `<span style="color:var(--success);">● Loaded</span>`;
-            } else if (data.vision?.loading) {
-                visEl.innerHTML = '<span style="color:orange;">● Loading...</span>';
-            } else if (data.vision?.enabled) {
-                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Available</span>';
-            } else {
-                visEl.innerHTML = '<span style="color:var(--text-muted);">○ Disabled</span>';
-            }
-        }
-
-        // Global status dot
-        updateGlobalStatus(data);
-
     } catch (e) {
-        console.error('Status check failed:', e);
-    }
-}
-
-async function refreshRegistryCards() {
-    const container = document.getElementById('modelRegistry');
-    if (!container) return;
-    try {
-        const resp = await fetch('/api/models/llm/registry');
-        const data = await resp.json();
-        if (!data.models || data.models.length === 0) {
-            container.innerHTML = '<div class="text-muted">No models in registry</div>';
-            return;
-        }
-        // Group by family
-        const families = {};
-        data.models.forEach(m => {
-            if (!families[m.family]) families[m.family] = [];
-            families[m.family].push(m);
-        });
-        let html = '';
-        for (const [family, models] of Object.entries(families)) {
-            html += `<div style="margin-bottom:0.3rem;"><span style="font-size:0.75rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;">${family}</span></div>`;
-            models.forEach(m => {
-                const isActive = m.active;
-                const isDownloaded = m.downloaded;
-                const borderColor = isActive ? 'var(--success)' : isDownloaded ? 'var(--accent-dim, rgba(139,92,246,0.3))' : 'var(--border)';
-                const bgColor = isActive ? 'rgba(16,185,129,0.08)' : 'transparent';
-
-                let actionBtn = '';
-                if (isActive) {
-                    actionBtn = `<span style="color:var(--success);font-size:0.75rem;font-weight:600;">● Active</span>`;
-                } else if (isDownloaded) {
-                    actionBtn = `<button class="btn btn-primary btn-sm" onclick="loadModelById('${m.id}')" style="font-size:0.7rem;padding:0.2rem 0.6rem;">Load</button>`;
-                } else {
-                    actionBtn = `<span style="color:var(--text-muted);font-size:0.7rem;">Not on disk</span>`;
-                }
-
-                html += `<div class="model-card" style="border-color:${borderColor};background:${bgColor};" id="card-${m.id}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <div style="font-weight:600;font-size:0.85rem;">${m.name}${m.default ? ' <span style="font-size:0.65rem;color:var(--accent);">(default)</span>' : ''}</div>
-                            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.1rem;">${m.description}</div>
-                        </div>
-                        <div style="text-align:right;min-width:80px;">
-                            ${actionBtn}
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:0.8rem;margin-top:0.3rem;font-size:0.7rem;color:var(--text-muted);">
-                        <span>RAM: ~${m.ram_gb} GB</span>
-                        <span>Speed: ${m.speed_estimate}</span>
-                        <span>${m.quant}</span>
-                    </div>
-                </div>`;
-            });
-        }
-        container.innerHTML = html;
-    } catch (e) {
-        container.innerHTML = '<div class="text-muted">Failed to load registry</div>';
-    }
-}
-
-async function downloadModelById(modelId) {
-    showOpBar('Starting download from HuggingFace...', 'indeterminate');
-    const card = document.getElementById(`card-${modelId}`);
-    const btn = card?.querySelector('.btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Downloading...'; }
-    try {
-        const resp = await fetch('/api/models/llm/download', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_id: modelId })
-        });
-        const data = await resp.json();
-        if (data.error) {
-            showOpBarError(`Download failed: ${data.error}`);
-            if (btn) { btn.disabled = false; btn.textContent = 'Download'; }
-            return;
-        }
-        if (data.message === 'Already downloaded') {
-            showOpBarDone('Model already downloaded');
-            refreshModelStatus();
-            return;
-        }
-
-        // Poll progress with bottom bar
-        let lastPct = -1;
-        for (let i = 0; i < 600; i++) {
-            await new Promise(r => setTimeout(r, 2000));
-            try {
-                const pr = await fetch(`/api/models/llm/download-progress/${modelId}`);
-                const p = await pr.json();
-                if (p.status === 'done') {
-                    showOpBarDone('Download complete');
-                    break;
-                }
-                if (p.status === 'error') {
-                    showOpBarError(`Download error: ${p.error}`);
-                    break;
-                }
-                const pct = Math.round((p.progress || 0) * 100);
-                if (pct !== lastPct) {
-                    lastPct = pct;
-                    updateOpBar(`Downloading model... ${pct}%`, pct);
-                    if (btn) btn.textContent = `${pct}%`;
-                }
-            } catch (e) { /* ignore poll errors */ }
-        }
-
-        refreshModelStatus();
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-        refreshModelStatus();
-    }
-}
-
-function updateGlobalStatus(data) {
-    const dot = document.getElementById('statusDot');
-    if (!dot) return;
-
-    const llmOk = data.llm?.loaded;
-    const embOk = data.embedding?.loaded;
-    const qdOk = data.qdrant?.connected;
-
-    if (llmOk && embOk && qdOk) {
-        dot.className = 'status-dot online';
-        dot.title = 'All services online';
-    } else if (llmOk || embOk || qdOk) {
-        dot.className = 'status-dot loading';
-        dot.title = 'Some services loading';
-    } else {
         dot.className = 'status-dot offline';
-        dot.title = 'Services offline';
+        dot.title = 'AI assistant offline';
     }
 }
 
-// --- Bottom Operation Bar ---
-function showOpBar(text, mode = 'indeterminate') {
-    const bar = document.getElementById('modelOpBar');
-    const textEl = document.getElementById('modelOpText');
-    const fill = document.getElementById('modelOpFill');
-    if (!bar) return;
-    textEl.textContent = text;
-    bar.className = 'model-op-bar visible ' + mode;
-    if (mode === 'indeterminate') fill.style.width = '30%';
-    else fill.style.width = '0%';
-}
-
-function updateOpBar(text, pct) {
-    const textEl = document.getElementById('modelOpText');
-    const fill = document.getElementById('modelOpFill');
-    const bar = document.getElementById('modelOpBar');
-    if (textEl) textEl.textContent = text;
-    if (fill) fill.style.width = pct + '%';
-    if (bar) bar.className = 'model-op-bar visible';
-}
-
-function hideOpBar(delay = 2500) {
-    setTimeout(() => {
-        const bar = document.getElementById('modelOpBar');
-        if (bar) bar.className = 'model-op-bar';
-    }, delay);
-}
-
-function showOpBarDone(text) {
-    const bar = document.getElementById('modelOpBar');
-    const textEl = document.getElementById('modelOpText');
-    const fill = document.getElementById('modelOpFill');
-    if (textEl) textEl.textContent = text;
-    if (fill) fill.style.width = '100%';
-    if (bar) bar.className = 'model-op-bar visible done';
-    hideOpBar(3000);
-}
-
-function showOpBarError(text) {
-    const bar = document.getElementById('modelOpBar');
-    const textEl = document.getElementById('modelOpText');
-    if (textEl) textEl.textContent = text;
-    if (bar) bar.className = 'model-op-bar visible error';
-    hideOpBar(5000);
-}
-
-// --- Live Metrics Widget ---
-let _metricsTimer = null;
-async function refreshLiveMetrics() {
-    const ramEl = document.getElementById('metricRam');
-    const cpuEl = document.getElementById('metricCpu');
-    const gpuEl = document.getElementById('metricGpu');
-    const gpuRow = document.getElementById('metricGpuRow');
-    const processEl = document.getElementById('metricProcess');
-    const coresRow = document.getElementById('metricCoresRow');
-    const coresEl = document.getElementById('metricCores');
-    const infRow = document.getElementById('metricInferenceRow');
-    const infEl = document.getElementById('metricInference');
-    if (!ramEl || !cpuEl) return;
-
-    try {
-        const resp = await fetch('/api/models/metrics');
-        const data = await resp.json();
-
-        // RAM
-        const ramPct = data?.ram?.percent;
-        ramEl.textContent = (ramPct === 0 || ramPct) ? `${ramPct}%` : '--%';
-        if (ramPct > 70) ramEl.style.color = 'var(--warning)';
-        else if (ramPct > 90) ramEl.style.color = 'var(--error)';
-        else ramEl.style.color = '';
-
-        // Process RSS
-        if (processEl && data?.process?.rss_gb !== undefined) {
-            processEl.textContent = `${data.process.rss_gb} GB`;
-        }
-
-        // CPU (aggregate)
-        const cpuPct = data?.cpu_percent;
-        cpuEl.textContent = (cpuPct === 0 || cpuPct) ? `${cpuPct}%` : '--%';
-        if (cpuPct > 70) cpuEl.style.color = 'var(--accent-light)';
-        else if (cpuPct > 90) cpuEl.style.color = 'var(--error)';
-        else cpuEl.style.color = '';
-
-        // Per-core CPU bars
-        const cores = data?.cpu_per_core;
-        if (coresRow && coresEl && cores && cores.length > 0) {
-            coresRow.style.display = '';
-            let html = '';
-            cores.forEach((pct, i) => {
-                const color = pct > 80 ? 'var(--accent-light)' : pct > 50 ? 'var(--accent)' : 'var(--border)';
-                html += `<div class="core-bar" title="Core ${i}: ${pct}%"><div class="core-bar-fill" style="height:${Math.max(2, pct)}%;background:${color};"></div></div>`;
-            });
-            coresEl.innerHTML = html;
-        }
-
-        // Inference telemetry
-        const inf = data?.inference;
-        if (infRow && infEl) {
-            if (inf?.active) {
-                infRow.style.display = '';
-                infEl.textContent = `${inf.tokens_per_sec} t/s · ${inf.tokens_generated} tok`;
-                infEl.style.color = 'var(--success)';
-            } else if (inf?.tokens_generated > 0) {
-                infRow.style.display = '';
-                infEl.textContent = `${inf.tokens_per_sec} t/s · ${inf.tokens_generated} tok`;
-                infEl.style.color = 'var(--accent-light)';
-            } else {
-                infRow.style.display = 'none';
-            }
-        }
-
-        // GPU
-        const gpuPct = data?.gpu?.gpu_percent;
-        if (gpuRow) {
-            if (gpuPct === 0 || gpuPct) {
-                gpuRow.style.display = '';
-                if (gpuEl) gpuEl.textContent = `${gpuPct}%`;
-            } else {
-                gpuRow.style.display = 'none';
-            }
-        }
-    } catch (e) {
-        // ignore
-    }
-}
-
-function startLiveMetrics() {
-    if (_metricsTimer) return;
-    refreshLiveMetrics();
-    // Poll every 1s for responsive real-time metrics during inference
-    _metricsTimer = setInterval(refreshLiveMetrics, 1000);
-}
-
-document.addEventListener('DOMContentLoaded', startLiveMetrics);
-
-// --- Model Load Status Polling ---
-let _loadPollTimer = null;
-function startLoadPoll() {
-    stopLoadPoll();
-    _loadPollTimer = setInterval(async () => {
-        try {
-            const resp = await fetch('/api/models/llm/load-status');
-            const s = await resp.json();
-            if (s.status === 'loading') {
-                showOpBar(s.step || 'Loading model...', 'indeterminate');
-            } else if (s.status === 'done') {
-                showOpBarDone(`${s.model_name || 'Model'} loaded successfully`);
-                stopLoadPoll();
-                refreshModelStatus();
-            } else if (s.status === 'error') {
-                showOpBarError(`Load failed: ${s.error || 'Unknown error'}`);
-                stopLoadPoll();
-                refreshModelStatus();
-            } else {
-                stopLoadPoll();
-            }
-        } catch (e) { /* ignore poll errors */ }
-    }, 1000);
-}
-function stopLoadPoll() {
-    if (_loadPollTimer) { clearInterval(_loadPollTimer); _loadPollTimer = null; }
-}
-
-// --- Model Actions ---
-async function loadLLM() {
-    showOpBar('Loading default LLM...', 'indeterminate');
-    try {
-        const resp = await fetch('/api/models/llm/load', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-        });
-        const data = await resp.json();
-        if (data.success) startLoadPoll();
-        else { showOpBarError(`Load failed: ${data.error}`); refreshModelStatus(); }
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-    }
-}
-
-async function loadModelById(modelId) {
-    showOpBar('Preparing to load model...', 'indeterminate');
-    const card = document.getElementById(`card-${modelId}`);
-    const btn = card?.querySelector('.btn-primary');
-    if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
-    try {
-        const resp = await fetch('/api/models/llm/load', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_id: modelId })
-        });
-        const data = await resp.json();
-        if (data.success) startLoadPoll();
-        else { showOpBarError(`Failed: ${data.error}`); refreshModelStatus(); }
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-        refreshModelStatus();
-    }
-}
-
-async function loadLLMModel(modelName) {
-    showOpBar(`Loading ${modelName}...`, 'indeterminate');
-    try {
-        const resp = await fetch('/api/models/llm/load', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model_path: `./models/${modelName}` })
-        });
-        const data = await resp.json();
-        if (data.success) startLoadPoll();
-        else { showOpBarError(`Failed: ${data.error}`); refreshModelStatus(); }
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-    }
-}
-
-async function unloadLLM() {
-    showOpBar('Unloading model...', 'indeterminate');
-    try {
-        await fetch('/api/models/llm/unload', { method: 'POST' });
-        showOpBarDone('Model unloaded');
-        refreshModelStatus();
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-    }
-}
-
-async function testLLM() {
-    const resultEl = document.getElementById('testResult');
-    if (resultEl) resultEl.textContent = 'Testing...';
-    try {
-        const resp = await fetch('/api/models/llm/test', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Say hello in exactly one sentence.' })
-        });
-        const data = await resp.json();
-        if (data.error) {
-            if (resultEl) resultEl.textContent = `Error: ${data.error}`;
-        } else {
-            if (resultEl) resultEl.textContent = `${data.elapsed_seconds}s - ~${data.estimated_tokens} tokens - "${data.response.substring(0, 80)}..."`;
-        }
-    } catch (e) {
-        if (resultEl) resultEl.textContent = `Failed: ${e.message}`;
-    }
-}
-
-async function loadEmbedding() {
-    showToast('Loading embedding model (may take a minute)...', 'info');
-    try {
-        const resp = await fetch('/api/models/embedding/load', { method: 'POST' });
-        const data = await resp.json();
-        if (data.success) {
-            showToast('Embedding model loaded', 'success');
-        } else {
-            showToast(`Failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
-    } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
-    }
-}
-
-async function connectQdrant() {
-    try {
-        const resp = await fetch('/api/models/qdrant/connect', { method: 'POST' });
-        const data = await resp.json();
-        if (data.success) {
-            showToast('Qdrant connected', 'success');
-        } else {
-            showToast(`Failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
-    } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
-    }
-}
-
-async function loadReranker() {
-    showToast('Loading reranker...', 'info');
-    try {
-        const resp = await fetch('/api/models/reranker/load', { method: 'POST' });
-        const data = await resp.json();
-        if (data.success) {
-            showToast('Reranker loaded', 'success');
-        } else {
-            showToast(`Failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
-    } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
-    }
-}
-
-async function loadVision() {
-    showToast('Loading vision model...', 'info');
-    try {
-        const resp = await fetch('/api/models/vision/load', { method: 'POST' });
-        const data = await resp.json();
-        if (data.success) {
-            showToast('Vision model loaded', 'success');
-        } else {
-            showToast(`Failed: ${data.error}`, 'error');
-        }
-        refreshModelStatus();
-    } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
-    }
-}
-
-async function unloadVision() {
-    try {
-        await fetch('/api/models/vision/unload', { method: 'POST' });
-        showToast('Vision model unloaded', 'info');
-        refreshModelStatus();
-    } catch (e) {
-        showToast(`Error: ${e.message}`, 'error');
-    }
-}
-
-async function loadAll() {
-    showOpBar('Loading all services...', 'indeterminate');
-    try {
-        const resp = await fetch('/api/models/load-all', { method: 'POST' });
-        const data = await resp.json();
-        const r = data.results || {};
-        const hasError = Object.values(r).some(v => v.startsWith?.('error'));
-        let msg = Object.entries(r).map(([k, v]) => `${k}: ${v}`).join(' | ');
-        if (hasError) showOpBarError(msg);
-        else showOpBarDone('All services loaded');
-        refreshModelStatus();
-    } catch (e) {
-        showOpBarError(`Error: ${e.message}`);
-    }
-}
-
-// --- Init ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial status check
-    refreshModelStatus();
-    // Poll every 30s
-    setInterval(refreshModelStatus, 30000);
+    refreshServiceStatus();
+    setInterval(refreshServiceStatus, 60000);
 });

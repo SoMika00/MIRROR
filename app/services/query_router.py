@@ -119,46 +119,37 @@ def classify_query(question: str, has_sources: bool = False) -> RouteDecision:
         complexity_score -= 0.3
 
     # --- Routing Logic ---
+    # The portfolio knowledge base (CV, articles, architecture docs) is always
+    # indexed, so substantive questions - personal or technical - go through
+    # RAG for grounded, citable answers. Only greetings/small talk skip it.
 
-    # Simple: greetings, personal questions without tech overlap, very short
-    if is_simple_pattern and technical_score < 0.3 and not has_sources:
+    # Simple: greetings, thanks, very short small talk
+    if is_simple_pattern and technical_score < 0.3 and personal_score < 0.4:
         return RouteDecision(
             tier="simple",
             mode="chat",
-            reason="greeting/personal query",
+            reason="greeting/small talk",
             confidence=0.9,
-            params={},
-        )
-
-    if personal_score > 0.5 and technical_score < 0.3:
-        return RouteDecision(
-            tier="simple",
-            mode="chat",
-            reason="personal question (no RAG needed)",
-            confidence=0.8,
             params={},
         )
 
     # Complex: multi-part, comparison, deep technical, long
     if complexity_score > 0.6 or (technical_score > 0.5 and word_count > 15):
-        top_k = 15  # More chunks for complex queries
-        reranker_top_k = 5  # Keep more after reranking
         return RouteDecision(
             tier="complex",
-            mode="rag" if has_sources else "chat",
+            mode="rag",
             reason=f"complex query (complexity={complexity_score:.1f}, tech={technical_score:.1f})",
             confidence=0.7 + complexity_score * 0.2,
             params={
-                "top_k": top_k,
-                "reranker_top_k": reranker_top_k,
+                "top_k": 12,
                 "max_tokens": 1536,  # Allow longer answers
             },
         )
 
-    # Medium: standard RAG or chat
+    # Medium: everything substantive goes through RAG
     return RouteDecision(
         tier="medium",
-        mode="rag" if (has_sources or technical_score > 0.3) else "chat",
+        mode="rag",
         reason=f"standard query (tech={technical_score:.1f}, personal={personal_score:.1f})",
         confidence=0.7,
         params={},
