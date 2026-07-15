@@ -7,7 +7,14 @@ mymirror.fr {
         Referrer-Policy strict-origin-when-cross-origin
     }
 
-    reverse_proxy mirror:5000
+    # PaperClue app (separate stack, its web container joins this docker network)
+    handle /paperclue* {
+        reverse_proxy paperclue-web:3000
+    }
+
+    handle {
+        reverse_proxy mirror:5000
+    }
 }
 
 www.mymirror.fr {
@@ -23,5 +30,11 @@ http://51.83.71.145 {
         Referrer-Policy strict-origin-when-cross-origin
     }
 
-    reverse_proxy mirror:5000
+    handle /paperclue* {
+        reverse_proxy paperclue-web:3000
+    }
+
+    handle {
+        reverse_proxy mirror:5000
+    }
 }

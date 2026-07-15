@@ -16,15 +16,15 @@
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-title">Upload Documents</div>
+            <div class="sidebar-title" data-i18n="chat.upload_docs">Upload Documents</div>
             <div class="drop-zone drop-zone-mini" id="dropZone">
-                <div class="drop-zone-text" style="font-size:0.8rem;">Drop files here (PDF, DOCX, TXT, MD)</div>
+                <div class="drop-zone-text" style="font-size:0.8rem;"><span data-i18n="chat.drop_here">Drop files here</span> (PDF, DOCX, TXT, MD)</div>
             </div>
             <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md" multiple style="display:none">
         </div>
 
         <div class="sidebar-section">
-            <div class="sidebar-title">Web Scraper</div>
+            <div class="sidebar-title" data-i18n="chat.web_scraper">Web Scraper</div>
             <div class="scraper-input-group">
                 <input type="text" class="scraper-input" id="scraperUrl" placeholder="https://...">
                 <button class="btn btn-ghost btn-sm" onclick="scrapeUrl()" id="scrapeBtn">Go</button>
@@ -68,11 +68,6 @@
                 <button class="chat-send-btn" id="sendBtn" onclick="sendMessage()" title="Send (Enter)">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
-            </div>
-            <div class="chat-input-hint" id="streamToggle">
-                <label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.75rem;color:var(--text-muted);">
-                    <input type="checkbox" id="useStreaming" checked style="accent-color:var(--accent);"> Streaming
-                </label>
             </div>
         </div>
     </div>
@@ -321,7 +316,6 @@ async function sendMessage() {
     isGenerating = true;
     document.getElementById('sendBtn').disabled = true;
 
-    const useStream = document.getElementById('useStreaming').checked;
     const mode = getEffectiveMode();
     const payload = {
         question,
@@ -330,36 +324,11 @@ async function sendMessage() {
         enabled_sources: mode === 'rag' ? Array.from(enabledSources) : undefined,
     };
 
-    if (useStream) {
-        await sendStreaming(payload);
-    } else {
-        await sendBlocking(payload);
-    }
+    await sendStreaming(payload);
 
     isGenerating = false;
     document.getElementById('sendBtn').disabled = false;
     loadConversations();
-}
-
-async function sendBlocking(payload) {
-    const typingId = appendTyping();
-    try {
-        const resp = await fetch('/api/chat/query', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        removeTyping(typingId);
-        if (data.error) {
-            appendMessage('assistant', `Error: ${data.error}`);
-        } else {
-            if (data.conversation_id) currentConvId = data.conversation_id;
-            appendMessage('assistant', data.answer, data.sources, data.timings);
-        }
-    } catch (e) {
-        removeTyping(typingId);
-        appendMessage('assistant', `Connection error: ${e.message}`);
-    }
 }
 
 async function sendStreaming(payload) {
@@ -401,7 +370,7 @@ async function sendStreaming(payload) {
                     const parsed = JSON.parse(raw);
                     if (parsed.token) {
                         fullText += parsed.token;
-                        bubble.innerHTML = escapeHtml(fullText).replace(/\n/g, '<br>') + '<span class="cursor-blink">|</span>';
+                        bubble.innerHTML = renderMarkdown(fullText) + '<span class="cursor-blink">|</span>';
                         container.scrollTop = container.scrollHeight;
                     }
                     if (parsed.sources) {
@@ -419,7 +388,7 @@ async function sendStreaming(payload) {
         }
         // Remove cursor and add source citations
         bubble.classList.remove('streaming-bubble');
-        bubble.innerHTML = escapeHtml(fullText).replace(/\n/g, '<br>');
+        bubble.innerHTML = renderMarkdown(fullText);
         if (streamSources && streamSources.length > 0) {
             const srcDiv = buildSourceCitations(streamSources);
             msgDiv.appendChild(srcDiv);
@@ -454,9 +423,10 @@ function appendMessage(role, text, sources, timings, scroll = true) {
     const div = document.createElement('div');
     div.className = `message message-${role}`;
 
-    let html = `<div class="message-bubble">${escapeHtml(text).replace(/\n/g, '<br>')}</div>`;
-
-    div.innerHTML = html;
+    const body = role === 'assistant'
+        ? renderMarkdown(text)
+        : escapeHtml(text).replace(/\n/g, '<br>');
+    div.innerHTML = `<div class="message-bubble">${body}</div>`;
 
     // Add collapsible source citations for assistant messages
     if (role === 'assistant' && sources && sources.length > 0) {
@@ -505,6 +475,50 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// --- Minimal safe Markdown renderer (input is HTML-escaped first) ---
+function renderMarkdown(text) {
+    if (!text) return '';
+    let src = escapeHtml(text);
+
+    // Fenced code blocks first, protected from further transforms
+    const codeBlocks = [];
+    src = src.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+        codeBlocks.push(`<pre class="md-pre"><code>${code.replace(/\n$/, '')}</code></pre>`);
+        return ` CODE${codeBlocks.length - 1} `;
+    });
+
+    // Inline code
+    src = src.replace(/`([^`\n]+)`/g, '<code class="md-code">$1</code>');
+    // Headers (#### to #) -> bold section titles
+    src = src.replace(/^#{1,6}\s+(.+)$/gm, '<span class="md-h">$1</span>');
+    // Bold / italic
+    src = src.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    src = src.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,;:!?]|$)/g, '$1<em>$2</em>');
+    // Links [label](url) - http(s) only
+    src = src.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+    // Lists and paragraphs, line by line
+    const lines = src.split('\n');
+    let html = '', inList = false;
+    for (const line of lines) {
+        const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+        if (li) {
+            if (!inList) { html += '<ul class="md-ul">'; inList = true; }
+            html += `<li>${li[1]}</li>`;
+        } else {
+            if (inList) { html += '</ul>'; inList = false; }
+            if (line.trim() === '') html += '<span class="md-br"></span>';
+            else html += line + '<br>';
+        }
+    }
+    if (inList) html += '</ul>';
+
+    // Restore code blocks
+    html = html.replace(/ CODE(\d+) (<br>)?/g, (m, i) => codeBlocks[+i]);
+    return html;
 }
 
 // Auto-resize textarea

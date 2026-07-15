@@ -13,7 +13,7 @@ summary: "In-depth analysis of the most relevant open source LLMs for 2025: Dens
 
 This comparison analyzes the most relevant models for 2025, examining their architectures (Dense vs. Mixture-of-Experts) and critical optimization techniques (distillation, advanced quantization). The selection criteria cover performance on key benchmarks (MMLU, GPQA, MATH, HumanEval), memory efficiency, stability, multilingual capabilities, and ecosystem vitality.
 
-*Note: MIRROR itself runs a Llama 3.1 8B Q6_K on CPU-only infrastructure - a deliberate choice at the opposite end of the spectrum from dual H100s. The comparisons below helped me understand the landscape before settling on what's practical for a self-hosted portfolio.*
+*Note: the dual-H100 configuration analyzed here is the one I operate in production at Scaleway for my freelance work (70B fine-tuning + dynamic LoRA adapters). MIRROR - this site - deliberately made the opposite call: an API-first stack with no GPU at all, documented on the [Architecture](/tech) page. Knowing when to pick which is exactly what this comparison is about.*
 
 ## 1. The New Open Source Titans
 

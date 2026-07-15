@@ -11,7 +11,7 @@ summary: Standards architecturaux et meilleures pratiques pour le déploiement d
 
 Ce document documente les standards architecturaux et les meilleures pratiques pour le déploiement de Large Language Models (LLMs) en environnement de production. Il se concentre sur l'optimisation de l'inférence via la quantization, le dimensionnement de la VRAM sur GPU (NVIDIA H100, A100, RTX), et le choix des moteurs d'inférence (TRT-LLM, vLLM, llama.cpp).
 
-*Pour MIRROR, j'ai suivi le chemin "CPU Only / Edge" : llama.cpp avec GGUF Q6_K sur un serveur Hetzner 64 Go. L'arbre de décision ci-dessous est le cadre que j'ai utilisé pour arriver à ce choix.*
+*L'arbre de décision ci-dessous est le cadre que j'applique en mission : il m'a mené au chemin "GPU haute densité" (vLLM sur 2×H100) pour un assistant 70B en production, au chemin "CPU Only" (llama.cpp GGUF) pour la V1 de MIRROR, puis au chemin "API-first" pour sa V2 - trois réponses différentes au même problème de dimensionnement.*
 
 ## 1. Fondations : Gestion de la Mémoire d'un LLM
 

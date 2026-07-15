@@ -7,9 +7,11 @@ summary: "Lessons learned from building an end-to-end RAG pipeline for MIRROR - 
 
 # RAG in Production: Building a Complete System on a Single Server
 
+> **Note (2026)**: this article describes MIRROR V1, which was fully self-hosted. The architecture has since evolved to an API-first stack (Grok API + hybrid BM25 retrieval) - the reasons behind that migration are documented on the [Architecture](/tech) page. The lessons below (chunking, reranking, prompting, infra) remain valid for any sovereign RAG deployment.
+
 ## The Context
 
-MIRROR is a complete RAG system running on a dedicated Hetzner server (12 vCPU, 64 GB RAM, zero GPU). Users upload PDFs, URLs, Markdown, and the system answers by citing its sources in French, English, or Japanese.
+MIRROR V1 was a complete RAG system running on a dedicated Hetzner server (12 vCPU, 64 GB RAM, zero GPU). Users upload PDFs, URLs, Markdown, and the system answers by citing its sources in French, English, or Japanese.
 
 This article covers two things: the RAG pipeline itself (what worked, what didn't) and the infrastructure to run it in production (server, TLS, reverse proxy, monitoring). This is the guide I wish I had before starting.
 

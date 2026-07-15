@@ -13,7 +13,7 @@ L'année 2024 et le début 2025 ont marqué un tournant décisif pour les modèl
 
 Ce comparatif analyse les modèles les plus pertinents pour 2025, en examinant leurs architectures (Dense vs. Mixture-of-Experts) et les techniques d'optimisation critiques (distillation, quantification avancée). Les critères de sélection couvrent les performances sur benchmarks clés (MMLU, GPQA, MATH, HumanEval), l'efficacité mémoire, la stabilité, les capacités multilingues, et la vitalité de l'écosystème.
 
-*Note : MIRROR tourne lui-même sur un Llama 3.1 8B Q6_K en infrastructure CPU-only - un choix délibéré à l'opposé du spectre des dual H100. Ces comparaisons m'ont aidé à comprendre le paysage avant de choisir ce qui est réaliste pour un portfolio auto-hébergé.*
+*Note : la configuration 2×H100 analysée ici est celle que j'exploite en production chez Scaleway pour mes missions freelance (fine-tuning d'un 70B + adaptateurs LoRA dynamiques). À l'inverse, MIRROR - ce site - a fait le choix opposé du spectre : une stack API-first sans aucun GPU, documentée sur la page [Architecture](/tech). Savoir choisir entre les deux, c'est précisément le sujet de ce comparatif.*
 
 ## 1. Les Nouveaux Titans Open Source
 

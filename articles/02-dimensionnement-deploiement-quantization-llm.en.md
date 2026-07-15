@@ -11,7 +11,7 @@ summary: "Architectural standards and best practices for deploying LLMs in produ
 
 This document covers architectural standards and best practices for deploying Large Language Models (LLMs) in production environments. It focuses on inference optimization via quantization, VRAM sizing on GPUs (NVIDIA H100, A100, RTX), and inference engine selection (TRT-LLM, vLLM, llama.cpp).
 
-*For MIRROR, I went with the "CPU Only / Edge" path: llama.cpp with GGUF Q6_K on a 64 GB Hetzner server. The decision tree below is the framework I used to arrive at that choice.*
+*The decision tree below is the framework I apply on client work: it led me to the "high-density GPU" path (vLLM on 2xH100) for a 70B assistant in production, the "CPU Only" path (llama.cpp GGUF) for MIRROR V1, and the "API-first" path for its V2 - three different answers to the same sizing problem.*
 
 ## 1. Foundations: LLM Memory Management
 
@@ -110,7 +110,7 @@ Minimalist C/C++ implementation for local execution.
 4. **CPU Only / Edge**
   - Method: GGUF Q4_K_M or Q3_K_M
   - Tool: llama.cpp / llama-cpp-python
-  - Benefit: no GPU required, runs on laptop or CPU server (used in MIRROR)
+  - Benefit: no GPU required, runs on laptop or CPU server (used in MIRROR V1)
 
 ## 6. Monitoring and SLIs in Production
 

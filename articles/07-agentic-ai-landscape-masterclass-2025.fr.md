@@ -471,7 +471,7 @@ La direction la plus spéculative mais potentiellement transformatrice : des age
   2. RAG avec cache sémantique et routage adaptatif
   3. Télémétrie et observabilité en temps réel
   4. Intégration d'outils compatible MCP
-- **C'est exactement ce que MIRROR démontre** - un système de grade production tournant entièrement sur CPU sans dépendances cloud
+- **C'est exactement ce que MIRROR démontre** - un système RAG parti d'une stack 100 % auto-hébergée (CPU only), migré ensuite vers une architecture API-first. C'est la migration entre les deux paradigmes qui apprend le plus
 
 ---
 
@@ -501,4 +501,4 @@ La direction la plus spéculative mais potentiellement transformatrice : des age
 ---
 
 *Michail Berjaoui - Novembre 2025*
-*MIRROR - Portfolio alimenté par l'IA démontrant des patterns agentiques de grade production sur infrastructure CPU uniquement*
+*MIRROR - Portfolio alimenté par l'IA, patterns RAG et agentiques sur une stack API-first*

@@ -21,7 +21,8 @@ window.addEventListener('mirror-lang-changed', () => loadArticles());
 
 function getCurrentLang() {
     try {
-        return localStorage.getItem('mirror_lang') || '';
+        // Stored choice first, then browser-detected preference (matches the nav switcher)
+        return localStorage.getItem('mirror_lang') || window.MIRROR_I18N?.getLang() || '';
     } catch (e) {
         return '';
     }

@@ -11,7 +11,7 @@ summary: "Guide étape par étape pour fine-tuner un LLM open source avec LoRA e
 
 Le prompting a ses limites. Quand un LLM ne produit pas les résultats attendus malgré des prompts bien construits, le fine-tuning devient nécessaire. Grâce à LoRA (Low-Rank Adaptation) et QLoRA (Quantized LoRA), il est désormais possible d'adapter un modèle de 7B à 70B paramètres sur un seul GPU consumer (24 Go VRAM).
 
-Cet article est un guide pratique issu de plusieurs fine-tunings réalisés en production, couvrant la préparation des données jusqu'au déploiement.
+Cet article est un guide pratique issu de plusieurs fine-tunings réalisés en production - dont un 70B avec adaptateurs LoRA dynamiques servi sur 2×H100 chez Scaleway, avec bascule de personnalité à chaud - couvrant la préparation des données jusqu'au déploiement.
 
 ## 1. Quand Fine-tuner (et Quand Ne Pas le Faire)
 

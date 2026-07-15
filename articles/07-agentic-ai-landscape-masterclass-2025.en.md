@@ -471,7 +471,7 @@ The most speculative but potentially transformative direction: agents that impro
   2. RAG with adaptive routing
   3. Real-time telemetry and observability
   4. MCP-compatible tool integration
-- MIRROR is my attempt at this - a self-hosted RAG system running on CPU-only infrastructure. It's not production-grade in the enterprise sense, but it covers the full stack from ingestion to generation and taught me more than any tutorial
+- MIRROR is my attempt at this - a RAG system that started fully self-hosted (CPU-only) and evolved into an API-first architecture. It covers the full stack from ingestion to generation, and migrating it between the two paradigms taught me more than any tutorial
 
 ---
 
@@ -501,4 +501,4 @@ The most speculative but potentially transformative direction: agents that impro
 ---
 
 *Michail Berjaoui - November 2025*
-*MIRROR - self-hosted AI portfolio running agentic patterns on CPU-only infrastructure*
+*MIRROR - AI-powered portfolio running RAG and agentic patterns on an API-first stack*
